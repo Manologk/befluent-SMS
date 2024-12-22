@@ -1,0 +1,117 @@
+import React from "react";
+import { Clock, Users, Video, BookOpen, QrCode } from "lucide-react";
+import { ClassSchedule } from "@/types/attendance";
+import { useClassActivity } from "@/hooks/useClassActivity";
+import AttendanceScanner from "@/components/pages/AttendanceScanner";
+import { AttendanceProgress } from "./AttendanceProgress";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+interface ClassCardProps {
+  class_: ClassSchedule;
+  onStartScanning: (classId: string) => void;
+}
+
+export const ClassCard: React.FC<ClassCardProps> = ({
+  class_,
+  onStartScanning,
+}) => {
+  const isActive = useClassActivity(class_.time);
+
+  return (
+    <div className="border rounded-lg p-4 hover:border-blue-500 transition-colors">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Clock className="w-5 h-5 text-blue-500" />
+          <span className="font-medium">{class_.time}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span
+            className={`px-3 py-1 rounded-full text-sm ${
+              class_.isOnline
+                ? "bg-green-100 text-green-800"
+                : "bg-purple-100 text-purple-800"
+            }`}
+          >
+            {class_.isOnline ? "Online" : "In-Person"}
+          </span>
+          {isActive && (
+            <span className="px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
+              Active
+            </span>
+          )}
+        </div>
+      </div>
+
+      <h3 className="text-lg font-medium text-gray-800 mb-2">
+        {class_.className}
+      </h3>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex items-center gap-2">
+          <Users className="w-4 h-4 text-gray-500" />
+          <span className="text-sm text-gray-600">
+            {class_.students.join(", ")}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <BookOpen className="w-4 h-4 text-gray-500" />
+          <span className="text-sm text-gray-600">
+            {class_.proficiencyLevel}
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <AttendanceProgress classId={class_.id} />
+      </div>
+
+      <div className="mt-4 flex gap-2">
+        {class_.isOnline && (
+          <button className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-sm hover:bg-blue-100">
+            <Video className="w-4 h-4" />
+            Join Meeting
+          </button>
+        )}
+        <button className="flex items-center gap-1 px-3 py-1 bg-gray-50 text-gray-700 rounded-md text-sm hover:bg-gray-100">
+          <BookOpen className="w-4 h-4" />
+          View Materials
+        </button>
+
+        {/* <button
+          onClick={() => onStartScanning(class_.id)}
+          className="flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-md text-sm hover:bg-green-100"
+        >
+          <QrCode className="w-4 h-4" />
+          Mark Attendance
+        </button> */}
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-md text-sm hover:bg-green-100"><QrCode className="w-4 h-4" />Mark Attendance</Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl max-h-[80vh]">
+            <DialogHeader>
+              <DialogTitle> Mark Attendance</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <AttendanceScanner></AttendanceScanner>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+};
