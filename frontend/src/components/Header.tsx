@@ -14,6 +14,7 @@ import SettingsDialog from "@/components/SettingsDialog";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { studentApi } from "@/services/api";
+import { useNavigate } from "react-router-dom";
 
 interface StudentData {
     user_id: number;
@@ -34,6 +35,8 @@ const Header = () => {
     const [studentData, setStudentData] = useState<StudentData>();
     const [loading, setLoading] = useState(true);
 
+    const navigate = useNavigate();
+    const { logout } = useAuth();
 
     useEffect(() => {
         const fetchStudentData = async () => {
@@ -52,7 +55,6 @@ const Header = () => {
         fetchStudentData();
     }, [user?.user_id])
 
-
     if (loading) {
         return <p>Loading student data...</p>;
     }
@@ -61,12 +63,11 @@ const Header = () => {
         return <p>No data available for this student.</p>;
     }
 
-
     const { level, name, email } = studentData;
 
-    const handleLogout = () => {
-        // In a real app, this would handle the logout logic
-        console.log("Logging out...");
+    const handleLogout = async () => {
+        await logout();
+        navigate('/login');
     };
 
     return (
@@ -87,6 +88,15 @@ const Header = () => {
                             </p>
                         </div>
 
+                        <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={handleLogout}
+                            className="text-muted-foreground hover:text-foreground"
+                        >
+                            <LogOut className="h-5 w-5" />
+                        </Button>
+
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon">
@@ -103,11 +113,6 @@ const Header = () => {
                                 <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
                                     <Settings className="mr-2 h-4 w-4" />
                                     Settings
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={handleLogout}>
-                                    <LogOut className="mr-2 h-4 w-4" />
-                                    Log out
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>

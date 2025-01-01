@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Student, Teacher, Group, Assignment } from '@/types'
+import  MultipleSelector, { Option } from "@/components/ui/multiple-selector"
 
 import { toast, useToast } from '@/hooks/use-toast';
 import { scheduleApi } from '@/services/api';
@@ -23,7 +24,7 @@ const formSchema = z.object({
   assignmentType: z.enum(['group', 'private']),
   group_id: z.string().optional(),
   student_id: z.string().optional(),
-  day: z.number().min(0).max(6),
+  days: z.array(z.number().min(0).max(6)).min(1, "At least one day must be selected"),
   start_time: z.string().min(1, "Start time is required"),
   end_time: z.string().min(1, "End time is required"),
   is_recurring: z.boolean().default(true),
@@ -59,6 +60,16 @@ interface CreateScheduleProps {
   assignments: Assignment[]
   setAssignments: React.Dispatch<React.SetStateAction<Assignment[]>>
 }
+
+const DAYS_OPTIONS: Option[] = [
+  { value: "0", label: "Monday" },
+  { value: "1", label: "Tuesday" },
+  { value: "2", label: "Wednesday" },
+  { value: "3", label: "Thursday" },
+  { value: "4", label: "Friday" },
+  { value: "5", label: "Saturday" },
+  { value: "6", label: "Sunday" },
+]
 
 export default function CreateSchedule({ 
   // students, 
@@ -105,14 +116,12 @@ export default function CreateSchedule({
       try {
         setLoading(true)
         const data = await studentApi.getAll()
-        // Transform the API response and filter for private students only
-        const transformedStudents = data
-          .filter((student: any) => student.student_type === "PRIVATE")
-          .map((student: any) => ({
-            id: student.id.toString(),
-            name: student.name || `${student.first_name} ${student.last_name}`,
-            email: student.email
-          }))
+        // Transform the API response to match the UI's expected format
+        const transformedStudents = data.map((student: any) => ({
+          id: student.id.toString(),
+          name: student.name || `${student.first_name} ${student.last_name}`,
+          email: student.email
+        }))
         setStudents(transformedStudents)
       } catch (error) {
         toast({
@@ -160,7 +169,7 @@ export default function CreateSchedule({
       assignmentType: "private",
       group_id: "",
       student_id: "",
-      day: 0,
+      days: [],
       start_time: "",
       end_time: "",
       is_recurring: true,
@@ -175,7 +184,7 @@ export default function CreateSchedule({
         type: values.assignmentType,
         student_id: values.assignmentType === 'private' ? values.student_id : undefined,
         group_id: values.assignmentType === 'group' ? values.group_id : undefined,
-        day: values.day,
+        days: values.days,  
         start_time: values.start_time,
         end_time: values.end_time,
         is_recurring: values.is_recurring,  
@@ -338,26 +347,20 @@ export default function CreateSchedule({
 
           <FormField
             control={form.control}
-            name="day"
+            name="days"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Day</FormLabel>
-                <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value?.toString()}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a day" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="0">Sunday</SelectItem>
-                    <SelectItem value="1">Monday</SelectItem>
-                    <SelectItem value="2">Tuesday</SelectItem>
-                    <SelectItem value="3">Wednesday</SelectItem>
-                    <SelectItem value="4">Thursday</SelectItem>
-                    <SelectItem value="5">Friday</SelectItem>
-                    <SelectItem value="6">Saturday</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormLabel>Days</FormLabel>
+                <FormControl>
+                  <MultipleSelector
+                    value={field.value?.map((day: number) => DAYS_OPTIONS[day])}
+                    options={DAYS_OPTIONS}
+                    placeholder="Select days"
+                    onChange={(options: Option[]) => {
+                      field.onChange(options.map(opt => parseInt(opt.value)))
+                    }}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

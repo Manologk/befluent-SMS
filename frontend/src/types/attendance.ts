@@ -4,9 +4,13 @@ export interface Student {
   }
   
   export interface AttendanceRecord {
+    id: string;
     studentId: string;
+    studentName: string;
     classId: string;
+    className: string;
     timestamp: string;
+    status: 'present' | 'absent' | 'late';
   }
   
   export interface ClassSchedule {

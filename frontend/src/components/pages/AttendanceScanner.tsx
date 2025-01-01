@@ -3,35 +3,48 @@ import QRScanner from '../QRScanner';
 import { useToast } from '@/hooks/use-toast';
 import { Card } from '../ui/card';
 import { studentApi } from '@/services/api';
+import { sessionApi } from '@/services/api';
+
+interface Session {
+    id: string;
+    // Add other session properties as needed
+}
 
 const AttendanceScanner: React.FC = () => {
     const { toast } = useToast();
     const [isProcessing, setIsProcessing] = useState(false);
+    const [currentSession, setCurrentSession] = useState<Session | null>(null);
+    const [onAttendanceMarked, setOnAttendanceMarked] = useState<(() => void) | null>(null);
 
-    const handleScanSuccess = async (qrData: string) => {
-        if (isProcessing) return;
-        
-        setIsProcessing(true);
+    const handleQRCodeScan = async (decodedText: string) => {
+        if (!currentSession) {
+            toast({
+                title: "Error",
+                description: "No active session selected",
+                variant: "destructive",
+            });
+            return;
+        }
+
         try {
-            const response = await studentApi.reduceLesson(qrData);
+            const studentId = decodedText;
+            const attendance = await sessionApi.markAttendance({
+                sessionId: currentSession.id,
+                studentId
+            });
             
-            if (response.success) {
-                toast({
-                    title: "Success!",
-                    description: response.message || "Attendance marked successfully",
-                });
-            } else {
-                throw new Error(response.message || 'Failed to mark attendance');
-            }
-
+            toast({
+                title: "Success",
+                description: "Attendance marked successfully",
+            });
+            
+            onAttendanceMarked?.();
         } catch (error) {
             toast({
                 title: "Error",
-                description: error instanceof Error ? error.message : 'Failed to mark attendance',
+                description: "Failed to mark attendance",
                 variant: "destructive",
             });
-        } finally {
-            setIsProcessing(false);
         }
     };
 
@@ -57,7 +70,7 @@ const AttendanceScanner: React.FC = () => {
                         </p>
                         
                         <QRScanner 
-                            onScanSuccess={handleScanSuccess}
+                            onScanSuccess={handleQRCodeScan}
                             onScanError={handleScanError}
                         />
                         

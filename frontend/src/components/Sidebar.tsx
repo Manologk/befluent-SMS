@@ -5,7 +5,7 @@ import { useSidebar } from "@/components/SidebarProvider";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 import { Sheet, SheetContent } from "./ui/sheet";
-import { Users, BookOpen, UserCog, Users2, PiggyBank, Bus, Library, UtensilsCrossed, Calendar, MessageSquare, BarChart, Settings, ChevronLeft, GraduationCap, QrCode } from 'lucide-react';
+import { NotebookPen, Users, BookOpen, UserCog, Users2, PiggyBank, Bus, Library, UtensilsCrossed, Calendar, MessageSquare, BarChart, Settings, ChevronLeft, GraduationCap, QrCode } from 'lucide-react';
 
 const sidebarItems = [
   { name: "Dashboard", href: "/", icon: BarChart },
@@ -15,7 +15,7 @@ const sidebarItems = [
   { name: "Staff Management", href: "/staff", icon: UserCog },
   { name: "Parent Portal", href: "/parents", icon: Users2 },
   { name: "Financial Management", href: "/finance", icon: PiggyBank },
-  { name: "Library", href: "/library", icon: Library },
+  { name: "Plans", href: "/plans", icon: NotebookPen },
   { name: "Events", href: "/events", icon: Calendar },
   { name: "Messaging", href: "/messaging", icon: MessageSquare },
   { name: "Settings", href: "/settings", icon: Settings },

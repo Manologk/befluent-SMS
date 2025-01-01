@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { TeacherSession, AttendanceRecord, ClassSchedule } from '@/types/session';
 // import { User } from '../types/auth';
 
 const API_URL = 'http://localhost:8000/api';
@@ -102,6 +103,19 @@ export interface Parent {
   }>;
 }
 
+// Student interfaces
+interface CreateStudentPayload {
+  user: number;
+  name: string;
+  email: string;
+  phone_number: string;
+  subscription_plan: string;
+  level: string;
+  student_type: string;
+  qr_code: string;
+  subscription_balance: number;
+  lessons_remaining: number;
+}
 
 export interface Group {
   id: string;
@@ -135,16 +149,19 @@ export interface CreateSchedulePayload {
   type: 'group' | 'private';
   student_id?: string;
   group_id?: string;
-  day: number;
+  days: number[];  // Changed to number[] to match Django's expectation
   start_time: string;
   end_time: string;
   is_recurring: boolean;
   payment: number;
 }
 
-
-
-
+export interface CreatePlanPayload {
+  name: string;
+  description: string;
+  price: number;
+  number_of_lessons: number;
+}
 
 // Auth endpoints
 export const authApi = {
@@ -253,7 +270,29 @@ export const studentApi = {
       console.error('QR Code refresh error:', error);
       throw error;
     }
-  }
+  },
+
+  create: async (data: CreateStudentPayload) => {
+    return api.post('/students/students/', data);
+  },
+
+  createWithUser: async (data: {
+    name: string;
+    email: string;
+    phone_number: string;
+    subscription_plan: string;
+    level: string;
+    password: string;
+  }) => {
+    try {
+      const response = await api.post('/students/students/create-with-user/', data);
+      console.log('Create student with user response:', response);
+      return response;
+    } catch (error) {
+      console.error('Error creating student with user:', error);
+      throw error;
+    }
+  },
 };
 
 // Teacher endpoints
@@ -365,6 +404,57 @@ export const groupApi = {
 }
 
 
+// Session endpoint
+export const sessionApi = {
+  getSessionsByDate: async (date: string) => {
+    try {
+      const { data } = await api.get(`/students/sessions/?date=${date}`);
+      return data;
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+      throw error;
+    }
+  },
+
+  getTeacherSessions: async (date: string) => {
+    try {
+      const response = await api.get(`/students/sessions/`, {
+        params: {
+          date: date
+        }
+      });
+      console.log('Teacher sessions response:', response.data); // Debug log
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching teacher sessions:', error);
+      throw error;
+    }
+  },
+
+  async markAttendance(data: { sessionId: string; studentId: string }) {
+    const response = await api.post('/students/attendance/', data);
+    return response.data;
+  },
+
+  async getAttendance(sessionId: string) {
+    const response = await api.get(`/students/attendance/?session=${sessionId}`);
+    return response.data;
+  },
+
+  async toggleActivation(sessionId: string) {
+    const response = await api.post(`/students/sessions/${sessionId}/toggle_activation/`);
+    return response.data;
+  },
+
+  getSessionDetails: async (sessionId: string) => {
+    try {
+      const response = await api.get(`/sessions/${sessionId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error('Failed to get session details');
+    }
+  }
+};
 
 // Schedule endpoints
 export const scheduleApi = {
@@ -426,12 +516,12 @@ export const scheduleApi = {
 
   createSchedule: async (scheduleData: CreateSchedulePayload) => {
     try {
-      const { data } = await api.post('/students/sessions/', {
+      const { data } = await api.post('/students/schedules/', {
         teacher_id: scheduleData.teacher_id,
         type: scheduleData.type,
         student_id: scheduleData.student_id,
         group_id: scheduleData.group_id,
-        day: scheduleData.day,
+        days: scheduleData.days,
         start_time: scheduleData.start_time,
         end_time: scheduleData.end_time,
         is_recurring: scheduleData.is_recurring,
@@ -460,12 +550,12 @@ export const scheduleApi = {
 
   updateSchedule: async (id: string, scheduleData: Partial<CreateSchedulePayload>) => {
     try {
-      const { data } = await api.patch(`/students/sessions/${id}/`, {
+      const { data } = await api.patch(`/students/schedules/${id}/`, {
         teacher_id: scheduleData.teacher_id,
         type: scheduleData.type,
         student_id: scheduleData.student_id,
         group_id: scheduleData.group_id,
-        day: scheduleData.day,
+        days: scheduleData.days,
         start_time: scheduleData.start_time,
         end_time: scheduleData.end_time,
         is_recurring: scheduleData.is_recurring,
@@ -487,6 +577,55 @@ export const scheduleApi = {
       if (axios.isAxiosError(error)) {
         throw new Error(error.response?.data?.message || 'Failed to delete schedule');
       }
+      throw error;
+    }
+  }
+};
+
+// Subscription Plan endpoints
+export const planApi = {
+  getAll: async () => {
+    try {
+      const response = await api.get('/students/subscription-plans/');
+      console.log('Full API Response:', response);
+      console.log('Subscription plans data:', response.data);
+      return response; // Return the whole response, not just response.data
+    } catch (error) {
+      console.error('Error fetching subscription plans:', error);
+      throw error;
+    }
+  },
+  
+  create: async (planData: CreatePlanPayload) => {
+    const response = await api.post('/students/subscription-plans/', planData);
+    return response.data;
+  },
+  
+  update: async (id: number, planData: Partial<CreatePlanPayload>) => {
+    const response = await api.patch(`/students/subscription-plans/${id}/`, planData);
+    return response.data;
+  },
+  
+  delete: async (id: number) => {
+    await api.delete(`/students/subscription-plans/${id}/`);
+  }
+};
+
+// User management endpoints
+export interface CreateUserPayload {
+    email: string;
+    password: string;
+    role: 'admin' | 'instructor' | 'student' | 'parent';
+}
+
+export const userApi = {
+  createUser: async (userData: CreateUserPayload) => {
+    try {
+      const response = await api.post('/accounts/users/', userData);
+      console.log('Create user response:', response);
+      return response;
+    } catch (error) {
+      console.error('Error creating user:', error);
       throw error;
     }
   }

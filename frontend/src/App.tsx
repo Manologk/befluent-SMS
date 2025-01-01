@@ -14,7 +14,11 @@ import AttendanceScanner from '@/components/pages/AttendanceScanner';
 import StaffManagementPage from './components/pages/Staff';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
+import { PlanManager } from './components/PlanManager';
+
+
 import AcademicPlanning from '@/components/pages/AcademicPlanning'
+import UserManagement from './components/pages/UserManagement';
 
 import DashboardLayout from './components/layout/TeacherDashboardLayout';
 import TodaySchedule from './components/dashboard/TodaySchedule';
@@ -91,6 +95,8 @@ function App() {
                 <Route path="/attendance" element={<ProtectedRoute><AttendanceScanner /></ProtectedRoute>} />
                 <Route path="/staff" element={<ProtectedRoute><StaffManagementPage /></ProtectedRoute>} />
                 <Route path="/academic" element={<ProtectedRoute><AcademicPlanning/></ProtectedRoute>} />
+                <Route path="/plans" element={<ProtectedRoute><PlanManager/></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute><UserManagement/></ProtectedRoute>} />
               </Routes>
             </main>
           </div>

@@ -24,9 +24,9 @@ class Command(BaseCommand):
                 
                 # Create users and related profiles
                 admin = self.create_admin()
-                teachers = self.create_teachers(3)
-                students = self.create_students(10)
-                parents = self.create_parents(5)
+                teachers = self.create_teachers(5)  # Increased to 5 teachers
+                students = self.create_students(15)  # Increased to 15 students
+                parents = self.create_parents(8)  # Increased to 8 parents
                 
                 # Create groups and schedules
                 groups = self.create_groups(teachers)
@@ -34,7 +34,7 @@ class Command(BaseCommand):
                 self.create_schedules(groups, teachers, students)
                 
                 # Create sessions and attendance
-                sessions = self.create_sessions()
+                sessions = self.create_sessions(teachers, students, groups)
                 self.create_attendance_logs(students, sessions)
                 self.create_performance_records(students, sessions)
                 
@@ -83,14 +83,15 @@ class Command(BaseCommand):
     def create_teachers(self, count):
         teachers = []
         teacher_names = [
-            'Анна Петрова',
-            'Михаил Иванов',
-            'Елена Смирнова'
+            'Анна Петрова', 'Михаил Иванов', 'Елена Смирнова',
+            'Ольга Кузнецова', 'Дмитрий Попов', 'Наталья Волкова',
+            'Сергей Морозов', 'Татьяна Соколова'
         ]
         specializations = [
-            ['English', 'IELTS'],
-            ['English', 'TOEFL'],
-            ['English', 'Business English']
+            ['English', 'IELTS'], ['English', 'TOEFL'],
+            ['English', 'Business English'], ['English', 'General English'],
+            ['English', 'Academic English'], ['English', 'Conversational English'],
+            ['English', 'Cambridge Exams'], ['English', 'Young Learners']
         ]
         
         for i in range(count):
@@ -114,10 +115,12 @@ class Command(BaseCommand):
             'Александр Волков', 'Мария Козлова', 'Дмитрий Соколов',
             'София Морозова', 'Артём Лебедев', 'Анастасия Новикова',
             'Иван Попов', 'Екатерина Соловьева', 'Максим Васильев',
-            'Полина Кузнецова'
+            'Полина Кузнецова', 'Кирилл Николаев', 'Алиса Федорова',
+            'Даниил Михайлов', 'Виктория Андреева', 'Тимофей Егоров',
+            'Арина Павлова', 'Марк Захаров', 'Вера Степанова'
         ]
         student_types = ['GROUP', 'PRIVATE']
-        levels = ['Beginner', 'Intermediate', 'Advanced']
+        levels = ['Beginner', 'Elementary', 'Pre-Intermediate', 'Intermediate', 'Upper-Intermediate', 'Advanced']
         
         for i in range(count):
             user = User.objects.create_user(
@@ -143,7 +146,9 @@ class Command(BaseCommand):
         parents = []
         parent_names = [
             'Сергей Иванов', 'Ольга Петрова', 'Андрей Сидоров',
-            'Татьяна Морозова', 'Владимир Козлов'
+            'Татьяна Морозова', 'Владимир Козлов', 'Людмила Новикова',
+            'Игорь Соколов', 'Марина Волкова', 'Алексей Лебедев',
+            'Евгения Попова'
         ]
         for i in range(count):
             user = User.objects.create_user(
@@ -162,26 +167,73 @@ class Command(BaseCommand):
 
     def create_groups(self, teachers):
         groups = []
-        group_names = ['Группа А1', 'Группа А2', 'Группа B1']
+        group_names = [
+            'Группа А1', 'Группа А2', 'Группа B1', 
+            'Группа B2', 'Группа C1', 'Группа Kids'
+        ]
         for i, teacher in enumerate(teachers):
-            group = Group.objects.create(
-                name=group_names[i],
-                teacher=teacher,
-                max_capacity=5,
-                status='active'
-            )
-            groups.append(group)
+            if i < len(group_names):
+                group = Group.objects.create(
+                    name=group_names[i],
+                    teacher=teacher,
+                    max_capacity=5,
+                    status='active'
+                )
+                groups.append(group)
         return groups
 
     def assign_students_to_groups(self, students, groups):
+        """Assign students to groups based on their student type"""
         for student in students:
             if student.student_type == 'GROUP':
-                group = random.choice(groups)
-                if not group.is_full():
+                # Try to find a group that's not full
+                available_groups = [g for g in groups if not g.is_full()]
+                if available_groups:
+                    group = random.choice(available_groups)
                     GroupStudent.objects.create(
                         student=student,
                         group=group
                     )
+                    self.stdout.write(f'Assigned {student.name} to {group.name}')
+
+    def create_sessions(self, teachers, students, groups):
+        sessions = []
+        today = timezone.now().date()
+        
+        # Create sessions for each group
+        for group in groups:
+            for i in range(3):  # 3 sessions per group
+                session = Session.objects.create(
+                    date=today + timedelta(days=i),
+                    start_time=datetime.strptime('09:00', '%H:%M').time(),
+                    end_time=datetime.strptime('10:30', '%H:%M').time(),
+                    language='English',
+                    level=random.choice(['A1', 'A2', 'B1', 'B2', 'C1']),
+                    topic=f'Topic for day {i+1}',
+                    type='GROUP',
+                    group=group,
+                    teacher=group.teacher
+                )
+                sessions.append(session)
+        
+        # Create private sessions
+        for student in students:
+            if student.student_type == 'PRIVATE':
+                teacher = random.choice(teachers)
+                session = Session.objects.create(
+                    date=today,
+                    start_time=datetime.strptime('14:00', '%H:%M').time(),
+                    end_time=datetime.strptime('15:30', '%H:%M').time(),
+                    language='English',
+                    level=student.level,
+                    topic='Individual lesson',
+                    type='PRIVATE',
+                    student=student,
+                    teacher=teacher
+                )
+                sessions.append(session)
+        
+        return sessions
 
     def create_schedules(self, groups, teachers, students):
         days = list(range(0, 5))  # Monday to Friday
@@ -202,10 +254,11 @@ class Command(BaseCommand):
                 day=random.choice(days),
                 start_time=datetime.strptime(time_slot[0], '%H:%M').time(),
                 end_time=datetime.strptime(time_slot[1], '%H:%M').time(),
-                is_recurring=True
+                is_recurring=True,
+                payment=random.randint(3000, 6000)
             )
         
-        # Private student schedules
+        # Private schedules
         for student in students:
             if student.student_type == 'PRIVATE':
                 time_slot = random.choice(times)
@@ -215,105 +268,87 @@ class Command(BaseCommand):
                     day=random.choice(days),
                     start_time=datetime.strptime(time_slot[0], '%H:%M').time(),
                     end_time=datetime.strptime(time_slot[1], '%H:%M').time(),
-                    is_recurring=True
+                    is_recurring=True,
+                    payment=random.randint(4000, 8000)
                 )
-
-    def create_sessions(self):
-        sessions = []
-        topics = [
-            'Грамматика: Времена',
-            'Разговорная практика',
-            'Бизнес английский',
-            'Подготовка к IELTS',
-            'Идиомы и фразовые глаголы'
-        ]
-        
-        # Create sessions for the past 30 days
-        for i in range(30):
-            session_date = timezone.now().date() - timedelta(days=i)
-            session = Session.objects.create(
-                date=session_date,
-                language='English',
-                level=random.choice(['Beginner', 'Intermediate', 'Advanced']),
-                topic=random.choice(topics)
-            )
-            sessions.append(session)
-        return sessions
 
     def create_attendance_logs(self, students, sessions):
         for session in sessions:
-            # Randomly select 70% of students for attendance
-            attending_students = random.sample(students, k=int(len(students) * 0.7))
-            for student in attending_students:
+            if session.type == 'GROUP' and session.group:
+                group_students = GroupStudent.objects.filter(group=session.group)
+                for group_student in group_students:
+                    AttendanceLog.objects.create(
+                        student=group_student.student,
+                        session=session,
+                        valid=random.choice([True, True, False])  # 2/3 chance of attendance
+                    )
+            elif session.type == 'PRIVATE' and session.student:
                 AttendanceLog.objects.create(
-                    student=student,
+                    student=session.student,
                     session=session,
-                    scanned_at=datetime.combine(
-                        session.date,
-                        datetime.strptime('14:00', '%H:%M').time()
-                    ),
-                    valid=True
+                    valid=random.choice([True, True, False])
                 )
 
     def create_performance_records(self, students, sessions):
-        comments = [
-            'Отличный прогресс',
-            'Нужно больше практики',
-            'Активное участие в уроке',
-            'Хорошо справляется с заданиями',
-            'Улучшил(а) произношение'
-        ]
-        
         for session in sessions:
-            attendance_logs = AttendanceLog.objects.filter(session=session)
-            for log in attendance_logs:
-                Performance.objects.create(
-                    student=log.student,
-                    session=session,
-                    date=session.date,
-                    vocabulary_score=random.uniform(60, 100),
-                    grammar_score=random.uniform(60, 100),
-                    speaking_score=random.uniform(60, 100),
-                    listening_score=random.uniform(60, 100),
-                    comments=random.choice(comments)
-                )
+            if session.type == 'GROUP' and session.group:
+                group_students = GroupStudent.objects.filter(group=session.group)
+                for group_student in group_students:
+                    self._create_performance(group_student.student, session)
+            elif session.type == 'PRIVATE' and session.student:
+                self._create_performance(session.student, session)
+
+    def _create_performance(self, student, session):
+        Performance.objects.create(
+            student=student,
+            session=session,
+            date=session.date,
+            vocabulary_score=random.uniform(60, 100),
+            grammar_score=random.uniform(60, 100),
+            speaking_score=random.uniform(60, 100),
+            listening_score=random.uniform(60, 100),
+            comments=random.choice([
+                'Отличная работа на уроке!',
+                'Нужно больше практики в разговорной речи',
+                'Хорошее понимание грамматики',
+                'Улучшилось произношение'
+            ])
+        )
 
     def create_student_subscriptions(self, students, plans):
+        today = timezone.now().date()
         for student in students:
             plan = random.choice(plans)
-            start_date = timezone.now().date() - timedelta(days=random.randint(0, 30))
             StudentSubscription.objects.create(
                 student=student,
                 subscription_plan=plan,
-                start_date=start_date,
-                end_date=start_date + timedelta(days=30)
+                start_date=today - timedelta(days=random.randint(0, 30)),
+                end_date=today + timedelta(days=random.randint(30, 90))
             )
 
     def link_parents_to_students(self, parents, students):
-        # Each parent will be linked to 1-3 students
+        # Each parent gets 1-2 students
         for parent in parents:
-            num_children = random.randint(1, 3)
-            children = random.sample(students, k=min(num_children, len(students)))
-            for child in children:
-                ParentStudentLink.objects.create(
-                    parent=parent,
-                    student=child
-                )
+            num_children = random.randint(1, 2)
+            available_students = list(students)
+            for _ in range(num_children):
+                if available_students:
+                    student = random.choice(available_students)
+                    available_students.remove(student)
+                    ParentStudentLink.objects.create(
+                        parent=parent,
+                        student=student
+                    )
 
     def print_summary(self):
-        """Print a summary of all created data"""
-        self.stdout.write('\nDatabase Population Summary:')
-        self.stdout.write('-' * 30)
-        self.stdout.write(f'Users created:')
-        self.stdout.write(f'  - Admin: {User.objects.filter(role="admin").count()}')
-        self.stdout.write(f'  - Teachers: {User.objects.filter(role="instructor").count()}')
-        self.stdout.write(f'  - Students: {User.objects.filter(role="student").count()}')
-        self.stdout.write(f'  - Parents: {User.objects.filter(role="parent").count()}')
-        self.stdout.write(f'\nGroups created: {Group.objects.count()}')
-        self.stdout.write(f'Schedules created: {Schedule.objects.count()}')
-        self.stdout.write(f'Sessions created: {Session.objects.count()}')
-        self.stdout.write(f'Attendance logs: {AttendanceLog.objects.count()}')
-        self.stdout.write(f'Performance records: {Performance.objects.count()}')
-        self.stdout.write(f'Subscription plans: {SubscriptionPlan.objects.count()}')
-        self.stdout.write(f'Student subscriptions: {StudentSubscription.objects.count()}')
-        self.stdout.write(f'Parent-Student links: {ParentStudentLink.objects.count()}')
+        self.stdout.write("\nDatabase Population Summary:")
+        self.stdout.write(f"Users: {User.objects.count()}")
+        self.stdout.write(f"Teachers: {Teacher.objects.count()}")
+        self.stdout.write(f"Students: {Student.objects.count()}")
+        self.stdout.write(f"Parents: {Parent.objects.count()}")
+        self.stdout.write(f"Groups: {Group.objects.count()}")
+        self.stdout.write(f"Sessions: {Session.objects.count()}")
+        self.stdout.write(f"Attendance Logs: {AttendanceLog.objects.count()}")
+        self.stdout.write(f"Performance Records: {Performance.objects.count()}")
+        self.stdout.write(f"Student Subscriptions: {StudentSubscription.objects.count()}")
+        self.stdout.write(f"Parent-Student Links: {ParentStudentLink.objects.count()}")

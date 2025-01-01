@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -17,6 +17,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { toast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { userApi, studentApi, planApi } from "@/services/api"
+import { useNavigate } from "react-router-dom"
+
+const phoneRegex = /^(\+7|8)?[\s-]?\(?[489][0-9]{2}\)?[\s-]?[0-9]{3}[\s-]?[0-9]{2}[\s-]?[0-9]{2}$/
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -25,34 +30,96 @@ const formSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  class: z.string().min(1, {
-    message: "Please enter a class.",
+  phoneNumber: z.string().regex(phoneRegex, {
+    message: "Please enter a valid phone number.",
+  }),
+  subscriptionPlan: z.string({
+    required_error: "Please select a subscription plan.",
+  }),
+  level: z.enum(["Beginner", "Intermediate", "Advanced"], {
+    required_error: "Please select an academic level.",
   }),
 })
 
+type FormValues = z.infer<typeof formSchema>
+
 export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElement>) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [plans, setPlans] = useState<Array<{ id: number; name: string; price: number; number_of_lessons: number }>>([])
+  const navigate = useNavigate()
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const response = await planApi.getAll()
+        console.log('Fetched plans:', response.data)
+        setPlans(response.data)
+      } catch (error) {
+        console.error('Error fetching plans:', error)
+        toast({
+          title: "Error",
+          description: "Failed to load subscription plans",
+          variant: "destructive",
+        })
+        setPlans([])
+      }
+    }
+    fetchPlans()
+  }, [])
+
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       email: "",
-      class: "",
+      phoneNumber: "",
+      subscriptionPlan: undefined,
+      level: undefined,
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false)
-      toast({
-        title: "Student added",
-        description: "The new student has been successfully added.",
+    try {
+      const selectedPlan = plans.find(p => p.name.toLowerCase() === values.subscriptionPlan.toLowerCase())
+      
+      if (!selectedPlan) {
+        throw new Error('Selected plan not found')
+      }
+
+      // Use the transaction-safe endpoint
+      const response = await studentApi.createWithUser({
+        name: values.name,
+        email: values.email,
+        phone_number: values.phoneNumber,
+        subscription_plan: values.subscriptionPlan.toLowerCase(),
+        level: values.level.toLowerCase(),
+        password: 'student123',
       })
+
+      toast({
+        title: "Success!",
+        description: "Student has been successfully registered.",
+      })
+
+      // Clear the form
       form.reset()
-    }, 1000)
+      
+      navigate('/students')
+    } catch (error: any) {
+      console.error('Registration error:', error)
+      const errorMessage = error.response?.data?.detail || 
+                          Object.values(error.response?.data || {}).flat().join(', ') ||
+                          "Failed to register student. Please try again."
+      
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -62,57 +129,106 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>Full Name</FormLabel>
                   <FormControl>
                     <Input placeholder="John Doe" {...field} />
                   </FormControl>
-                  <FormDescription>
-                    Enter the student's full name.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Email Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="john@example.com" {...field} />
+                    <Input type="email" placeholder="john@example.com" {...field} />
                   </FormControl>
-                  <FormDescription>
-                    Enter the student's email address.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
-              name="class"
+              name="phoneNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Class</FormLabel>
+                  <FormLabel>Phone Number</FormLabel>
                   <FormControl>
-                    <Input placeholder="10A" {...field} />
+                    <Input type="tel" placeholder="+7 (999) 123-45-67" {...field} />
                   </FormControl>
                   <FormDescription>
-                    Enter the student's class.
+                    Enter phone number in Russian format
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="subscriptionPlan"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Subscription Plan</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a plan" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {plans && plans.length > 0 ? (
+                        plans.map((plan) => (
+                          <SelectItem key={plan.id} value={plan.name.toLowerCase()}>
+                            {plan.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no_plans" disabled>No plans available</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="level"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Academic Level</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a level" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Beginner">Beginner</SelectItem>
+                      <SelectItem value="Intermediate">Intermediate</SelectItem>
+                      <SelectItem value="Advanced">Advanced</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Adding..." : "Add Student"}
+              {isSubmitting ? "Registering..." : "Register Student"}
             </Button>
           </form>
         </Form>
@@ -120,4 +236,3 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
     </Card>
   )
 }
-

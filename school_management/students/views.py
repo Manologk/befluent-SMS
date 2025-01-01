@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from .models import *
@@ -14,6 +14,7 @@ from rest_framework.views import APIView
 from django.db.models import Avg, F
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.db import transaction
+from datetime import datetime
 
 from django.core.exceptions import ValidationError
 
@@ -112,6 +113,11 @@ class StudentViewSet(viewsets.ModelViewSet):
     serializer_class = StudentSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.action == 'create_with_user':
+            return CreateStudentWithUserSerializer
+        return StudentSerializer
 
     def get_queryset(self):
         user = self.request.user
@@ -229,45 +235,103 @@ class StudentViewSet(viewsets.ModelViewSet):
                 'message': str(e)
             }, status=500)
 
+    @action(detail=False, methods=['post'], url_path='create-with-user')
+    def create_with_user(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        student = serializer.save()
+        response_serializer = StudentSerializer(student)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
 
 class ScheduleViewSet(viewsets.ModelViewSet):
     queryset = Schedule.objects.all()
     serializer_class = ScheduleSerializer
-    permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
+        data = request.data
         try:
-            teacher_id = request.data.get('teacher_id')
-            teacher = Teacher.objects.get(id=teacher_id)
-
+            teacher = get_object_or_404(Teacher, id=data['teacher_id'])
+            
             schedule_data = {
-                'start_time': request.data.get('start_time'),
-                'end_time': request.data.get('end_time'),
-                'day': request.data.get('day')
+                'teacher': teacher,
+                'days': data['days'],  
+                'start_time': data['start_time'],
+                'end_time': data['end_time'],
+                'is_recurring': data.get('is_recurring', True),
+                'payment': data['payment']
             }
 
-            if 'group_id' in request.data:
-                group = Group.objects.get(id=request.data['group_id'])
-                schedule = ClassManagementService.assign_teacher_to_group(
-                    teacher, group, schedule_data
-                )
-            else:
-                student = Student.objects.get(id=request.data['student_id'])
-                schedule = ClassManagementService.assign_private_teacher(
-                    teacher, student, schedule_data
-                )
+            if data['type'] == 'private':
+                student = get_object_or_404(Student, id=data['student_id'])
+                schedule_data['student'] = student
+            elif data['type'] == 'group' and data.get('group_id'):
+                group = get_object_or_404(Group, id=data['group_id'])
+                schedule_data['group'] = group
 
+            schedule = Schedule.objects.create(**schedule_data)
+            
+            # Generate first session
+            session = schedule.generate_next_session()
+            
             serializer = self.get_serializer(schedule)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        except (ValidationError, Teacher.DoesNotExist,
-                Group.DoesNotExist, Student.DoesNotExist) as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class SessionViewSet(viewsets.ModelViewSet):
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = Session.objects.all()
+        
+        try:
+            # Filter by teacher if user is a teacher
+            if self.request.user.role == 'instructor':
+                teacher = Teacher.objects.get(user=self.request.user)
+                queryset = queryset.filter(teacher=teacher)
+                
+                # Filter by date if provided
+                date = self.request.query_params.get('date', None)
+                if date:
+                    # Convert string date to datetime
+                    target_date = datetime.strptime(date, '%Y-%m-%d').date()
+                    
+                    # First check for existing sessions
+                    queryset = queryset.filter(date=target_date)
+                    
+                    # If no sessions exist for this date, check schedules and generate them
+                    if not queryset.exists():
+                        # Get schedules for this teacher on this weekday
+                        weekday = target_date.weekday()
+                        schedules = Schedule.objects.filter(
+                            teacher=teacher,
+                            days__contains=[weekday]  # Check if weekday is in the days list
+                        )
+                        
+                        # Generate sessions for each schedule
+                        for schedule in schedules:
+                            sessions = schedule.generate_next_session(target_date=target_date)
+                            if sessions:  # sessions could be None if weekday doesn't match
+                                queryset = queryset | Session.objects.filter(id__in=[s.id for s in sessions])
+            
+            return queryset.select_related('student', 'group', 'teacher')
+        except Teacher.DoesNotExist:
+            return Session.objects.none()
+
+    @action(detail=True, methods=['post'])
+    def toggle_activation(self, request, pk=None):
+        session = self.get_object()
+        session.manually_activated = not session.manually_activated
+        session.save()
+        return Response({'manually_activated': session.manually_activated})
 
 
 class AttendanceLogViewSet(viewsets.ModelViewSet):
@@ -508,14 +572,25 @@ class AttendanceView(APIView):
                     'message': 'Attendance already marked for today'
                 }, status=400)
 
-            # Get or create today's session
-            session, _ = Session.objects.get_or_create(
-                date=today,
-                defaults={
-                    'language': 'English',  # This should be dynamic based on student's enrollment
-                    'level': 'Intermediate'  # This should be dynamic
-                }
-            )
+            # Find an active session for today
+            try:
+                session = Session.objects.get(
+                    date=today,
+                    manually_activated=True,
+                    student=student
+                )
+            except Session.DoesNotExist:
+                try:
+                    session = Session.objects.get(
+                        date=today,
+                        manually_activated=True,
+                        group__students__student=student
+                    )
+                except Session.DoesNotExist:
+                    return Response({
+                        'success': False,
+                        'message': 'No active session found for today. Please ensure a session is activated before scanning.'
+                    }, status=400)
 
             # Create attendance log
             AttendanceLog.objects.create(
