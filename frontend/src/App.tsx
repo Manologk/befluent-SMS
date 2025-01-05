@@ -15,7 +15,7 @@ import StaffManagementPage from './components/pages/Staff';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 import { PlanManager } from './components/PlanManager';
-
+import { AttendanceViewer } from './components/AttendanceViewer';
 
 import AcademicPlanning from '@/components/pages/AcademicPlanning'
 import UserManagement from './components/pages/UserManagement';
@@ -92,7 +92,8 @@ function App() {
                 } />
                 <Route path="/students" element={<ProtectedRoute><StudentManagement /></ProtectedRoute>} />
                 <Route path="/parents" element={<ProtectedRoute><ParentPortal /></ProtectedRoute>} />
-                <Route path="/attendance" element={<ProtectedRoute><AttendanceScanner /></ProtectedRoute>} />
+                {/* <Route path="/attendance" element={<ProtectedRoute><AttendanceScanner /></ProtectedRoute>} /> */}
+                <Route path="/attendance" element={<ProtectedRoute><AttendanceViewer /></ProtectedRoute>} />
                 <Route path="/staff" element={<ProtectedRoute><StaffManagementPage /></ProtectedRoute>} />
                 <Route path="/academic" element={<ProtectedRoute><AcademicPlanning/></ProtectedRoute>} />
                 <Route path="/plans" element={<ProtectedRoute><PlanManager/></ProtectedRoute>} />
