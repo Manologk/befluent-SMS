@@ -294,13 +294,13 @@ class SessionViewSet(viewsets.ModelViewSet):
         
         try:
             # Filter by teacher if user is a teacher
-            if self.request.user.role == 'instructor':
+            if hasattr(self.request.user, 'role') and self.request.user.role == 'instructor':
                 teacher = Teacher.objects.get(user=self.request.user)
                 queryset = queryset.filter(teacher=teacher)
-                
-                # Filter by date if provided
-                date = self.request.query_params.get('date', None)
-                if date:
+            
+            # Filter by date if provided
+            date = self.request.query_params.get('date', None)
+            if date:
                     # Convert string date to datetime
                     target_date = datetime.strptime(date, '%Y-%m-%d').date()
                     
@@ -325,19 +325,170 @@ class SessionViewSet(viewsets.ModelViewSet):
             return queryset.select_related('student', 'group', 'teacher')
         except Teacher.DoesNotExist:
             return Session.objects.none()
+        except Exception as e:
+            print(f"Error in get_queryset: {str(e)}")
+            return Session.objects.none()
 
     @action(detail=True, methods=['post'])
     def toggle_activation(self, request, pk=None):
         session = self.get_object()
-        session.manually_activated = not session.manually_activated
+        if session.status == 'SCHEDULED':
+            session.status = 'IN_PROGRESS'
+        elif session.status == 'IN_PROGRESS':
+            session.status = 'COMPLETED'
         session.save()
-        return Response({'manually_activated': session.manually_activated})
+        return Response({'status': session.status})
+
+    @action(detail=True, methods=['post'])
+    def update_attendance(self, request, pk=None):
+        session = self.get_object()
+        student_id = request.data.get('studentId')
+        status = request.data.get('status', 'absent')
+        
+        try:
+            student = Student.objects.get(id=student_id)
+            attendance, created = AttendanceLog.objects.get_or_create(
+                session=session,
+                student=student,
+                defaults={'status': status}
+            )
+            
+            if not created:
+                attendance.status = status
+                attendance.save()
+            
+            return Response({
+                'status': 'success',
+                'message': f'Attendance updated for student {student.name}'
+            })
+        except Student.DoesNotExist:
+            return Response(
+                {'error': 'Student not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class AttendanceLogViewSet(viewsets.ModelViewSet):
-    queryset = AttendanceLog.objects.all()
     serializer_class = AttendanceLogSerializer
     permission_classes = [IsAuthenticated]
+    queryset = AttendanceLog.objects.all()
+
+    def get_queryset(self):
+        queryset = AttendanceLog.objects.all()
+        
+        try:
+            # Filter by teacher if user is a teacher
+            if hasattr(self.request.user, 'role') and self.request.user.role == 'instructor':
+                teacher = Teacher.objects.get(user=self.request.user)
+                queryset = queryset.filter(session__teacher=teacher)
+            
+            # Filter by date range
+            start_date = self.request.query_params.get('start_date', None)
+            end_date = self.request.query_params.get('end_date', None)
+            
+            if start_date and end_date:
+                queryset = queryset.filter(session__date__range=[start_date, end_date])
+            elif start_date:
+                queryset = queryset.filter(session__date__gte=start_date)
+            elif end_date:
+                queryset = queryset.filter(session__date__lte=end_date)
+            
+            return queryset.select_related(
+                'student',
+                'session',
+                'session__teacher'
+            ).order_by('-session__date', 'student__name')
+            
+        except Teacher.DoesNotExist:
+            return AttendanceLog.objects.none()
+        except Exception as e:
+            print(f"Error in get_queryset: {str(e)}")
+            return AttendanceLog.objects.none()
+
+    @action(detail=False, methods=['post'])
+    def update_status(self, request):
+        try:
+            print(f"Received update_status request: {request.data}")  # Debug log
+            attendance_id = request.data.get('id')
+            new_status = request.data.get('status')
+            
+            if not attendance_id or not new_status:
+                return Response(
+                    {'error': 'Both id and status are required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            attendance = AttendanceLog.objects.select_related(
+                'student', 'session'
+            ).get(id=attendance_id)
+            
+            old_status = attendance.status
+            print(f"Changing status from {old_status} to {new_status}")  # Debug log
+            attendance.status = new_status
+            
+            # Handle lesson count and balance updates
+            student = attendance.student
+            
+            if old_status == 'absent' and new_status == 'present':
+                print(f"Deducting lesson. Current remaining: {student.lessons_remaining}")  # Debug log
+                # Student was marked absent but is now present
+                if student.lessons_remaining > 0:
+                    # Calculate cost per lesson based on current balance and remaining lessons
+                    cost_per_lesson = student.subscription_balance / student.lessons_remaining
+                    print(f"Cost per lesson: {cost_per_lesson}")  # Debug log
+                    
+                    # Deduct one lesson and update balance
+                    student.lessons_remaining -= 1
+                    student.subscription_balance -= cost_per_lesson
+                    print(f"New balance: {student.subscription_balance}")  # Debug log
+                else:
+                    return Response(
+                        {'error': 'No remaining lessons available'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            elif old_status == 'present' and new_status == 'absent':
+                print(f"Adding lesson back. Current remaining: {student.lessons_remaining}")  # Debug log
+                # Calculate cost per lesson based on current balance and remaining lessons
+                # We need to include the lesson we're adding back in the calculation
+                total_lessons = student.lessons_remaining + 1
+                cost_per_lesson = student.subscription_balance / student.lessons_remaining if student.lessons_remaining > 0 else 0
+                
+                # Add back one lesson and update balance
+                student.lessons_remaining += 1
+                student.subscription_balance += cost_per_lesson
+                print(f"New balance: {student.subscription_balance}")  # Debug log
+            
+            # Save changes
+            student.save()
+            attendance.save()
+            print(f"Changes saved. New lessons remaining: {student.lessons_remaining}")  # Debug log
+            
+            # Return updated attendance and student data
+            response_data = self.get_serializer(attendance).data
+            response_data.update({
+                'lessons_remaining': student.lessons_remaining,
+                'subscription_balance': float(student.subscription_balance)
+            })
+            
+            return Response(response_data)
+            
+        except AttendanceLog.DoesNotExist:
+            return Response(
+                {'error': 'Attendance record not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            print(f"Error in update_status: {str(e)}")  # Debug log
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class PerformanceViewSet(viewsets.ModelViewSet):

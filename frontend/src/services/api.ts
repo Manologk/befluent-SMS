@@ -20,7 +20,6 @@ api.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('Request headers:', config.headers);
     }
     return config;
   },
@@ -29,37 +28,14 @@ api.interceptors.request.use(
   }
 );
 
-// Add response interceptor to handle token refresh
+// Add response interceptor
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
-    
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      
-      try {
-        const refreshToken = localStorage.getItem('refresh');
-        if (!refreshToken) {
-          throw new Error('No refresh token available');
-        }
-
-        const response = await axios.post(`${API_URL}/token/refresh/`, {
-          refresh: refreshToken
-        });
-
-        const { access } = response.data;
-        localStorage.setItem('token', access); // Updated to use 'token' consistently
-        
-        originalRequest.headers.Authorization = `Bearer ${access}`;
-        return axios(originalRequest);
-      } catch (err) {
-        // Refresh token failed - clear tokens and redirect to login
-        localStorage.removeItem('token');
-        localStorage.removeItem('refresh');
-        window.location.href = '/login';
-        return Promise.reject(err);
-      }
+    if (error.response?.status === 401) {
+      // Handle token refresh or logout
+      localStorage.removeItem('token');
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }
@@ -626,6 +602,42 @@ export const userApi = {
       return response;
     } catch (error) {
       console.error('Error creating user:', error);
+      throw error;
+    }
+  }
+};
+
+// Attendance endpoint
+export const attendanceApi = {
+  getAttendanceLogs: async (startDate?: string, endDate?: string) => {
+    try {
+      const params = new URLSearchParams();
+      if (startDate) params.append('start_date', startDate);
+      if (endDate) params.append('end_date', endDate);
+      
+      const response = await api.get(`/students/attendance-logs/?${params}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching attendance logs:', error);
+      throw error;
+    }
+  },
+
+  updateAttendanceStatus: async (id: string, status: 'present' | 'absent' | 'late') => {
+    try {
+      const response = await api.post('/students/attendance-logs/update_status/', {
+        id,
+        status
+      });
+      
+      // Return both the updated attendance record and student info
+      return {
+        attendance: response.data,
+        lessons_remaining: response.data.lessons_remaining,
+        subscription_balance: parseFloat(response.data.subscription_balance)
+      };
+    } catch (error) {
+      console.error('Error updating attendance status:', error);
       throw error;
     }
   }

@@ -118,9 +118,18 @@ class AttendanceLog(models.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE)
     scanned_at = models.DateTimeField(auto_now_add=True)
     valid = models.BooleanField(default=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('present', 'Present'),
+            ('absent', 'Absent'),
+            ('late', 'Late')
+        ],
+        default='absent'
+    )
 
     def __str__(self):
-        return f"{self.student.name} - {self.session.date}"
+        return f"{self.student.name} - {self.session} - {self.status}"
 
 
 class Performance(models.Model):

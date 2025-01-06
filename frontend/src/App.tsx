@@ -13,6 +13,7 @@ import ParentPortal from '@/components/pages/ParentPortal';
 import AttendanceScanner from '@/components/pages/AttendanceScanner';
 import StaffManagementPage from './components/pages/Staff';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { LogoutButton } from './components/LogoutButton';
 
 import { PlanManager } from './components/PlanManager';
 import { AttendanceViewer } from './components/AttendanceViewer';
@@ -31,7 +32,6 @@ import StudentProgress from './components/dashboard/StudentProgress';
 
 
 
-
 import './App.css';
 
 function App() {
@@ -44,7 +44,8 @@ function App() {
     return (
       <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
         <main className="flex-1">
-          <div className="flex justify-end p-4">
+          <div className="flex justify-end p-4 items-center gap-2">
+            <LogoutButton />
             <ThemeSwitcher />
           </div>
           <StudentDashboard />
@@ -58,16 +59,20 @@ function App() {
     console.log(user);
     return (
       <DashboardLayout>
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <TodaySchedule />
-          <FinancialOverview />
+        <div className="flex justify-end p-4 items-center gap-2">
+          <LogoutButton />
+          <ThemeSwitcher />
         </div>
-        <WeeklyCalendar />
-        <ClassManagement />
-        <StudentProgress />
-      </div>
-    </DashboardLayout>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <TodaySchedule />
+            <FinancialOverview />
+          </div>
+          <WeeklyCalendar />
+          <ClassManagement />
+          <StudentProgress />
+        </div>
+      </DashboardLayout>
     );
   }
 
@@ -81,7 +86,8 @@ function App() {
           <div className="flex min-h-screen flex-col sm:flex-row">
             <Sidebar />
             <main className="flex-1 overflow-y-auto">
-              <div className="flex justify-end p-4">
+              <div className="flex justify-end p-4 items-center gap-2">
+                <LogoutButton />
                 <ThemeSwitcher />
               </div>
               <Routes>
@@ -92,7 +98,7 @@ function App() {
                 } />
                 <Route path="/students" element={<ProtectedRoute><StudentManagement /></ProtectedRoute>} />
                 <Route path="/parents" element={<ProtectedRoute><ParentPortal /></ProtectedRoute>} />
-                {/* <Route path="/attendance" element={<ProtectedRoute><AttendanceScanner /></ProtectedRoute>} /> */}
+                {/* <Route path="/attendance" element={<ProtectedRoute><AttendanceScanner /></ProtectedRoute>} */}
                 <Route path="/attendance" element={<ProtectedRoute><AttendanceViewer /></ProtectedRoute>} />
                 <Route path="/staff" element={<ProtectedRoute><StaffManagementPage /></ProtectedRoute>} />
                 <Route path="/academic" element={<ProtectedRoute><AcademicPlanning/></ProtectedRoute>} />

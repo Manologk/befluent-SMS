@@ -22,11 +22,13 @@ class SessionSerializer(serializers.ModelSerializer):
     type = serializers.SerializerMethodField()
     isOnline = serializers.SerializerMethodField()
     proficiencyLevel = serializers.SerializerMethodField()
+    student_details = serializers.SerializerMethodField()
 
     class Meta:
         model = Session
         fields = ['id', 'time', 'className', 'students', 'type', 'isOnline', 'proficiencyLevel', 
-                 'date', 'start_time', 'end_time', 'status', 'teacher', 'student', 'group']
+                 'date', 'start_time', 'end_time', 'status', 'teacher', 'student', 'group',
+                 'student_details']
 
     def get_time(self, obj):
         return obj.start_time.strftime('%I:%M %p')
@@ -47,6 +49,9 @@ class SessionSerializer(serializers.ModelSerializer):
 
     def get_type(self, obj):
         return 'Private' if obj.type == 'PRIVATE' else 'Group'
+
+    def get_isOnline(self, obj):
+        return False  # Default to false, modify if online status is tracked
 
     def get_proficiencyLevel(self, obj):
         if obj.type == 'PRIVATE' and obj.student:
@@ -70,9 +75,22 @@ class SessionSerializer(serializers.ModelSerializer):
     #     return data
 
 class AttendanceLogSerializer(serializers.ModelSerializer):
+    studentName = serializers.CharField(source='student.name')
+    studentId = serializers.CharField(source='student.id')
+    grade = serializers.CharField(source='student.level')
+    language = serializers.SerializerMethodField()
+    date = serializers.DateField(source='session.date')
+    timeIn = serializers.DateTimeField(source='scanned_at', allow_null=True)
+    timeOut = serializers.DateTimeField(read_only=True, allow_null=True)  # For future use
+    notes = serializers.CharField(default='', allow_blank=True)
+
     class Meta:
         model = AttendanceLog
-        fields = '__all__'
+        fields = ['id', 'studentId', 'studentName', 'date', 'status', 
+                 'timeIn', 'timeOut', 'notes', 'grade', 'language']
+    
+    def get_language(self, obj):
+        return 'English'  # Default language
 
 
 class PerformanceSerializer(serializers.ModelSerializer):

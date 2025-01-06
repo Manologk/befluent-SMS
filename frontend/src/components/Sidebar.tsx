@@ -10,7 +10,7 @@ import { NotebookPen, Users, BookOpen, UserCog, Users2, PiggyBank, Bus, Library,
 const sidebarItems = [
   { name: "Dashboard", href: "/", icon: BarChart },
   { name: "Student Management", href: "/students", icon: Users },
-  { name: "Attendance Scanner", href: "/attendance", icon: QrCode },
+  { name: "Attendance Management", href: "/attendance", icon: QrCode },
   { name: "Academic Planning", href: "/academic", icon: BookOpen },
   { name: "Staff Management", href: "/staff", icon: UserCog },
   { name: "Parent Portal", href: "/parents", icon: Users2 },

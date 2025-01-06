@@ -3,17 +3,11 @@ export interface Student {
     name: string;
   }
   
-  // export interface AttendanceRecord {
-  //   id: string;
-  //   studentId: string;
-  //   studentName: string;
-  //   classId: string;
-  //   className: string;
-  //   timestamp: string;
-  //   status: 'present' | 'absent' | 'late';
-  // }
-  
-  export interface ClassSchedule {
+  export type AttendanceStatus = 'present' | 'absent' | 'late';
+
+export type Language = 'english' | 'spanish' | 'french' | 'mandarin' | 'arabic';
+
+export interface ClassSchedule {
     id: string;
     time: string;
     className: string;
@@ -21,11 +15,7 @@ export interface Student {
     type: 'Group' | 'Private';
     isOnline: boolean;
     proficiencyLevel: string;
-  }
-
-export type AttendanceStatus = 'present' | 'absent' | 'late';
-
-export type Language = 'english' | 'spanish' | 'french' | 'mandarin' | 'arabic';
+}
 
 export interface Student {
   id: string;
@@ -44,7 +34,7 @@ export interface AttendanceRecord {
   timeOut?: string;
   notes?: string;
   grade: string;
-  language: Language;
+  language: string;
 }
 
 export interface AttendanceFilters {
@@ -52,10 +42,10 @@ export interface AttendanceFilters {
     start: string;
     end: string;
   };
-  grade: string;
+  level: string;
   studentSearch: string;
-  status: AttendanceStatus | '';
-  language: Language | '';
+  status: string;
+  language: string;
 }
 
 export interface AttendanceStats {
@@ -64,4 +54,10 @@ export interface AttendanceStats {
   absentDays: number;
   lateDays: number;
   attendancePercentage: number;
+}
+
+export interface AttendanceUpdateResponse {
+  attendance: AttendanceRecord;
+  lessons_remaining: number;
+  subscription_balance: number;
 }

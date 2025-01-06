@@ -4,7 +4,7 @@ import { LucideIcon } from 'lucide-react';
 interface StatsCardProps {
   title: string;
   value: number | string;
-  icon: LucideIcon;
+  icon: React.ReactNode;
   color: string;
   subtitle?: string;
 }
@@ -12,7 +12,7 @@ interface StatsCardProps {
 export const StatsCard: React.FC<StatsCardProps> = ({
   title,
   value,
-  icon: Icon,
+  icon,
   color,
   subtitle,
 }) => {
@@ -30,7 +30,9 @@ export const StatsCard: React.FC<StatsCardProps> = ({
             </div>
           </div>
           <div className={`p-3 rounded-lg ${color.replace('text', 'bg').replace('600', '100')}`}>
-            <Icon className={`h-6 w-6 ${color}`} />
+            <div className={`h-6 w-6 ${color}`}>
+              {icon}
+            </div>
           </div>
         </div>
       </div>
