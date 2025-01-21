@@ -35,6 +35,7 @@ export interface AttendanceRecord {
   notes?: string;
   grade: string;
   language: string;
+  students?: string[]; // Array of student names for group sessions
 }
 
 export interface AttendanceFilters {

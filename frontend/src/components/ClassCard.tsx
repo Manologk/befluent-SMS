@@ -60,18 +60,31 @@ export const ClassCard: React.FC<ClassCardProps> = ({
         {class_.className}
       </h3>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-gray-500" />
-          <span className="text-sm text-gray-600">
-            {class_.students.join(", ")}
-          </span>
+      <div className="grid grid-cols-1 gap-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Users className="w-5 h-5 text-gray-500" />
+          <div className="flex flex-col">
+            <div className="text-sm text-gray-600">
+              {class_.students.length > 0 ? (
+                <>
+                  {class_.students.length > 3 ? (
+                    <>
+                      {class_.students.slice(0, 3).join(', ')}
+                      <span className="text-gray-500"> +{class_.students.length - 3} more</span>
+                    </>
+                  ) : (
+                    class_.students.join(', ')
+                  )}
+                </>
+              ) : (
+                <span className="text-gray-400">No students assigned</span>
+              )}
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <BookOpen className="w-4 h-4 text-gray-500" />
-          <span className="text-sm text-gray-600">
-            {class_.proficiencyLevel}
-          </span>
+        <div className="flex items-center gap-2 mb-3">
+          <BookOpen className="w-5 h-5 text-gray-500" />
+          <span className="text-sm">{class_.proficiencyLevel}</span>
         </div>
       </div>
 

@@ -65,6 +65,25 @@ class SessionSerializer(serializers.ModelSerializer):
     def get_isOnline(self, obj):
         return getattr(obj, 'is_online', False)
 
+    def get_student_details(self, obj):
+        if obj.type == 'PRIVATE' and obj.student:
+            return {
+                'id': obj.student.id,
+                'name': obj.student.name,
+                'level': obj.student.level,
+                'email': obj.student.email,
+                'phone_number': obj.student.phone_number
+            }
+        elif obj.type == 'GROUP' and obj.group:
+            return [{
+                'id': student.student.id,
+                'name': student.student.name,
+                'level': student.student.level,
+                'email': student.student.email,
+                'phone_number': student.student.phone_number
+            } for student in obj.group.students.all()]
+        return None
+
     # def to_representation(self, instance):
     #     data = super().to_representation(instance)
     #     data['time'] = instance.start_time.strftime('%I:%M %p')

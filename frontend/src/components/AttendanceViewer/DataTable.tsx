@@ -97,8 +97,17 @@ export const DataTable: React.FC<DataTableProps> = ({
                       </span>
                     </div>
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">{record.studentName}</div>
-                      <div className="text-sm text-gray-500">{record.grade}</div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {record.studentName}
+                        {record.students && record.students.length > 0 && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            Group: {record.students.join(', ')}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {record.grade} • {record.language}
+                      </div>
                     </div>
                   </div>
                 </td>

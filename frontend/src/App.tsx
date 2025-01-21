@@ -37,12 +37,9 @@ import './App.css';
 function App() {
   const { isAuthenticated, user } = useAuth();
 
-
-  // Render student portal if user is a student
-  if (isAuthenticated && user?.role === 'student') {
-    console.log(user);
-    return (
-      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+  return (
+    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+      {isAuthenticated && user?.role === 'student' ? (
         <main className="flex-1">
           <div className="flex justify-end p-4 items-center gap-2">
             <LogoutButton />
@@ -50,38 +47,23 @@ function App() {
           </div>
           <StudentDashboard />
         </main>
-      </ThemeProvider>
-    );
-  }
-
-
-  if (isAuthenticated && user?.role === 'instructor') {
-    console.log(user);
-    return (
-      <DashboardLayout>
-        <div className="flex justify-end p-4 items-center gap-2">
-          <LogoutButton />
-          <ThemeSwitcher />
-        </div>
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <TodaySchedule />
-            <FinancialOverview />
+      ) : isAuthenticated && user?.role === 'instructor' ? (
+        <DashboardLayout>
+          <div className="flex justify-end p-4 items-center gap-2">
+            <LogoutButton />
+            <ThemeSwitcher />
           </div>
-          <WeeklyCalendar />
-          <ClassManagement />
-          <StudentProgress />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-
-
-  // Render admin layout for other authenticated users
-  return (
-    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-      {isAuthenticated ? (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <TodaySchedule />
+              <FinancialOverview />
+            </div>
+            <WeeklyCalendar />
+            <ClassManagement />
+            <StudentProgress />
+          </div>
+        </DashboardLayout>
+      ) : isAuthenticated ? (
         <SidebarProvider>
           <div className="flex min-h-screen flex-col sm:flex-row">
             <Sidebar />
