@@ -18,6 +18,11 @@ class ParentViewSet(viewsets.ModelViewSet):
     serializer_class = ParentSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_permissions(self):
+        if self.action == 'create':
+            return [AllowAny()]
+        return super().get_permissions()
+
     def get_serializer_class(self):
         if self.action == 'login':
             return ParentAuthSerializer
@@ -91,7 +96,7 @@ class ParentViewSet(viewsets.ModelViewSet):
         parent = self.get_object()
         links = ParentStudentLink.objects.filter(parent=parent)
         children = [link.student for link in links]
-        serializer = StudentBasicSerializer(children, many=True)
+        serializer = StudentSerializer(children, many=True)
         return Response(serializer.data)
 
 class ParentStudentLinkViewSet(viewsets.ModelViewSet):

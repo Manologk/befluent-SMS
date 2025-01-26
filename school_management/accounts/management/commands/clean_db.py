@@ -8,64 +8,81 @@ from students.models import (
 )
 from parents.models import Parent, ParentStudentLink
 from notifications.models import Notification
+from django.db.models import ProtectedError
 
 
 class Command(BaseCommand):
     help = 'Cleans all data from the database while preserving the structure'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            help='Show what would be deleted without actually deleting',
+        )
+
     def handle(self, *args, **options):
+        dry_run = options['dry_run']
+        
+        if dry_run:
+            self.stdout.write(self.style.WARNING('Running in dry-run mode - no actual deletions will occur'))
+        
         try:
             with transaction.atomic():
-                self.stdout.write('Cleaning database...')
+                self.stdout.write('Starting database cleanup...')
                 
-                # Delete notifications first
-                self.delete_model(Notification, 'notifications')
+                models_to_clean = [
+                    (Notification, 'notifications'),
+                    (AttendanceLog, 'attendance logs'),
+                    (Performance, 'performance records'),
+                    (StudentSubscription, 'student subscriptions'),
+                    (Session, 'sessions'),
+                    (Schedule, 'schedules'),
+                    (GroupStudent, 'group students'),
+                    (Group, 'groups'),
+                    (SubscriptionPlan, 'subscription plans'),
+                    (ParentStudentLink, 'parent-student links'),
+                    (Parent, 'parents'),
+                    (Student, 'students'),
+                    (Teacher, 'teachers'),
+                ]
+
+                total_deleted = 0
+                for model, name in models_to_clean:
+                    deleted = self.delete_model(model, name, dry_run)
+                    total_deleted += deleted
+
+                # Handle users separately to preserve superusers
+                user_count = User.objects.exclude(is_superuser=True).count()
+                if not dry_run:
+                    User.objects.exclude(is_superuser=True).delete()
+                total_deleted += user_count
+                self.stdout.write(f'{"Would delete" if dry_run else "Deleted"} {user_count} non-superuser users')
+
+                if dry_run:
+                    self.stdout.write(
+                        self.style.SUCCESS(f'Dry run complete. Would delete {total_deleted} total records')
+                    )
+                    # Roll back the transaction in dry-run mode
+                    transaction.set_rollback(True)
+                else:
+                    self.stdout.write(
+                        self.style.SUCCESS(f'Successfully cleaned database. Deleted {total_deleted} total records')
+                    )
                 
-                # Delete attendance and performance records
-                self.delete_model(AttendanceLog, 'attendance logs')
-                self.delete_model(Performance, 'performance records')
-                
-                # Delete student subscriptions
-                self.delete_model(StudentSubscription, 'student subscriptions')
-                
-                # Delete sessions
-                self.delete_model(Session, 'sessions')
-                
-                # Delete schedules
-                self.delete_model(Schedule, 'schedules')
-                
-                # Delete group students
-                self.delete_model(GroupStudent, 'group students')
-                
-                # Delete groups
-                self.delete_model(Group, 'groups')
-                
-                # Delete subscription plans
-                self.delete_model(SubscriptionPlan, 'subscription plans')
-                
-                # Delete parent-student links
-                self.delete_model(ParentStudentLink, 'parent-student links')
-                
-                # Delete parents
-                self.delete_model(Parent, 'parents')
-                
-                # Delete students and teachers
-                self.delete_model(Student, 'students')
-                self.delete_model(Teacher, 'teachers')
-                
-                # Delete all users except superuser
-                User.objects.exclude(is_superuser=True).delete()
-                self.stdout.write('Deleted all non-superuser users')
-                
-                self.stdout.write(self.style.SUCCESS('Successfully cleaned database'))
-                
+        except ProtectedError as e:
+            self.stdout.write(
+                self.style.ERROR(f'Cannot delete some records due to protected references: {str(e)}')
+            )
         except Exception as e:
             self.stdout.write(
                 self.style.ERROR(f'Error cleaning database: {str(e)}')
             )
     
-    def delete_model(self, model, name):
+    def delete_model(self, model, name, dry_run=False):
         """Helper method to delete all instances of a model and log the count"""
         count = model.objects.count()
-        model.objects.all().delete()
-        self.stdout.write(f'Deleted {count} {name}')
+        if not dry_run:
+            model.objects.all().delete()
+        self.stdout.write(f'{"Would delete" if dry_run else "Deleted"} {count} {name}')
+        return count

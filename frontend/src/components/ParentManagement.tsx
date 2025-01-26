@@ -8,12 +8,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Progress } from "@/components/ui/progress"
-import { ChevronUp, ChevronDown, Search } from 'lucide-react'
+import { ChevronUp, ChevronDown, Search, Plus, X } from 'lucide-react'
 import { parentApi } from '@/services/api';
 import { useToast } from "@/hooks/use-toast"
+import { AddParentForm } from "@/components/add-parent-form"
 
-
-// Remove the mock data and add these interfaces at the top of the file
 interface Child {
   id: number
   name: string
@@ -44,9 +43,9 @@ export function ParentManagement() {
   const [parents, setParents] = useState<Parent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showAddForm, setShowAddForm] = useState(false)
   const { toast } = useToast()
 
-  // Add this useEffect to fetch data when component mounts
   useEffect(() => {
     const fetchParents = async () => {
       try {
@@ -122,7 +121,17 @@ export function ParentManagement() {
     return null
   }
 
-  // Add loading state to the JSX
+  const handleParentAdded = async () => {
+    // Refresh the parents list
+    try {
+      const data = await parentApi.getAll()
+      setParents(data)
+      setShowAddForm(false) // Hide the form after successful addition
+    } catch (error) {
+      console.error('Error refreshing parents:', error)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-48">
@@ -133,6 +142,35 @@ export function ParentManagement() {
 
   return (
     <div className="space-y-4">
+      {showAddForm ? (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle>Add New Parent</CardTitle>
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => setShowAddForm(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <AddParentForm 
+              className="mt-4" 
+              onSuccess={handleParentAdded}
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        <Button 
+          onClick={() => setShowAddForm(true)}
+          className="mb-4"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add New Parent
+        </Button>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Parent Portal</CardTitle>
@@ -176,7 +214,7 @@ export function ParentManagement() {
                   <TableCell>{parent.email}</TableCell>
                   <TableCell>{parent.children.length}</TableCell>
                   <TableCell>{parent.total_lessons_remaining}</TableCell>
-                  <TableCell>${parent.total_subscription_balance}</TableCell>
+                  <TableCell>₽ {parent.total_subscription_balance}</TableCell>
                   <TableCell>
                     <Dialog>
                       <DialogTrigger asChild>
@@ -207,7 +245,7 @@ export function ParentManagement() {
                                   </div>
                                   <div>
                                     <h4 className="text-sm font-medium">Subscription Balance</h4>
-                                    <p className="text-sm text-muted-foreground">${child.subscription_balance}</p>
+                                    <p className="text-sm text-muted-foreground">₽ {child.subscription_balance}</p>
                                   </div>
                                 </CardContent>
                               </Card>
@@ -226,4 +264,3 @@ export function ParentManagement() {
     </div>
   )
 }
-

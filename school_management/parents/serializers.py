@@ -1,8 +1,11 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from .models import Parent, ParentStudentLink
 from students.serializers import StudentSerializer
 from students.models import Student
+from django.db import transaction
+
+User = get_user_model()
 
 class ParentAuthSerializer(serializers.Serializer):
     username = serializers.CharField()
@@ -42,6 +45,7 @@ class ParentSerializer(serializers.ModelSerializer):
         decimal_places=2, 
         read_only=True
     )
+    password = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = Parent
@@ -50,10 +54,33 @@ class ParentSerializer(serializers.ModelSerializer):
             'name', 
             'email', 
             'phone_number', 
+            'password',
             'children',
             'total_lessons_remaining',
             'total_subscription_balance'
         ]
+
+    @transaction.atomic
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        email = validated_data.get('email')
+        name = validated_data.get('name')
+        
+        # Create User instance using the custom User model
+        user = User.objects.create_user(
+            email=email,
+            password=password,
+            first_name=name,
+            role='parent'  # Set the role to parent
+        )
+        
+        # Create Parent instance
+        parent = Parent.objects.create(
+            user=user,
+            **validated_data
+        )
+        
+        return parent
 
 class ParentStudentLinkSerializer(serializers.ModelSerializer):
     class Meta:

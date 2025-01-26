@@ -24,6 +24,24 @@ class TeacherViewSet(viewsets.ModelViewSet):
     serializer_class = TeacherSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        return Teacher.objects.prefetch_related(
+            'teaching_groups',
+            'session_set__student'
+        ).all()
+
+    def get_serializer_class(self):
+        if self.action == 'create_with_user':
+            return CreateTeacherWithUserSerializer
+        return TeacherSerializer
+
+    @action(detail=False, methods=['post'], url_path='create-with-user')
+    def create_with_user(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        teacher = serializer.save()
+        return Response(TeacherSerializer(teacher).data, status=status.HTTP_201_CREATED)
+
     @action(detail=True, methods=['get'])
     def schedule(self, request, pk=None):
         teacher = self.get_object()
@@ -93,6 +111,100 @@ class GroupViewSet(viewsets.ModelViewSet):
                 {'error': str(e)}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+    @action(detail=True, methods=['post'])
+    def add_students(self, request, pk=None):
+        """Add multiple students to a group at once"""
+        group = self.get_object()
+        student_ids = request.data.get('student_ids', [])
+        
+        if not isinstance(student_ids, list):
+            return Response(
+                {'error': 'student_ids must be a list'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        results = []
+        with transaction.atomic():
+            for student_id in student_ids:
+                try:
+                    student = Student.objects.get(id=student_id)
+                    group_student = GroupManager.add_student_to_group(student, group)
+                    results.append({
+                        'student_id': student_id,
+                        'status': 'success',
+                        'message': f'Student {student.name} added to group {group.name}'
+                    })
+                except (ValidationError, Student.DoesNotExist) as e:
+                    results.append({
+                        'student_id': student_id,
+                        'status': 'error',
+                        'message': str(e)
+                    })
+
+        return Response(results, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'])
+    def assign_teacher(self, request, pk=None):
+        """Assign a teacher to a group"""
+        group = self.get_object()
+        teacher_id = request.data.get('teacher_id')
+        
+        try:
+            teacher = Teacher.objects.get(id=teacher_id)
+            
+            # Check if schedule data is provided
+            schedule_data = request.data.get('schedule')
+            
+            with transaction.atomic():
+                group.teacher = teacher
+                group.save()
+                
+                # If schedule data is provided, create or update schedule
+                if schedule_data:
+                    ClassManagementService.assign_teacher_to_group(
+                        teacher=teacher,
+                        group=group,
+                        schedule_data=schedule_data
+                    )
+                
+                return Response({
+                    'message': f'Teacher {teacher.name} assigned to group {group.name}',
+                    'teacher': TeacherSerializer(teacher).data,
+                    'group': GroupSerializer(group).data
+                }, status=status.HTTP_200_OK)
+                
+        except Teacher.DoesNotExist:
+            return Response(
+                {'error': f'Teacher with id {teacher_id} does not exist'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except ValidationError as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=True, methods=['post'])
+    def remove_teacher(self, request, pk=None):
+        """Remove the current teacher from a group"""
+        group = self.get_object()
+        
+        if not group.teacher:
+            return Response(
+                {'error': 'Group has no teacher assigned'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        with transaction.atomic():
+            teacher_name = group.teacher.name
+            group.teacher = None
+            group.save()
+            
+            return Response({
+                'message': f'Teacher {teacher_name} removed from group {group.name}',
+                'group': GroupSerializer(group).data
+            }, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def remove_student(self, request, pk=None):

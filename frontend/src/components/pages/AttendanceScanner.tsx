@@ -57,31 +57,23 @@ const AttendanceScanner: React.FC = () => {
     };
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <Card className="max-w-2xl mx-auto">
-                <div className="p-6">
-                    <h1 className="text-2xl font-bold mb-6 text-center">
-                        Scan Attendance QR Code
-                    </h1>
-                    
-                    <div className="space-y-4">
-                        <p className="text-center text-muted-foreground">
-                            Position the QR code within the camera view to mark your attendance
-                        </p>
-                        
-                        <QRScanner 
-                            onScanSuccess={handleQRCodeScan}
-                            onScanError={handleScanError}
-                        />
-                        
-                        {isProcessing && (
-                            <p className="text-center text-muted-foreground">
-                                Processing attendance...
-                            </p>
-                        )}
-                    </div>
-                </div>
-            </Card>
+        <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+                Position the QR code within the camera view to mark attendance
+            </p>
+            
+            <div className="overflow-hidden rounded-lg border bg-background">
+                <QRScanner 
+                    onScanSuccess={handleQRCodeScan}
+                    onScanError={handleScanError}
+                />
+            </div>
+            
+            {isProcessing && (
+                <p className="text-sm text-muted-foreground animate-pulse">
+                    Processing attendance...
+                </p>
+            )}
         </div>
     );
 };

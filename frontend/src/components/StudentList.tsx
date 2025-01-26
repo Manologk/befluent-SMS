@@ -36,6 +36,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { studentApi } from '@/services/api';
+import { EditStudentDialog } from "./edit-student-dialog"
 
 interface Student {
   id: string;
@@ -52,136 +53,139 @@ export type StudentListProps = {
   className?: string;
 }
 
-export const columns: ColumnDef<Student>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={table.getIsAllPageRowsSelected()}
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "name",
-    header: "Name",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("name")}</div>,
-  },
-  {
-    accessorKey: "email",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Email
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
-  },
-  {
-    accessorKey: "level",
-    header: "level",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("level")}</div>,
-  },
-  {
-    accessorKey: "attendance",
-    header: "Attendance",
-    cell: ({ row }) => <div>{row.getValue("attendance")}</div>,
-  },
-  {
-    accessorKey: "gpa",
-    header: "GPA",
-    cell: ({ row }) => <div>{row.getValue("gpa")}</div>,
-  },
-  {
-    accessorKey: "lessons_remaining",
-    header: "Lessons Remaining",
-    cell: ({ row }) => <div>{row.getValue("lessons_remaining")}</div>,
-  },
-  {
-    accessorKey: "subscription_balance",
-    header: "Subscription Balance",
-    cell: ({ row }) => <div>{row.getValue("subscription_balance")}</div>,
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const student = row.original
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(student.id)}
-            >
-              Copy student ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View student</DropdownMenuItem>
-            <DropdownMenuItem>View attendance history</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
-  },
-]
-
 export function StudentList({ className }: StudentListProps) {
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [editingStudent, setEditingStudent] = React.useState<Student | null>(null)
   const [students, setStudents] = React.useState<Student[]>([])
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
 
-  React.useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const data = await studentApi.getAll();
-        
-        // Transform the data to match our table structure
-        const transformedData = data.map((student: any) => ({
-          id: student.id.toString(),
-          name: student.name,
-          email: student.email,
-          level: student.level || 'N/A',
-          attendance: '95%',
-          gpa: '3.8',
-          lessons_remaining: student.lessons_remaining,
-          subscription_balance: student.subscription_balance
-        }));
-        
-        setStudents(transformedData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load students');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const columns: ColumnDef<Student>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => <div className="capitalize">{row.getValue("name")}</div>,
+    },
+    {
+      accessorKey: "email",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Email
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
+    },
+    {
+      accessorKey: "level",
+      header: "level",
+      cell: ({ row }) => <div className="capitalize">{row.getValue("level")}</div>,
+    },
+    {
+      accessorKey: "attendance",
+      header: "Attendance",
+      cell: ({ row }) => <div>{row.getValue("attendance")}</div>,
+    },
+    {
+      accessorKey: "gpa",
+      header: "GPA",
+      cell: ({ row }) => <div>{row.getValue("gpa")}</div>,
+    },
+    {
+      accessorKey: "lessons_remaining",
+      header: "Lessons Remaining",
+      cell: ({ row }) => <div>{row.getValue("lessons_remaining")}</div>,
+    },
+    {
+      accessorKey: "subscription_balance",
+      header: "Subscription Balance",
+      cell: ({ row }) => <div>{row.getValue("subscription_balance")}</div>,
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        const student = row.original
 
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => navigator.clipboard.writeText(student.id)}
+              >
+                Copy student ID
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setEditingStudent(student)}>
+                Edit student
+              </DropdownMenuItem>
+              <DropdownMenuItem>View attendance history</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      },
+    },
+  ]
+
+  const fetchStudents = async () => {
+    try {
+      const data = await studentApi.getAll();
+      
+      // Transform the data to match our table structure
+      const transformedData = data.map((student: any) => ({
+        id: student.id.toString(),
+        name: student.name,
+        email: student.email,
+        level: student.level || 'N/A',
+        attendance: '95%',
+        gpa: '3.8',
+        lessons_remaining: student.lessons_remaining,
+        subscription_balance: student.subscription_balance
+      }));
+      
+      setStudents(transformedData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load students');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
     fetchStudents()
   }, [])
 
@@ -233,13 +237,13 @@ export function StudentList({ className }: StudentListProps) {
   }
 
   return (
-    <div className={`w-full ${className}`}>
+    <div className={className}>
       <div className="flex items-center py-4">
         <Input
           placeholder="Filter students..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
+            table.getColumn("email")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -291,7 +295,19 @@ export function StudentList({ className }: StudentListProps) {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  Loading...
+                </TableCell>
+              </TableRow>
+            ) : error ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center text-red-500">
+                  {error}
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -344,6 +360,14 @@ export function StudentList({ className }: StudentListProps) {
           </Button>
         </div>
       </div>
+      {editingStudent && (
+        <EditStudentDialog
+          student={editingStudent}
+          open={!!editingStudent}
+          onOpenChange={(open) => !open && setEditingStudent(null)}
+          onSuccess={fetchStudents}
+        />
+      )}
     </div>
   )
 }

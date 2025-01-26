@@ -20,7 +20,11 @@ const TodaySchedule = () => {
         const today = format(new Date(), 'yyyy-MM-dd');
         console.log('Fetching sessions for date:', today); // Debug log
         const data = await sessionApi.getTeacherSessions(today);
-        setSessions(data);
+        // Sort sessions by start time
+        const sortedData = data.sort((a, b) => {
+          return a.start_time.localeCompare(b.start_time);
+        });
+        setSessions(sortedData);
       } catch (error) {
         console.error('Error fetching sessions:', error);
         toast({

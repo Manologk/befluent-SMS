@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input"
 import { toast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { userApi, studentApi, planApi } from "@/services/api"
+import { userApi, studentApi, planApi, parentApi } from "@/services/api"
 import { useNavigate } from "react-router-dom"
 
 const phoneRegex = /^(\+7|8)?[\s-]?\(?[489][0-9]{2}\)?[\s-]?[0-9]{3}[\s-]?[0-9]{2}[\s-]?[0-9]{2}$/
@@ -36,16 +36,24 @@ const formSchema = z.object({
   subscriptionPlan: z.string({
     required_error: "Please select a subscription plan.",
   }),
-  level: z.enum(["Beginner", "Intermediate", "Advanced"], {
+  level: z.string({
     required_error: "Please select an academic level.",
   }),
+  parentId: z.string().optional(),
 })
 
 type FormValues = z.infer<typeof formSchema>
 
+interface Parent {
+  id: number
+  name: string
+  phone_number: string
+}
+
 export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElement>) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [plans, setPlans] = useState<Array<{ id: number; name: string; price: number; number_of_lessons: number }>>([])
+  const [parents, setParents] = useState<Parent[]>([])
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -64,7 +72,25 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
         setPlans([])
       }
     }
+
+    const fetchParents = async () => {
+      try {
+        const parents = await parentApi.getAll()
+        console.log('Fetched parents:', parents)
+        setParents(parents)
+      } catch (error) {
+        console.error('Error fetching parents:', error)
+        toast({
+          title: "Error",
+          description: "Failed to load parents",
+          variant: "destructive",
+        })
+        setParents([])
+      }
+    }
+
     fetchPlans()
+    fetchParents()
   }, [])
 
   const form = useForm<FormValues>({
@@ -75,6 +101,7 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
       phoneNumber: "",
       subscriptionPlan: undefined,
       level: undefined,
+      parentId: undefined,
     },
   })
 
@@ -87,8 +114,8 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
         throw new Error('Selected plan not found')
       }
 
-      // Use the transaction-safe endpoint
-      const response = await studentApi.createWithUser({
+      // Create student with user
+      const studentResponse = await studentApi.createWithUser({
         name: values.name,
         email: values.email,
         phone_number: values.phoneNumber,
@@ -96,6 +123,23 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
         level: values.level.toLowerCase(),
         password: 'student123',
       })
+
+      // If parent is selected, create the link
+      if (values.parentId) {
+        try {
+          await parentApi.linkToStudent({
+            parent_id: parseInt(values.parentId),
+            student_id: studentResponse.data.id
+          })
+        } catch (error) {
+          console.error('Error linking parent:', error)
+          toast({
+            title: "Warning",
+            description: "Student was created but failed to link parent. Please link manually.",
+            variant: "destructive",
+          })
+        }
+      }
 
       toast({
         title: "Success!",
@@ -209,19 +253,45 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
               name="level"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Academic Level</FormLabel>
+                  <FormLabel>Level</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. A1 (Beginner)" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Available levels: A1 (Beginner), A2 (Elementary), B1 (Intermediate), B2 (Upper Intermediate), C1 (Advanced), C2 (Proficiency)
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="parentId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Parent (Optional)</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a level" />
+                        <SelectValue placeholder="Select a parent" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Beginner">Beginner</SelectItem>
-                      <SelectItem value="Intermediate">Intermediate</SelectItem>
-                      <SelectItem value="Advanced">Advanced</SelectItem>
+                      {parents && parents.length > 0 ? (
+                        parents.map((parent) => (
+                          <SelectItem key={parent.id} value={parent.id.toString()}>
+                            {parent.name} ({parent.phone_number})
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no_parents" disabled>No parents available</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
+                  <FormDescription>
+                    Optional: Link this student to a parent
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

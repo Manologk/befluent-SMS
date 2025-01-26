@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import StudentRegistration from '@/components/StudentRegistration'
 import TeacherAssignment from '@/components/TeacherAssignment'
-import GroupManagement from '@/components/GroupManagement'
+import GroupManagement from '@/components/GroupManager/GroupManagement'
 // import ReportGeneration from '@/components/ReportGeneration'
 import CreateSchedule from '@/components/CreateSchedule'
-import { Student, Teacher, Group, Assignment } from '@/types'
+import { Student, Teacher, Assignment } from '@/types'
+import { Group } from '@/types/groupManager'
 
 export default function ClassManagement() {
   const [students, setStudents] = useState<Student[]>([])
@@ -42,13 +43,7 @@ export default function ClassManagement() {
           />
         </TabsContent>
         <TabsContent value="groups">
-          <GroupManagement 
-            groups={groups} 
-            setGroups={setGroups}
-            students={students}
-            setStudents={setStudents}
-            teachers={teachers}
-          />
+          <GroupManagement />
         </TabsContent>
         <TabsContent value="schedule">
           <CreateSchedule 
@@ -71,4 +66,3 @@ export default function ClassManagement() {
     </div>
   )
 }
-

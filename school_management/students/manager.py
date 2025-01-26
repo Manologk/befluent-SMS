@@ -12,11 +12,12 @@ class ScheduleManager:
             day=day
         ).exclude(id=exclude_id)
 
-        for schedule in schedule:
+        for schedule in Schedule:
             if (start_time < schedule.end_time > schedule.start_time):
                 return True
         return False
     
+    @staticmethod
     def create_schedule(teacher, start_time, end_time, day, group=None, student=None):
         if ScheduleManager.check_schedule_conflict(teacher, start_time, end_time, day):
             raise ValidationError("Schedule conflicts with existing appointments")
@@ -51,17 +52,20 @@ class GroupManager:
         if group.is_full():
             raise ValidationError("Group has reached maximum capacity")
         
-        if student.student_type != 'GROUP':
-            raise ValidationError("Only group students can be added to groups")
+        # Check if student is already in the group
+        if GroupStudent.objects.filter(student=student, group=group).exists():
+            raise ValidationError("Student is already in this group")
         
         with transaction.atomic():
             group_student = GroupStudent(student=student, group=group)
             group_student.full_clean()
             group_student.save()
             return group_student
-        
     
     @staticmethod
     def remove_student_from_group(student, group):
-        GroupStudent.objects.filter(student=student,)
-
+        try:
+            group_student = GroupStudent.objects.get(student=student, group=group)
+            group_student.delete()
+        except GroupStudent.DoesNotExist:
+            raise ValidationError("Student is not in this group")

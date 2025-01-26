@@ -68,10 +68,10 @@ const WeeklyCalendar = () => {
 
   const getSessionDisplayName = (session: Session) => {
     if (session.type === 'PRIVATE' && session.student_name) {
-      return `Private: ${session.student_name}`;
+      return session.student_name;
     }
     if (session.type === 'GROUP' && session.group_name) {
-      return `Group: ${session.group_name}`;
+      return session.group_name;
     }
     return session.type;
   };

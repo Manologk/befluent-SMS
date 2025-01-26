@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 
 interface ClassCardProps {
@@ -104,23 +105,21 @@ export const ClassCard: React.FC<ClassCardProps> = ({
           View Materials
         </button>
 
-        {/* <button
-          onClick={() => onStartScanning(class_.id)}
-          className="flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-md text-sm hover:bg-green-100"
-        >
-          <QrCode className="w-4 h-4" />
-          Mark Attendance
-        </button> */}
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="outline" className="flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-md text-sm hover:bg-green-100"><QrCode className="w-4 h-4" />Mark Attendance</Button>
+            <Button variant="outline" className="flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-md text-sm hover:bg-green-100">
+              <QrCode className="w-4 h-4" />Mark Attendance
+            </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[80vh]">
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle> Mark Attendance</DialogTitle>
+              <DialogTitle>Mark Attendance</DialogTitle>
+              <DialogDescription>
+                Scan the QR code to mark attendance for this class.
+              </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <AttendanceScanner></AttendanceScanner>
+            <div className="mt-4">
+              <AttendanceScanner />
             </div>
           </DialogContent>
         </Dialog>

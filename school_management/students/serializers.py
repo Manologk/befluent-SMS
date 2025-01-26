@@ -15,6 +15,44 @@ class StudentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class GroupSerializer(serializers.ModelSerializer):
+    current_capacity = serializers.SerializerMethodField()
+    students = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Group
+        fields = ['id', 'name', 'description', 'language', 'level', 'max_capacity', 
+                 'status', 'current_capacity', 'created_at', 'updated_at', 'students']
+
+    def get_current_capacity(self, obj):
+        return obj.students.count()
+
+    def get_students(self, obj):
+        return [{
+            'id': student.student.id,
+            'name': student.student.name,
+            'email': student.student.email,
+            'level': student.student.level
+        } for student in obj.students.all()]
+
+
+class TeacherSerializer(serializers.ModelSerializer):
+    teaching_groups = GroupSerializer(many=True, read_only=True)
+    private_students = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Teacher
+        fields = ['id', 'name', 'email', 'phone_number', 'specializations', 'teaching_groups', 'private_students']
+
+    def get_private_students(self, obj):
+        # Get students from private sessions
+        private_students = Student.objects.filter(
+            session__teacher=obj,
+            session__type='PRIVATE'
+        ).distinct()
+        return StudentSerializer(private_students, many=True).data
+
+
 class SessionSerializer(serializers.ModelSerializer):
     time = serializers.SerializerMethodField()
     className = serializers.SerializerMethodField()
@@ -51,7 +89,7 @@ class SessionSerializer(serializers.ModelSerializer):
         return 'Private' if obj.type == 'PRIVATE' else 'Group'
 
     def get_isOnline(self, obj):
-        return False  # Default to false, modify if online status is tracked
+        return getattr(obj, 'is_online', False)
 
     def get_proficiencyLevel(self, obj):
         if obj.type == 'PRIVATE' and obj.student:
@@ -61,9 +99,6 @@ class SessionSerializer(serializers.ModelSerializer):
             first_student = obj.group.students.first().student
             return first_student.level if first_student else None
         return None
-
-    def get_isOnline(self, obj):
-        return getattr(obj, 'is_online', False)
 
     def get_student_details(self, obj):
         if obj.type == 'PRIVATE' and obj.student:
@@ -84,14 +119,6 @@ class SessionSerializer(serializers.ModelSerializer):
             } for student in obj.group.students.all()]
         return None
 
-    # def to_representation(self, instance):
-    #     data = super().to_representation(instance)
-    #     data['time'] = instance.start_time.strftime('%I:%M %p')
-    #     data['className'] = f"{'Private' if instance.type == 'PRIVATE' else 'Group'} Lesson"
-    #     data['students'] = [instance.student.name] if instance.student else []
-    #     if instance.group:
-    #         data['students'] = [gs.student.name for gs in instance.group.students.all()]
-    #     return data
 
 class AttendanceLogSerializer(serializers.ModelSerializer):
     studentName = serializers.CharField(source='student.name')
@@ -99,17 +126,15 @@ class AttendanceLogSerializer(serializers.ModelSerializer):
     grade = serializers.CharField(source='student.level')
     language = serializers.SerializerMethodField()
     date = serializers.DateField(source='session.date')
-    timeIn = serializers.DateTimeField(source='scanned_at', allow_null=True)
-    timeOut = serializers.DateTimeField(read_only=True, allow_null=True)  # For future use
-    notes = serializers.CharField(default='', allow_blank=True)
 
     class Meta:
         model = AttendanceLog
-        fields = ['id', 'studentId', 'studentName', 'date', 'status', 
-                 'timeIn', 'timeOut', 'notes', 'grade', 'language']
-    
+        fields = ['id', 'studentName', 'studentId', 'grade', 'language', 'date', 'status']
+
     def get_language(self, obj):
-        return 'English'  # Default language
+        if obj.session.group:
+            return obj.session.group.language
+        return None
 
 
 class PerformanceSerializer(serializers.ModelSerializer):
@@ -130,23 +155,22 @@ class StudentSubscriptionSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class TeacherSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Teacher
-        fields = '__all__'
-
-
-class GroupSerializer(serializers.ModelSerializer):
-    teacher = TeacherSerializer(read_only=True)
-    current_capacity = serializers.SerializerMethodField()
-
-
+class GroupCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
-        fields = '__all__'
+        fields = ['name', 'description', 'language', 'level', 'max_capacity']
+        extra_kwargs = {
+            'name': {'required': True},
+            'language': {'required': True},
+            'level': {'required': True},
+            'max_capacity': {'required': True},
+            'description': {'required': False}
+        }
 
-    def get_current_capacity(self, obj):
-        return obj.students.count()
+    def validate(self, data):
+        if data.get('max_capacity', 0) <= 0:
+            raise serializers.ValidationError("Maximum capacity must be greater than 0")
+        return data
 
 
 class ScheduleSerializer(serializers.ModelSerializer):
@@ -154,7 +178,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
         child=serializers.IntegerField(min_value=0, max_value=6),
         help_text='List of weekday numbers (0-6, Monday is 0)'
     )
-    
+
     class Meta:
         model = Schedule
         fields = '__all__'
@@ -162,8 +186,8 @@ class ScheduleSerializer(serializers.ModelSerializer):
     def validate_days(self, value):
         if not value:
             raise serializers.ValidationError("At least one day must be selected")
-        if len(set(value)) != len(value):
-            raise serializers.ValidationError("Days must be unique")
+        if len(value) != len(set(value)):
+            raise serializers.ValidationError("Duplicate days are not allowed")
         return value
 
 
@@ -176,17 +200,6 @@ class GroupStudentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class GroupCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Group
-        fields = ['name', 'teacher', 'max_capacity', 'status']
-
-    def validate(self, data):
-        if data.get('max_capacity', 0) <= 0:
-            raise serializers.ValidationError("Maximum capacity must be greater than 0")
-        return data
-
-
 class CreateStudentWithUserSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     email = serializers.EmailField()
@@ -195,37 +208,56 @@ class CreateStudentWithUserSerializer(serializers.Serializer):
     subscription_plan = serializers.CharField(max_length=255)
     level = serializers.CharField(max_length=50)
 
+    @transaction.atomic
     def create(self, validated_data):
         User = get_user_model()
-        subscription_plan = SubscriptionPlan.objects.get(
-            name__iexact=validated_data['subscription_plan']
+        
+        # Create user
+        user = User.objects.create_user(
+            username=validated_data['email'],
+            email=validated_data['email'],
+            password=validated_data['password'],
+            role='student'
         )
 
-        with transaction.atomic():
-            # Create user
-            user = User.objects.create_user(
-                email=validated_data['email'],
-                password=validated_data['password'],
-                role='student'
-            )
+        # Create student
+        student = Student.objects.create(
+            user=user,
+            name=validated_data['name'],
+            email=validated_data['email'],
+            phone_number=validated_data.get('phone_number', ''),
+            level=validated_data.get('level', '')
+        )
 
-            # Create student
-            student = Student.objects.create(
-                user=user,
-                name=validated_data['name'],
-                email=validated_data['email'],
-                phone_number=validated_data['phone_number'],
-                level=validated_data['level'],
-                qr_code=str(user.id),  # Simply use the user ID as QR code
-                subscription_balance=subscription_plan.price,
-                lessons_remaining=subscription_plan.number_of_lessons
-            )
+        return student
 
-            # Create student subscription
-            StudentSubscription.objects.create(
-                student=student,
-                subscription_plan=subscription_plan,
-                start_date=timezone.now().date()
-            )
 
-            return student
+class CreateTeacherWithUserSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=255)
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+    phone_number = serializers.CharField(max_length=20)
+    specializations = serializers.ListField(child=serializers.CharField())
+
+    @transaction.atomic
+    def create(self, validated_data):
+        User = get_user_model()
+        
+        # Create user
+        user = User.objects.create_user(
+            username=validated_data['email'],
+            email=validated_data['email'],
+            password=validated_data['password'],
+            role='instructor'
+        )
+
+        # Create teacher
+        teacher = Teacher.objects.create(
+            user=user,
+            name=validated_data['name'],
+            email=validated_data['email'],
+            phone_number=validated_data.get('phone_number', ''),
+            specializations=validated_data.get('specializations', [])
+        )
+
+        return teacher

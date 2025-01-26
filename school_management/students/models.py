@@ -172,25 +172,63 @@ class Teacher(models.Model):
         related_name='teacher')
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
+    phone_number = models.CharField(max_length=20, blank=True)
     specializations = models.JSONField(default=list)
 
     def __str__(self):
         return self.name
 
+    @property
+    def teaching_groups(self):
+        return Group.objects.filter(teacher=self)
+
+
 class Group(models.Model):
+    LANGUAGE_CHOICES = [
+        ('English', 'English'),
+        ('Spanish', 'Spanish'),
+        ('French', 'French'),
+        ('German', 'German'),
+        ('Italian', 'Italian'),
+        ('Portuguese', 'Portuguese'),
+        ('Russian', 'Russian'),
+        ('Chinese', 'Chinese'),
+        ('Japanese', 'Japanese'),
+        ('Korean', 'Korean'),
+    ]
+
+    LEVEL_CHOICES = [
+        ('Beginner', 'Beginner'),
+        ('Elementary', 'Elementary'),
+        ('Intermediate', 'Intermediate'),
+        ('Upper Intermediate', 'Upper Intermediate'),
+        ('Advanced', 'Advanced'),
+        ('Proficient', 'Proficient'),
+    ]
+
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('inactive', 'Inactive'),
+        ('full', 'Full'),
+        ('archived', 'Archived'),
+    ]
+
     name = models.CharField(max_length=255)
-    teacher = models.ForeignKey(Teacher, on_delete=models.SET_NULL, null=True, blank=True)
+    description = models.TextField(blank=True)
+    language = models.CharField(max_length=50, choices=LANGUAGE_CHOICES)
+    level = models.CharField(max_length=50, choices=LEVEL_CHOICES)
+    teacher = models.ForeignKey(Teacher, on_delete=models.SET_NULL, null=True, blank=True, related_name='teaching_groups')
     max_capacity = models.PositiveIntegerField()
-    status = models.CharField(max_length=20, default='active')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.name
+        return f"{self.name} - {self.language} ({self.level})"
 
     def is_full(self):
         return self.students.count() >= self.max_capacity
-    
+
 
 class Schedule(models.Model):
     teacher = models.ForeignKey('Teacher', on_delete=models.CASCADE)

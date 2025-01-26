@@ -269,18 +269,67 @@ export const studentApi = {
       throw error;
     }
   },
+
+  update: async (id: string, data: any) => {
+    try {
+      const response = await api.patch(`/students/students/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating student:', error);
+      throw error;
+    }
+  },
 };
 
 // Teacher endpoints
 export const teacherApi = {
-  getAll: async () => {
+  async getAll() {
     try {
-      const { data } = await api.get('/students/teachers/');
-      return data;
+      const response = await api.get('/students/teachers/');
+      console.log('Teacher API Response:', response); // Debug log
+      return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(error.response?.data?.message || 'Failed to fetch teachers');
-      }
+      console.error('Error fetching teachers:', error);
+      throw error;
+    }
+  },
+
+  async createWithUser(data: {
+    name: string;
+    email: string;
+    password: string;
+    phone_number: string;
+    specializations: string[];
+  }) {
+    try {
+      const response = await api.post('/students/teachers/create-with-user/', data);
+      console.log('Create teacher response:', response);
+      return response;
+    } catch (error) {
+      console.error('Error creating teacher:', error);
+      throw error;
+    }
+  },
+
+  async update(id: string, data: {
+    name: string;
+    email: string;
+    specializations: string[];
+  }) {
+    try {
+      const { data: responseData } = await api.patch(`/students/teachers/${id}/`, data);
+      return responseData;
+    } catch (error) {
+      console.error('Error updating teacher:', error);
+      throw error;
+    }
+  },
+
+  async delete(id: string) {
+    try {
+      await api.delete(`/students/teachers/${id}/`);
+    } catch (error) {
+      console.error('Error deleting teacher:', error);
       throw error;
     }
   }
@@ -288,40 +337,64 @@ export const teacherApi = {
 
 // Parent endpoints
 export const parentApi = {
-  async getAll() {
-    try {
-      const response = await fetch(`${API_URL}/parents/parents/`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          // Add authorization header if required
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        credentials: 'include', // Include if using cookies
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json(); // Parse JSON here
-      return data; // Return the parsed data
-    } catch (error) {
-      console.error('API call failed:', error);
-      throw error;
-    }
+  getAll(): Promise<Parent[]> {
+    return api.get('/parents/parents/').then(response => response.data);
   },
 
-  getParentById: async (id: number) => {
-    try {
-      const response = await api.get(`/parents/${id}/`);
-      console.log('Student data response:', response); // Debug log
-      return response;  
-  }catch (error) {
-    console.error('Failed to fetch student:', error);
-    throw error;
+  getParentById(id: number): Promise<Parent> {
+    return api.get(`/parents/parents/${id}/`).then(response => response.data);
+  },
+
+  getParentStudentLinks(): Promise<any[]> {
+    return api.get('/parents/parent-student-links/').then(response => response.data);
+  },
+
+  getStudentParentLink(studentId: number): Promise<any> {
+    return api.get(`/parents/parent-student-links/?student=${studentId}`).then(response => {
+      const links = response.data.filter((link: any) => link.student === studentId);
+      return links.length > 0 ? links[0] : null;
+    });
+  },
+
+  create(data: {
+    name: string;
+    email: string;
+    phone_number: string;
+    password: string;
+  }): Promise<Parent> {
+    return api.post('/parents/parents/', data).then(response => response.data);
+  },
+
+  linkToStudent(data: {
+    parent_id: number;
+    student_id: number;
+  }): Promise<void> {
+    return this.getStudentParentLink(data.student_id).then(existingLink => {
+      if (existingLink) {
+        throw new Error('Student already has a parent');
+      }
+      return api.post('/parents/parent-student-links/', {
+        parent: data.parent_id,
+        student: data.student_id
+      });
+    });
+  },
+
+  unlinkFromStudent(data: {
+    parent_id: number;
+    student_id: number;
+  }): Promise<void> {
+    return api.get(`/parents/parent-student-links/?student=${data.student_id}&parent=${data.parent_id}`)
+      .then(response => {
+        const links = response.data.filter(
+          (link: any) => link.student === data.student_id && link.parent === data.parent_id
+        );
+        if (links.length > 0) {
+          return api.delete(`/parents/parent-student-links/${links[0].id}/`);
+        }
+        throw new Error('Parent-student link not found');
+      });
   }
-}
 }
 
 // Subscription endpoints
@@ -354,31 +427,26 @@ export const subscriptionApi = {
 
 // Group endpoints
 export const groupApi = {
-  createGroup: async (name: string, max_capacity: number) => {
-    try {
-      const { data } = await api.post(`/students/groups/`, {name, max_capacity});
-      return data
-    } catch(error) {
-      if (axios.isAxiosError(error)){
-        throw new Error(error.response?.data?.message || 'Failed to create group')
-      }
-      throw error
-    }
-  },
-
   getAll: async () => {
-    try {
-      const { data } = await api.get('/students/groups/');
-      return data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(error.response?.data?.message || 'Failed to fetch groups');
-      }
-      throw error;
-    }
-  }
-}
-
+    const response = await api.get('/students/groups/');
+    return response.data;
+  },
+  getById: async (id: string) => {
+    const response = await api.get(`/students/groups/${id}/`);
+    return response.data;
+  },
+  create: (data: CreateGroupPayload) => api.post('/students/groups/', data),
+  update: (id: string, data: Partial<CreateGroupPayload>) => api.put(`/students/groups/${id}/`, data),
+  delete: (id: string) => api.delete(`/students/groups/${id}/`),
+  addStudent: (groupId: string, studentId: string) => 
+    api.post(`/students/groups/${groupId}/add_student/`, { student_id: studentId }),
+  removeStudent: (groupId: string, studentId: string) => 
+    api.post(`/students/groups/${groupId}/remove_student/`, { student_id: studentId }),
+  getTeacherGroups: (teacherId: string) => 
+    api.get(`/students/teachers/${teacherId}/groups/`),
+  getStudentGroups: (studentId: string) => 
+    api.get(`/students/students/${studentId}/groups/`),
+};
 
 // Session endpoint
 export const sessionApi = {
@@ -641,6 +709,44 @@ export const attendanceApi = {
       throw error;
     }
   }
+};
+
+// Group management API functions
+export const groupService = {
+  getGroups: () => api.get('/students/groups/'),
+  getGroup: (id: number) => api.get(`/students/groups/${id}/`),
+  createGroup: (data: {
+    name: string;
+    description: string;
+    language: string;
+    level: string;
+    max_capacity: number;
+  }) => api.post('/students/groups/', data),
+  updateGroup: (id: number, data: Partial<{
+    name: string;
+    description: string;
+    language: string;
+    level: string;
+    max_capacity: number;
+    status: string;
+  }>) => api.put(`/students/groups/${id}/`, data),
+  deleteGroup: (id: number) => api.delete(`/students/groups/${id}/`),
+  addStudentsToGroup: (groupId: number, studentIds: number[]) => 
+    api.post(`/students/groups/${groupId}/add_students/`, { student_ids: studentIds }),
+  removeStudentFromGroup: (groupId: number, studentId: number) =>
+    api.post(`/students/groups/${groupId}/remove_student/`, { student_id: studentId }),
+  assignTeacherToGroup: (groupId: number, teacherId?: number) => {
+    // If teacherId is undefined, it means we want to remove the teacher
+    if (teacherId === undefined) {
+      return api.post(`/students/groups/${groupId}/remove_teacher/`);
+    }
+    // Otherwise assign the new teacher
+    return api.post(`/students/groups/${groupId}/assign_teacher/`, { 
+      teacher_id: teacherId 
+    });
+  },
+  removeTeacherFromGroup: (groupId: number) => 
+    api.post(`/students/groups/${groupId}/remove_teacher/`)
 };
 
 export default api;

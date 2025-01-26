@@ -141,14 +141,10 @@ export default function CreateSchedule({
     async function fetchGroups() {
       try {
         setLoading(true)
-        const data = await groupApi.getAll()
-        // Transform the API response to match the UI's expected format
-        const transformedGroups = data.map((group: any) => ({
-          id: group.id.toString(),
-          name: group.name,
-        }))
-        setGroups(transformedGroups)
+        const groups = await groupApi.getAll()
+        setGroups(groups)
       } catch (error) {
+        console.error('Error fetching groups:', error)
         toast({
           title: "Error",
           description: "Failed to fetch groups",
@@ -295,20 +291,25 @@ export default function CreateSchedule({
                 {assignmentType === 'group' ? (
                   <FormItem>
                     <FormLabel>Group</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a group" />
+                          <SelectValue placeholder="Select a group">
+                            {groupsState.find(g => g.id.toString() === field.value)?.name || "Select a group"}
+                          </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {groupsState.map((group) => (
-                          <SelectItem key={group.id} value={group.id}>
-                            {group.name}
+                          <SelectItem key={group.id} value={group.id.toString()}>
+                            {group.name} ({group.current_capacity}/{group.max_capacity} students)
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormDescription>
+                      Select a group for the lesson
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 ) : null}
