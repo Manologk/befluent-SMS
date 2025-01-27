@@ -1,6 +1,5 @@
 import axios from 'axios';
-import { TeacherSession, AttendanceRecord, ClassSchedule } from '@/types/session';
-// import { User } from '../types/auth';
+import { AttendanceRecord, ClassSchedule } from '@/types/session';
 
 const API_URL = 'http://localhost:8000/api';
 

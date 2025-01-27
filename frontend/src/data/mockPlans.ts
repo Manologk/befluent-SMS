@@ -3,7 +3,7 @@ import { planApi } from '@/services/api';
 
 export const getPlans = async (): Promise<Plan[]> => {
     try {
-        return await planApi.getAll();
+        return (await planApi.getAll()).data;
     } catch (error) {
         console.error('Failed to fetch plans:', error);
         return [];

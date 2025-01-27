@@ -1,7 +1,5 @@
 import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import StudentRegistration from '@/components/StudentRegistration'
-import TeacherAssignment from '@/components/TeacherAssignment'
 import GroupManagement from '@/components/GroupManager/GroupManagement'
 // import ReportGeneration from '@/components/ReportGeneration'
 import CreateSchedule from '@/components/CreateSchedule'

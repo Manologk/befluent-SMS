@@ -1,0 +1,7 @@
+src/data/mockPlans.ts(6,9): error TS2740: Type 'AxiosResponse<any, any>' is missing the following properties from type 'Plan[]': length, pop, push, concat, and 29 more.
+src/lib/create-theme.ts(1,29): error TS6133: 'name' is declared but its value is never read.
+src/services/api.ts(2,1): error TS6192: All imports in import declaration are unused.
+src/store/attendanceStore.ts(44,17): error TS2322: Type 'AttendanceRecord | { studentId: string; classId: string; timestamp: string; }' is not assignable to type 'AttendanceRecord'.
+  Type '{ studentId: string; classId: string; timestamp: string; }' is missing the following properties from type 'AttendanceRecord': id, studentName, date, status, and 2 more.
+src/store/attendanceStore.ts(44,29): error TS2740: Type '{ studentId: string; classId: string; timestamp: string; }' is missing the following properties from type 'AttendanceRecord': id, studentName, date, status, and 2 more.
+src/store/attendanceStore.ts(53,48): error TS2339: Property 'classId' does not exist on type 'AttendanceRecord'.
