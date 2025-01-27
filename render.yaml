@@ -2,7 +2,7 @@ services:
   - type: web
     name: befluent
     env: python
-    buildCommand: cd school_management && ./build.sh
+    buildCommand: pip install -r school_management/requirements.txt && cd school_management && ./build.sh
     startCommand: cd school_management && gunicorn school_management.wsgi:application
     envVars:
       - key: DB_NAME
