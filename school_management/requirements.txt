@@ -8,7 +8,7 @@ djangorestframework-simplejwt==5.3.1
 filelock==3.16.1
 names==0.3.0
 pillow==11.0.0
-platformdirs==4.6.3
+platformdirs==4.3.6
 psycopg2==2.9.9
 PyJWT==2.9.0
 qrcode==8.0
