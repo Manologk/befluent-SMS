@@ -19,20 +19,20 @@ export default function ClassManagement() {
       <h1 className="text-2xl font-bold mb-4">Class Management System</h1>
       <Tabs defaultValue="students">
         <TabsList>
-          <TabsTrigger value="students">Students</TabsTrigger>
-          <TabsTrigger value="teachers">Teachers</TabsTrigger>
+          {/* <TabsTrigger value="students">Students</TabsTrigger> */}
+          {/* <TabsTrigger value="teachers">Teachers</TabsTrigger> */}
           <TabsTrigger value="groups">Groups</TabsTrigger>
           <TabsTrigger value="schedule">Create Schedule</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
-        <TabsContent value="students">
+        {/* <TabsContent value="students">
           <StudentRegistration 
             students={students} 
             setStudents={setStudents} 
             groups={groups}
           />
-        </TabsContent>
-        <TabsContent value="teachers">
+        </TabsContent> */}
+        {/* <TabsContent value="teachers">
           <TeacherAssignment 
             teachers={teachers} 
             setTeachers={setTeachers}
@@ -41,7 +41,7 @@ export default function ClassManagement() {
             assignments={assignments}
             setAssignments={setAssignments}
           />
-        </TabsContent>
+        </TabsContent> */}
         <TabsContent value="groups">
           <GroupManagement />
         </TabsContent>

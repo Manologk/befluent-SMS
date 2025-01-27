@@ -683,10 +683,20 @@ export const attendanceApi = {
       if (startDate) params.append('start_date', startDate);
       if (endDate) params.append('end_date', endDate);
       
-      const response = await api.get(`/students/attendance-logs/?${params}`);
+      const response = await api.get('/students/attendance-logs/', { params });
       return response.data;
     } catch (error) {
       console.error('Error fetching attendance logs:', error);
+      throw error;
+    }
+  },
+
+  createAttendanceLog: async (data: { student: string; session: string }) => {
+    try {
+      const response = await api.post('/students/attendance-logs/', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating attendance log:', error);
       throw error;
     }
   },
@@ -697,13 +707,7 @@ export const attendanceApi = {
         id,
         status
       });
-      
-      // Return both the updated attendance record and student info
-      return {
-        attendance: response.data,
-        lessons_remaining: response.data.lessons_remaining,
-        subscription_balance: parseFloat(response.data.subscription_balance)
-      };
+      return response.data;
     } catch (error) {
       console.error('Error updating attendance status:', error);
       throw error;

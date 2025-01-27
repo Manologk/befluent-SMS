@@ -85,7 +85,7 @@ class Session(models.Model):
             ('COMPLETED', 'Completed'),
             ('CANCELLED', 'Cancelled')
         ],
-        default='SCHEDULED'
+        default='IN_PROGRESS'
     )
 
     def mark_attendance(self, student_id):
@@ -241,63 +241,46 @@ class Schedule(models.Model):
     payment = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def clean(self):
+        if not self.student and not self.group:
+            raise ValidationError("Schedule must be associated with either a student or a group")
+        if self.student and self.group:
+            raise ValidationError("Schedule cannot be associated with both a student and a group")
+        
+        if not self.days:
+            raise ValidationError("At least one day must be selected")
+        
+        for day in self.days:
+            if not isinstance(day, int) or day < 0 or day > 6:
+                raise ValidationError("Days must be integers between 0 and 6")
+        
+        if self.start_time >= self.end_time:
+            raise ValidationError("End time must be after start time")
+
+    def __str__(self):
+        if self.student:
+            return f"Private lesson for {self.student.name} with {self.teacher.name}"
+        return f"Group lesson for {self.group.name} with {self.teacher.name}"
+
     def generate_next_session(self, target_date=None):
         """Generate the next session based on this schedule"""
-        if target_date is None:
-            # Get next occurrence for each day in the schedule
-            today = timezone.now().date()
-            sessions = []
+        try:
+            if target_date is None:
+                target_date = timezone.now().date()
             
-            # Convert days to int if they're strings
-            weekdays = [int(day) if isinstance(day, str) else day for day in self.days]
-            
-            for day in weekdays:
-                days_ahead = day - today.weekday()
-                if days_ahead <= 0:  # Target day already happened this week
-                    days_ahead += 7
-                target_date = today + timedelta(days=days_ahead)
-                
-                # Check if session already exists
-                existing_session = Session.objects.filter(
-                    schedule=self,
-                    date=target_date,
-                    teacher=self.teacher
-                ).first()
-                
-                if not existing_session:
-                    # Create new session
-                    session = Session.objects.create(
-                        schedule=self,
-                        teacher=self.teacher,
-                        student=self.student,
-                        group=self.group,
-                        date=target_date,
-                        start_time=self.start_time,
-                        end_time=self.end_time,
-                        type='GROUP' if self.group else 'PRIVATE',
-                        payment=self.payment,
-                        status='SCHEDULED'
-                    )
-                    sessions.append(session)
-                else:
-                    sessions.append(existing_session)
-            
-            return sessions
-        else:
-            # For specific target date, verify it matches one of the schedule days
+            # Check if the target date's weekday is in the schedule's days
             if target_date.weekday() not in self.days:
                 return None
             
-            # Check if session already exists
+            # Check if a session already exists for this date
             existing_session = Session.objects.filter(
                 schedule=self,
-                date=target_date,
-                teacher=self.teacher
+                date=target_date
             ).first()
             
             if existing_session:
-                return [existing_session]
-                
+                return existing_session
+            
             # Create new session
             session = Session.objects.create(
                 schedule=self,
@@ -309,9 +292,14 @@ class Schedule(models.Model):
                 end_time=self.end_time,
                 type='GROUP' if self.group else 'PRIVATE',
                 payment=self.payment,
-                status='SCHEDULED'
+                status='IN_PROGRESS'  # Ensure new sessions are active by default
             )
-            return [session]
+            
+            return session
+            
+        except Exception as e:
+            print(f"Error generating session: {e}")
+            return None
 
 
 class GroupStudent(models.Model):

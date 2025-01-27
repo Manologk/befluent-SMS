@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from .models import Student, AttendanceLog, Session
 from rest_framework.views import APIView
-from django.db.models import Avg, F
+from django.db.models import Avg, F, Q
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.db import transaction
 from datetime import datetime
@@ -359,41 +359,51 @@ class StudentViewSet(viewsets.ModelViewSet):
 class ScheduleViewSet(viewsets.ModelViewSet):
     queryset = Schedule.objects.all()
     serializer_class = ScheduleSerializer
+    permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        data = request.data
         try:
-            teacher = get_object_or_404(Teacher, id=data['teacher_id'])
-            
-            schedule_data = {
-                'teacher': teacher,
-                'days': data['days'],  
-                'start_time': data['start_time'],
-                'end_time': data['end_time'],
-                'is_recurring': data.get('is_recurring', True),
-                'payment': data['payment']
-            }
+            with transaction.atomic():
+                # Extract data from request
+                teacher = get_object_or_404(Teacher, id=request.data.get('teacher_id'))
+                schedule_type = request.data.get('type')
+                days = request.data.get('days', [])
+                start_time = request.data.get('start_time')
+                end_time = request.data.get('end_time')
+                is_recurring = request.data.get('is_recurring', True)
+                payment = request.data.get('payment', 0)
 
-            if data['type'] == 'private':
-                student = get_object_or_404(Student, id=data['student_id'])
-                schedule_data['student'] = student
-            elif data['type'] == 'group' and data.get('group_id'):
-                group = get_object_or_404(Group, id=data['group_id'])
-                schedule_data['group'] = group
+                # Create schedule based on type
+                if schedule_type == 'private':
+                    student = get_object_or_404(Student, id=request.data.get('student_id'))
+                    schedule = ScheduleManager.create_schedule(
+                        teacher=teacher,
+                        start_time=start_time,
+                        end_time=end_time,
+                        days=days,
+                        student=student,
+                        payment=payment,
+                        is_recurring=is_recurring
+                    )
+                else:  # group
+                    group = get_object_or_404(Group, id=request.data.get('group_id'))
+                    schedule = ScheduleManager.create_schedule(
+                        teacher=teacher,
+                        start_time=start_time,
+                        end_time=end_time,
+                        days=days,
+                        group=group,
+                        payment=payment,
+                        is_recurring=is_recurring
+                    )
 
-            schedule = Schedule.objects.create(**schedule_data)
-            
-            # Generate first session
-            session = schedule.generate_next_session()
-            
-            serializer = self.get_serializer(schedule)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-            
+                serializer = self.get_serializer(schedule)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class SessionViewSet(viewsets.ModelViewSet):
@@ -405,37 +415,49 @@ class SessionViewSet(viewsets.ModelViewSet):
         queryset = Session.objects.all()
         
         try:
-            # Filter by teacher if user is a teacher
-            if hasattr(self.request.user, 'role') and self.request.user.role == 'instructor':
-                teacher = Teacher.objects.get(user=self.request.user)
-                queryset = queryset.filter(teacher=teacher)
+            # Get date parameter
+            date = self.request.query_params.get('date', None)
             
             # Filter by date if provided
-            date = self.request.query_params.get('date', None)
             if date:
-                    # Convert string date to datetime
-                    target_date = datetime.strptime(date, '%Y-%m-%d').date()
+                target_date = datetime.strptime(date, '%Y-%m-%d').date()
+                queryset = queryset.filter(date=target_date)
+                
+                # Automatically set today's sessions to IN_PROGRESS
+                today = timezone.now().date()
+                if target_date == today:
+                    queryset.filter(status='SCHEDULED').update(status='IN_PROGRESS')
+            
+            # Filter based on user role
+            if hasattr(self.request.user, 'role'):
+                if self.request.user.role == 'instructor':
+                    # For teachers, show their sessions
+                    teacher = Teacher.objects.get(user=self.request.user)
+                    queryset = queryset.filter(teacher=teacher)
                     
-                    # First check for existing sessions
-                    queryset = queryset.filter(date=target_date)
-                    
-                    # If no sessions exist for this date, check schedules and generate them
-                    if not queryset.exists():
-                        # Get schedules for this teacher on this weekday
+                    # Generate sessions from schedule if none exist
+                    if date and not queryset.exists():
                         weekday = target_date.weekday()
                         schedules = Schedule.objects.filter(
                             teacher=teacher,
-                            days__contains=[weekday]  # Check if weekday is in the days list
+                            days__contains=[weekday]
                         )
                         
-                        # Generate sessions for each schedule
                         for schedule in schedules:
-                            sessions = schedule.generate_next_session(target_date=target_date)
-                            if sessions:  # sessions could be None if weekday doesn't match
-                                queryset = queryset | Session.objects.filter(id__in=[s.id for s in sessions])
+                            session = schedule.generate_next_session(target_date=target_date)
+                            if session:
+                                queryset = queryset | Session.objects.filter(id=session.id)
+                
+                elif self.request.user.role == 'student':
+                    # For students, show sessions they're part of
+                    student = Student.objects.get(user=self.request.user)
+                    queryset = queryset.filter(
+                        Q(student=student) | Q(group__students=student)
+                    )
             
-            return queryset.select_related('student', 'group', 'teacher')
-        except Teacher.DoesNotExist:
+            return queryset.select_related('student', 'group', 'teacher').distinct()
+        
+        except (Teacher.DoesNotExist, Student.DoesNotExist):
             return Session.objects.none()
         except Exception as e:
             print(f"Error in get_queryset: {str(e)}")
@@ -455,18 +477,17 @@ class SessionViewSet(viewsets.ModelViewSet):
     def update_attendance(self, request, pk=None):
         session = self.get_object()
         student_id = request.data.get('studentId')
-        status = request.data.get('status', 'absent')
         
         try:
             student = Student.objects.get(id=student_id)
             attendance, created = AttendanceLog.objects.get_or_create(
                 session=session,
                 student=student,
-                defaults={'status': status}
+                defaults={'status': 'present'}
             )
             
             if not created:
-                attendance.status = status
+                attendance.status = 'present'
                 attendance.save()
             
             return Response({
@@ -521,6 +542,98 @@ class AttendanceLogViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(f"Error in get_queryset: {str(e)}")
             return AttendanceLog.objects.none()
+
+    def create(self, request, *args, **kwargs):
+        try:
+            # Get student and session from request data
+            student_id = request.data.get('student')
+            session_id = request.data.get('session')
+
+            if not student_id or not session_id:
+                return Response(
+                    {'error': 'Both student and session are required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Get student and session objects
+            student = Student.objects.get(id=student_id)
+            session = Session.objects.get(id=session_id)
+
+            # Check if session is active
+            if session.status != 'IN_PROGRESS':
+                return Response(
+                    {'error': 'Session is not active'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Check if student has remaining lessons
+            if student.lessons_remaining <= 0:
+                return Response(
+                    {'error': 'No remaining lessons in subscription'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Check if student has sufficient balance
+            if student.subscription_balance <= 0:
+                return Response(
+                    {'error': 'Insufficient subscription balance'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Check for existing attendance today
+            existing_attendance = AttendanceLog.objects.filter(
+                student=student,
+                session__date=session.date
+            ).exists()
+
+            if existing_attendance:
+                return Response(
+                    {'error': 'Attendance already marked for today'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Create attendance log
+            attendance = AttendanceLog.objects.create(
+                student=student,
+                session=session,
+                status='present',
+                valid=True
+            )
+
+            # Deduct one lesson and update subscription balance
+            cost_per_lesson = student.subscription_balance / student.lessons_remaining
+            student.lessons_remaining -= 1
+            student.subscription_balance = F('subscription_balance') - cost_per_lesson
+            student.save()
+
+            # Refresh student to get updated values
+            student.refresh_from_db()
+
+            # Return success response
+            response_data = self.get_serializer(attendance).data
+            response_data.update({
+                'lessons_remaining': student.lessons_remaining,
+                'subscription_balance': float(student.subscription_balance)
+            })
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
+
+        except Student.DoesNotExist:
+            return Response(
+                {'error': 'Student not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Session.DoesNotExist:
+            return Response(
+                {'error': 'Session not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            print(f"Error creating attendance log: {str(e)}")
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     @action(detail=False, methods=['post'])
     def update_status(self, request):
@@ -684,33 +797,22 @@ def scan_qr_code(request, student_id):
             }, status=400)
 
         # Get or create today's session
-        session, _ = Session.objects.get_or_create(
+        session, created = Session.objects.get_or_create(
             date=today,
             defaults={
                 'language': student.level.split('_')[0] if '_' in student.level else 'English',
-                'level': student.level.split('_')[1] if '_' in student.level else student.level
+                'level': student.level.split('_')[1] if '_' in student.level else student.level,
+                'status': 'IN_PROGRESS'  # Set status to IN_PROGRESS by default
             }
         )
 
-        # Create attendance log
-        AttendanceLog.objects.create(
-            student=student,
-            session=session,
-            valid=True
-        )
+        # If session exists but not in progress, set it to in progress
+        if not created and session.status != 'IN_PROGRESS':
+            session.status = 'IN_PROGRESS'
+            session.save()
 
-        # Deduct one lesson and update subscription balance
-        student.lessons_remaining -= 1
-        student.subscription_balance = F('subscription_balance') - 1  # Deduct 1 unit from balance
-        student.save()
-
-        # Refresh to get updated values
-        student.refresh_from_db()
-
-        # Send notification if lessons are running low
-        # if student.lessons_remaining <= 3:
-        #     # TODO: Implement notification system
-        #     pass
+        # Mark attendance using the session's method
+        attendance = session.mark_attendance(student.id)
 
         return Response({
             'success': True,
@@ -725,10 +827,11 @@ def scan_qr_code(request, student_id):
             'message': 'Student not found'
         }, status=404)
     except Exception as e:
+        print(f"Error in scan_qr_code: {str(e)}")
         return Response({
             'success': False,
             'message': str(e)
-        }, status=500)
+        }, status=400)
 
 
 @api_view(['GET'])
@@ -855,16 +958,8 @@ class AttendanceView(APIView):
                         'message': 'No active session found for today. Please ensure a session is activated before scanning.'
                     }, status=400)
 
-            # Create attendance log
-            AttendanceLog.objects.create(
-                student=student,
-                session=session,
-                valid=True
-            )
-
-            # Deduct one lesson
-            student.lessons_remaining -= 1
-            student.save()
+            # Mark attendance using the session's method
+            attendance = session.mark_attendance(student.id)
 
             return Response({
                 'success': True,

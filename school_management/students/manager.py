@@ -1,38 +1,107 @@
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from .models import *
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
+from django.utils import timezone
 
 
 class ScheduleManager:
     @staticmethod
     def check_schedule_conflict(teacher, start_time, end_time, day, exclude_id=None):
-        Schedule = Schedule.objects.filter(
-            teacher = teacher,
-            day=day
+        # Convert string times to time objects if they're strings
+        if isinstance(start_time, str):
+            start_time = datetime.strptime(start_time, '%H:%M').time()
+        if isinstance(end_time, str):
+            end_time = datetime.strptime(end_time, '%H:%M').time()
+
+        existing_schedules = Schedule.objects.filter(
+            teacher=teacher,
+            days__contains=[day]
         ).exclude(id=exclude_id)
 
-        for schedule in Schedule:
-            if (start_time < schedule.end_time > schedule.start_time):
+        for schedule in existing_schedules:
+            if (start_time < schedule.end_time and end_time > schedule.start_time):
                 return True
         return False
     
     @staticmethod
-    def create_schedule(teacher, start_time, end_time, day, group=None, student=None):
-        if ScheduleManager.check_schedule_conflict(teacher, start_time, end_time, day):
-            raise ValidationError("Schedule conflicts with existing appointments")
+    def create_schedule(teacher, start_time, end_time, days, group=None, student=None, payment=0, is_recurring=True):
+        # Convert string times to time objects if they're strings
+        if isinstance(start_time, str):
+            start_time = datetime.strptime(start_time, '%H:%M').time()
+        if isinstance(end_time, str):
+            end_time = datetime.strptime(end_time, '%H:%M').time()
+
+        # Check for conflicts on each day
+        for day in days:
+            if ScheduleManager.check_schedule_conflict(teacher, start_time, end_time, day):
+                raise ValidationError(f"Schedule conflicts with existing appointments on day {day}")
         
         schedule = Schedule(
             teacher=teacher,
             start_time=start_time,
             end_time=end_time,
-            day=day,
+            days=days,
             group=group,
-            student=student
+            student=student,
+            payment=payment,
+            is_recurring=is_recurring
         )
         schedule.full_clean()
         schedule.save()
+
+        # Create initial sessions
+        ScheduleManager.create_sessions_for_schedule(schedule)
+        
         return schedule
+
+    @staticmethod
+    def create_sessions_for_schedule(schedule):
+        """Creates sessions for the next 4 weeks based on the schedule"""
+        today = timezone.now().date()
+        end_date = today + timedelta(weeks=4)
+        
+        with transaction.atomic():
+            # If it's a group schedule, create sessions for each student in the group
+            if schedule.group:
+                group_students = GroupStudent.objects.filter(group=schedule.group)
+                for day in schedule.days:
+                    current_date = today
+                    while current_date <= end_date:
+                        if current_date.weekday() == day:
+                            session = Session(
+                                schedule=schedule,
+                                teacher=schedule.teacher,
+                                group=schedule.group,
+                                date=current_date,
+                                start_time=schedule.start_time,
+                                end_time=schedule.end_time,
+                                type='GROUP',
+                                payment=schedule.payment,
+                                status='SCHEDULED'
+                            )
+                            session.save()
+                        current_date += timedelta(days=1)
+            
+            # If it's a private student schedule
+            elif schedule.student:
+                for day in schedule.days:
+                    current_date = today
+                    while current_date <= end_date:
+                        if current_date.weekday() == day:
+                            session = Session(
+                                schedule=schedule,
+                                teacher=schedule.teacher,
+                                student=schedule.student,
+                                date=current_date,
+                                start_time=schedule.start_time,
+                                end_time=schedule.end_time,
+                                type='PRIVATE',
+                                payment=schedule.payment,
+                                status='SCHEDULED'
+                            )
+                            session.save()
+                        current_date += timedelta(days=1)
 
 
 class GroupManager:
