@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: befluent
+    env: python
+    buildCommand: cd school_management && ./build.sh
+    startCommand: cd school_management && gunicorn school_management.wsgi:application
+    envVars:
+      - key: DB_NAME
+        value: defaultdb
+      - key: DB_USER
+        value: avnadmin
+      - key: DB_PASSWORD
+        sync: false  # You'll need to set this manually in Render dashboard
+      - key: DB_HOST
+        value: befluent-db-payslipapp.g.aivencloud.com
+      - key: DB_PORT
+        value: 16595
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: PYTHON_VERSION
+        value: 3.11.2
