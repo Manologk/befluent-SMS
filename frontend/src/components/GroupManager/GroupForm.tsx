@@ -33,7 +33,6 @@ interface FormData {
   language: string;
   level: string;
   max_capacity: number;
-  status: string;
 }
 
 const LANGUAGE_OPTIONS = [
@@ -46,104 +45,69 @@ const LANGUAGE_OPTIONS = [
   'Russian',
   'Chinese',
   'Japanese',
-  'Korean',
+  'Korean'
 ];
 
 const LEVEL_OPTIONS = [
   'Beginner',
   'Elementary',
+  'Pre-Intermediate',
   'Intermediate',
-  'Upper Intermediate',
+  'Upper-Intermediate',
   'Advanced',
-  'Proficient',
+  'Proficiency'
 ];
 
-export const GroupForm: React.FC<GroupFormProps> = ({
+const GroupForm: React.FC<GroupFormProps> = ({
   onSubmit,
   onCancel,
   initialData,
 }) => {
-  const defaultFormData: FormData = {
-    name: '',
-    description: '',
-    language: '',
-    level: '',
-    max_capacity: 10,
-    status: 'active'
-  };
-
   const [formData, setFormData] = useState<FormData>({
-    ...defaultFormData,
-    ...initialData && {
-      name: initialData.name ?? defaultFormData.name,
-      description: initialData.description ?? defaultFormData.description,
-      language: initialData.language ?? defaultFormData.language,
-      level: initialData.level ?? defaultFormData.level,
-      max_capacity: typeof initialData.max_capacity === 'number' ? initialData.max_capacity : defaultFormData.max_capacity,
-      status: initialData.status ?? defaultFormData.status,
-    }
+    name: initialData?.name || '',
+    description: initialData?.description || '',
+    language: initialData?.language || '',
+    level: initialData?.level || '',
+    max_capacity: initialData?.max_capacity || 10,
   });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
-    if (!formData.language) {
-      newErrors.language = 'Language is required';
-    }
-    if (!formData.level) {
-      newErrors.level = 'Level is required';
-    }
-    if (formData.max_capacity < 1) {
-      newErrors.max_capacity = 'Maximum capacity must be at least 1';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-
     try {
-      const submitData = {
-        name: formData.name,
-        description: formData.description,
-        language: formData.language,
-        level: formData.level,
-        max_capacity: Number(formData.max_capacity),
-        status: formData.status
-      };
-
       if (initialData?.id) {
-        await groupService.updateGroup(Number(initialData.id), submitData);
+        await groupService.updateGroup(Number(initialData.id), {
+          name: formData.name,
+          description: formData.description,
+          language: formData.language,
+          level: formData.level,
+          max_capacity: formData.max_capacity,
+        });
       } else {
-        await groupService.createGroup(submitData);
+        await groupService.createGroup({
+          name: formData.name,
+          description: formData.description,
+          language: formData.language,
+          level: formData.level,
+          max_capacity: formData.max_capacity,
+        });
       }
       onSubmit();
     } catch (error) {
-      console.error('Error saving group:', error);
+      console.error('Error submitting group form:', error);
     }
   };
 
   return (
-    <Card>
-      <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit}>
+      <Card>
         <CardHeader>
-          <CardTitle>{initialData?.id ? 'Edit Group' : 'Create New Group'}</CardTitle>
+          <CardTitle>{initialData ? 'Edit Group' : 'Create New Group'}</CardTitle>
           <CardDescription>
-            Enter the group details below
+            {initialData 
+              ? 'Update the group details below' 
+              : 'Fill in the details below to create a new group'}
           </CardDescription>
         </CardHeader>
-        
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Group Name</Label>
@@ -152,21 +116,17 @@ export const GroupForm: React.FC<GroupFormProps> = ({
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Enter group name"
-              className={errors.name ? 'border-red-500' : ''}
+              required
             />
-            {errors.name && (
-              <p className="text-sm text-red-500">{errors.name}</p>
-            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
-              value={formData.description || ''}
+              value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Enter group description"
-              rows={3}
             />
           </div>
 
@@ -175,21 +135,19 @@ export const GroupForm: React.FC<GroupFormProps> = ({
             <Select
               value={formData.language}
               onValueChange={(value) => setFormData({ ...formData, language: value })}
+              required
             >
-              <SelectTrigger className={errors.language ? 'border-red-500' : ''}>
-                <SelectValue placeholder="Select language" />
+              <SelectTrigger>
+                <SelectValue placeholder="Select a language" />
               </SelectTrigger>
               <SelectContent>
                 {LANGUAGE_OPTIONS.map((lang) => (
-                  <SelectItem key={lang} value={lang}>
+                  <SelectItem key={lang} value={lang.toLowerCase()}>
                     {lang}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {errors.language && (
-              <p className="text-sm text-red-500">{errors.language}</p>
-            )}
           </div>
 
           <div className="space-y-2">
@@ -197,21 +155,19 @@ export const GroupForm: React.FC<GroupFormProps> = ({
             <Select
               value={formData.level}
               onValueChange={(value) => setFormData({ ...formData, level: value })}
+              required
             >
-              <SelectTrigger className={errors.level ? 'border-red-500' : ''}>
-                <SelectValue placeholder="Select level" />
+              <SelectTrigger>
+                <SelectValue placeholder="Select a level" />
               </SelectTrigger>
               <SelectContent>
                 {LEVEL_OPTIONS.map((level) => (
-                  <SelectItem key={level} value={level}>
+                  <SelectItem key={level} value={level.toLowerCase()}>
                     {level}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {errors.level && (
-              <p className="text-sm text-red-500">{errors.level}</p>
-            )}
           </div>
 
           <div className="space-y-2">
@@ -219,30 +175,23 @@ export const GroupForm: React.FC<GroupFormProps> = ({
             <Input
               id="max_capacity"
               type="number"
+              value={formData.max_capacity}
+              onChange={(e) => setFormData({ ...formData, max_capacity: parseInt(e.target.value) })}
               min={1}
-              value={formData.max_capacity.toString()}
-              onChange={(e) => {
-                const value = parseInt(e.target.value) || 1;
-                setFormData({ ...formData, max_capacity: value });
-              }}
-              className={errors.max_capacity ? 'border-red-500' : ''}
+              required
             />
-            {errors.max_capacity && (
-              <p className="text-sm text-red-500">{errors.max_capacity}</p>
-            )}
           </div>
         </CardContent>
-
         <CardFooter className="flex justify-end space-x-2">
-          <Button variant="outline" onClick={onCancel}>
+          <Button variant="outline" onClick={onCancel} type="button">
             Cancel
           </Button>
           <Button type="submit">
-            {initialData?.id ? 'Update' : 'Create'} Group
+            {initialData ? 'Update Group' : 'Create Group'}
           </Button>
         </CardFooter>
-      </form>
-    </Card>
+      </Card>
+    </form>
   );
 };
 

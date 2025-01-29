@@ -8,11 +8,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { groupService } from '../../services/api';
+import { groupService, studentApi, teacherApi } from '../../services/api';
 import GroupForm from './GroupForm';
 import GroupList from './GroupList';
 import MembersModal from './MembersModal';
-import { Student, Teacher, Group, mockStudents } from '@/types/groupManager';
+import { Student, Teacher, Group } from '@/types/groupManager';
+import { toast } from 'react-hot-toast';
 
 export const GroupManagement: React.FC = () => {
   const [groups, setGroups] = useState<Group[]>([]);
@@ -22,27 +23,83 @@ export const GroupManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState<Student[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [showManageMembers, setShowManageMembers] = useState(false);
+  const [newlyCreatedGroup, setNewlyCreatedGroup] = useState<Group | null>(null);
 
-  const fetchGroups = async () => {
+  const fetchData = async () => {
     try {
-      const response = await groupService.getGroups();
-      setGroups(response.data);
+      setLoading(true);
+      const [groupsResponse, teachersResponse, studentsResponse] = await Promise.all([
+        groupService.getGroups(),
+        teacherApi.getAll(),
+        studentApi.getAll()
+      ]);
+
+      setGroups(groupsResponse.data || []);
+
+      // Transform and set teachers
+      const transformedTeachers = (Array.isArray(teachersResponse) ? teachersResponse : []).map((teacher: {
+        id: string;
+        name: string;
+        email: string;
+        phone_number?: string;
+        specializations?: string[];
+      }): Teacher => ({
+        id: teacher.id,
+        name: teacher.name,
+        email: teacher.email,
+        specializations: teacher.specializations || [],
+        phone_number: teacher.phone_number
+      }));
+      setTeachers(transformedTeachers);
+
+      // Transform and set students
+      const transformedStudents = (Array.isArray(studentsResponse) ? studentsResponse : []).map((student: {
+        id: string;
+        name: string;
+        email: string;
+        level?: string;
+        phone_number?: string;
+        subscription_plan?: string;
+        lessons_remaining?: number;
+        subscription_balance?: number;
+        qr_code?: string;
+      }): Student => ({
+        id: student.id,
+        name: student.name,
+        email: student.email,
+        level: student.level || '',
+        phone_number: student.phone_number,
+        subscription_plan: student.subscription_plan,
+        lessons_remaining: student.lessons_remaining,
+        subscription_balance: student.subscription_balance,
+        qr_code: student.qr_code
+      }));
+      setStudents(transformedStudents);
+
       // Update selectedGroup if it exists
       if (selectedGroup) {
-        const updatedGroup = response.data.find(g => g.id === selectedGroup.id);
+        const updatedGroup = groupsResponse.data?.find((g: Group) => g.id === selectedGroup.id);
         if (updatedGroup) {
           setSelectedGroup(updatedGroup);
         }
       }
+
+      setLoading(false);
     } catch (error) {
-      console.error('Error fetching groups:', error);
+      console.error('Error fetching data:', error);
+      toast.error('Failed to fetch data');
+      // Initialize with empty arrays on error
+      setGroups([]);
+      setStudents([]);
+      setTeachers([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchGroups();
+    fetchData();
   }, []);
 
   const handleCreateGroup = () => {
@@ -55,137 +112,175 @@ export const GroupManagement: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  const handleDeleteGroup = async (groupId: number) => {
+  const handleDeleteGroup = async (groupId: string) => {
     if (window.confirm('Are you sure you want to delete this group?')) {
       try {
-        await groupService.deleteGroup(groupId);
-        await fetchGroups();
+        await groupService.deleteGroup(Number(groupId));
+        await fetchData();
+        toast.success('Group deleted successfully');
       } catch (error) {
         console.error('Error deleting group:', error);
+        toast.error('Failed to delete group');
       }
     }
   };
 
   const handleManageMembers = (group: Group) => {
-    setSelectedGroup(group);
-    setIsMembersModalOpen(true);
-  };
-
-  const handleFormClose = () => {
-    setIsFormOpen(false);
-    setSelectedGroup(null);
+    if (!loading) {
+      setSelectedGroup(group);
+      setIsMembersModalOpen(true);
+    }
   };
 
   const handleFormSubmit = async () => {
-    await fetchGroups();
+    await fetchData();
     setIsFormOpen(false);
+    
+    // If we were creating a new group, show the manage members dialog
+    if (!selectedGroup && !loading) {
+      const newGroup = groups[groups.length - 1]; // Get the latest group
+      setNewlyCreatedGroup(newGroup);
+      setShowManageMembers(true);
+    }
+    
     setSelectedGroup(null);
+    toast.success(`Group ${selectedGroup ? 'updated' : 'created'} successfully`);
   };
 
-  const handleMembersModalClose = () => {
-    setIsMembersModalOpen(false);
-    setSelectedGroup(null);
-  };
-
-  const handleMembersUpdate = async (groupId: string, studentIds: string[], teacherIds: string[]) => {
+  const handleMembersUpdate = async (studentIds: string[], teacherId?: string) => {
     try {
       if (!selectedGroup) return;
-      
-      // Find which students were added and which were removed
-      const currentStudentIds = selectedGroup.students?.map(s => s.id.toString()) || [];
-      const addedStudents = studentIds.filter(id => !currentStudentIds.includes(id));
-      const removedStudents = currentStudentIds.filter(id => !studentIds.includes(id));
 
-      // Handle teacher changes
-      const currentTeacherId = selectedGroup.teacher?.id.toString();
-      const newTeacherId = teacherIds[0]; // Only one teacher allowed
+      // Get current student IDs
+      const currentStudentIds = selectedGroup.students?.map(s => s.id) || [];
+      
+      // Find students to add and remove
+      const studentsToAdd = studentIds.filter(id => !currentStudentIds.includes(id));
+      const studentsToRemove = currentStudentIds.filter(id => !studentIds.includes(id));
+
+      // Handle teacher change
+      const currentTeacherId = selectedGroup.teacher?.id;
+      if (teacherId !== currentTeacherId) {
+        if (teacherId) {
+          await groupService.assignTeacherToGroup(Number(selectedGroup.id), Number(teacherId));
+        } else if (currentTeacherId) {
+          await groupService.removeTeacherFromGroup(Number(selectedGroup.id));
+        }
+      }
 
       // Add new students
-      if (addedStudents.length > 0) {
+      if (studentsToAdd.length > 0) {
         await groupService.addStudentsToGroup(
-          parseInt(groupId), 
-          addedStudents.map(id => parseInt(id))
+          Number(selectedGroup.id),
+          studentsToAdd.map(id => Number(id))
         );
       }
 
       // Remove students
-      for (const studentId of removedStudents) {
+      for (const studentId of studentsToRemove) {
         await groupService.removeStudentFromGroup(
-          parseInt(groupId),
-          parseInt(studentId)
+          Number(selectedGroup.id),
+          Number(studentId)
         );
       }
 
-      // Update teacher if changed
-      if (newTeacherId !== currentTeacherId) {
-        if (newTeacherId) {
-          // Assign new teacher
-          await groupService.assignTeacherToGroup(parseInt(groupId), parseInt(newTeacherId));
-        } else {
-          // Remove current teacher
-          await groupService.removeTeacherFromGroup(parseInt(groupId));
-        }
-      }
-      
-      // Refresh the groups list and update selected group
-      await fetchGroups();
+      await fetchData(); // Refresh data
+      setIsMembersModalOpen(false);
+      toast.success('Group members updated successfully');
     } catch (error) {
       console.error('Error updating group members:', error);
+      toast.error('Failed to update group members');
     }
   };
 
+  if (loading) {
+    return (
+      <div className="container mx-auto py-6">
+        <div className="flex justify-center items-center min-h-[200px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Group Management</h1>
+        <h1 className="text-2xl font-bold">Group Management</h1>
         <Button onClick={handleCreateGroup}>
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="w-4 h-4 mr-2" />
           Create Group
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
-        {loading ? (
-          <div className="p-8 text-center text-gray-500">Loading groups...</div>
-        ) : (
-          <GroupList
-            groups={groups}
-            onEdit={handleEditGroup}
-            onDelete={handleDeleteGroup}
-            onManageMembers={handleManageMembers}
-          />
-        )}
-      </div>
+      <GroupList
+        groups={groups}
+        onEdit={handleEditGroup}
+        onDelete={handleDeleteGroup}
+        onManageMembers={handleManageMembers}
+      />
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>
-              {selectedGroup ? 'Edit Group' : 'Create New Group'}
-            </DialogTitle>
+            <DialogTitle>{selectedGroup ? 'Edit Group' : 'Create New Group'}</DialogTitle>
             <DialogDescription>
               {selectedGroup
                 ? 'Update the group details below'
-                : 'Fill in the group details below'}
+                : 'Fill in the details below to create a new group'}
             </DialogDescription>
           </DialogHeader>
           <GroupForm
-            initialData={selectedGroup || undefined}
             onSubmit={handleFormSubmit}
-            onCancel={handleFormClose}
+            onCancel={() => setIsFormOpen(false)}
+            initialData={selectedGroup || undefined}
           />
         </DialogContent>
       </Dialog>
 
-      {/* Members Modal */}
-      {selectedGroup && (
-        <MembersModal
-          open={isMembersModalOpen}
-          group={selectedGroup}
-          onClose={handleMembersModalClose}
-          onUpdate={handleMembersUpdate}
-        />
-      )}
+      {/* Show manage members prompt after creating a group */}
+      <Dialog 
+        open={showManageMembers} 
+        onOpenChange={(open) => {
+          setShowManageMembers(open);
+          if (!open) {
+            setNewlyCreatedGroup(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Members to New Group</DialogTitle>
+            <DialogDescription>
+              Would you like to add members to your newly created group?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end space-x-2 mt-4">
+            <Button variant="outline" onClick={() => setShowManageMembers(false)}>
+              Skip for Now
+            </Button>
+            <Button 
+              onClick={() => {
+                setShowManageMembers(false);
+                setSelectedGroup(newlyCreatedGroup);
+                setIsMembersModalOpen(true);
+              }}
+            >
+              Add Members
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Members management modal */}
+      <MembersModal
+        open={isMembersModalOpen}
+        onOpenChange={setIsMembersModalOpen}
+        group={selectedGroup}
+        students={students || []}
+        teachers={teachers || []}
+        onSubmit={handleMembersUpdate}
+      />
     </div>
   );
 };

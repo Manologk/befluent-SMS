@@ -137,8 +137,8 @@ export function EditStudentDialog({ student, open, onOpenChange, onSuccess }: Ed
       })
 
       // Handle parent linking/unlinking
-      const newParentId = values.parentId === "none" ? null : parseInt(values.parentId)
-      const currentParentId = linkedParent?.parent
+      const newParentId = values.parentId ? (values.parentId === "none" ? null : parseInt(values.parentId)) : null;
+      const currentParentId = linkedParent?.parent;
 
       try {
         if (newParentId !== currentParentId) {

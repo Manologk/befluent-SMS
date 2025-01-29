@@ -90,6 +90,7 @@ export default function ClassManagement() {
               assignments={assignments}
               setTeachers={setTeachers}
               setAssignments={setAssignments}
+              setStudents={setStudents}
             />
           )}
         </TabsContent>

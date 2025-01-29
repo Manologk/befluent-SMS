@@ -60,6 +60,7 @@ interface CreateScheduleProps {
   assignments: Assignment[];
   setTeachers: React.Dispatch<React.SetStateAction<Teacher[]>>;
   setAssignments: React.Dispatch<React.SetStateAction<Assignment[]>>;
+  setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
 }
 
 const DAYS_OPTIONS: Option[] = [
@@ -79,6 +80,7 @@ export default function CreateSchedule({
   assignments,
   setTeachers,
   setAssignments,
+  setStudents,
 }: CreateScheduleProps) {
   const [assignmentType, setAssignmentType] = useState<'group' | 'private'>('private')
   const [loading, setLoading] = useState(false)
@@ -87,13 +89,33 @@ export default function CreateSchedule({
   const fetchStudents = async () => {
     if (assignmentType === 'private') {
       try {
-        const data = await studentApi.getAll()
+        setLoading(true);
+        const response = await studentApi.getAll();
+        // Transform the API response to match the UI's expected format
+        const transformedStudents = (Array.isArray(response) ? response : []).map((student: {
+          id: string;
+          name: string;
+          email: string;
+          phone_number?: string;
+          level?: string;
+        }): Student => ({
+          id: student.id,
+          name: student.name,
+          contactDetails: student.phone_number || '',
+          enrollmentDate: new Date().toISOString(), // Default to current date if not provided
+          assignmentType: 'private', // Since this is in the private student fetch context
+          groupId: undefined
+        }));
+        setStudents(transformedStudents);
       } catch (error) {
+        console.error('Error fetching students:', error);
         toast({
           title: "Error",
           description: "Failed to fetch students",
           variant: "destructive",
         })
+      } finally {
+        setLoading(false);
       }
     }
   }
@@ -125,9 +147,15 @@ export default function CreateSchedule({
     async function fetchTeachers() {
       try {
         setLoading(true)
-        const data = await teacherApi.getAll()
+        const response = await teacherApi.getAll();
         // Transform the API response to match the UI's expected format
-        const transformedTeachers = data.map(teacher => ({
+        const transformedTeachers = (Array.isArray(response) ? response : []).map((teacher: {
+          id: string;
+          name: string;
+          email: string;
+          phone_number?: string;
+          specializations?: string[];
+        }) => ({
           id: teacher.id,
           name: teacher.name,
           email: teacher.email,
