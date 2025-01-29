@@ -1,90 +1,74 @@
-import React, { useState, useEffect } from 'react';
-import { ClassSchedule } from '@/types/attendance';
-import { ClassCard } from '@/components/ClassCard';
-import { useAttendanceStore } from '../../store/attendanceStore';
-import { sessionApi } from '@/services/api';
+import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { ClassSchedule } from '@/types/attendance';
+import { sessionApi } from '@/services/api';
+// import { useAttendanceStore } from '@/store/attendanceStore';
 import { useToast } from '@/hooks/use-toast';
+import { ClassCard } from '@/components/ClassCard';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 const TodaySchedule = () => {
-  const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [sessions, setSessions] = useState<ClassSchedule[]>([]);
-  const { startScanning, stopScanning, isScanning } = useAttendanceStore();
+  // const { startScanning } = useAttendanceStore();
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchSessions = async () => {
+    async function fetchData() {
       try {
         const today = format(new Date(), 'yyyy-MM-dd');
-        console.log('Fetching sessions for date:', today); // Debug log
+        console.log('Fetching sessions for date:', today);
         const data = await sessionApi.getTeacherSessions(today);
-        // Sort sessions by start time
-        const sortedData = data.sort((a, b) => {
-          return a.start_time.localeCompare(b.start_time);
+        const sortedData = data.sort((a: ClassSchedule, b: ClassSchedule) => {
+          const timeA = new Date(`1970/01/01 ${a.time}`).getTime();
+          const timeB = new Date(`1970/01/01 ${b.time}`).getTime();
+          return timeA - timeB;
         });
         setSessions(sortedData);
       } catch (error) {
         console.error('Error fetching sessions:', error);
         toast({
-          title: 'Error',
-          description: 'Failed to load sessions. Please try again.',
-          variant: 'destructive',
+          title: "Error",
+          description: "Failed to fetch today's sessions",
+          variant: "destructive",
         });
       } finally {
         setLoading(false);
       }
-    };
+    }
 
-    fetchSessions();
+    fetchData();
   }, [toast]);
 
-  const handleStartScanning = (classId: string) => {
-    setSelectedClass(classId);
-    startScanning();
-  };
-
-  const handleStopScanning = () => {
-    setSelectedClass(null);
-    stopScanning();
-  };
+  // const handleStartScanning = () => {
+  //   startScanning();
+  // };
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex items-center justify-center h-48">
-          <LoadingSpinner className="w-8 h-8 text-blue-500" />
-        </div>
+      <div className="flex justify-center items-center h-64">
+        <LoadingSpinner />
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-6">Today's Schedule</h2>
+    <div className="space-y-4">
+      <h2 className="text-2xl font-bold">Today's Schedule</h2>
       {sessions.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center text-gray-500">
           No sessions scheduled for today
         </div>
       ) : (
-        <div className="space-y-4">
-          {sessions.map((session) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {sessions.map((class_) => (
             <ClassCard
-              key={session.id}
-              class_={session}
-              onStartScanning={handleStartScanning}
+              key={class_.id}
+              class_={class_}
             />
           ))}
         </div>
       )}
-
-      {/* {isScanning && selectedClass && (
-        <QRScanner
-          classId={selectedClass}
-          onClose={handleStopScanning}
-        />
-      )} */}
     </div>
   );
 };

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { AttendanceRecord } from '../../../types/attendance';
-import { attendanceApi } from '../../../services/api';
-import toast from 'react-hot-toast';
+// import { attendanceApi } from '../../../services/api';
+// import toast from 'react-hot-toast';
 
 interface EditRecordModalProps {
   record: AttendanceRecord;
@@ -28,7 +28,7 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
       await onSubmit({ status });
       onClose();
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to update status');
+      // toast.error(error.response?.data?.error || 'Failed to update status');
     } finally {
       setLoading(false);
     }
@@ -54,15 +54,15 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
           <div className="space-y-4">
             <div>
               <p className="text-sm font-medium text-gray-500">Student</p>
-              <p className="mt-1 text-sm text-gray-900">{record.studentName}</p>
+              <p className="mt-1 text-sm text-gray-900">{record.student.name}</p>
             </div>
 
-            <div>
+            {/* <div>
               <p className="text-sm font-medium text-gray-500">Date</p>
               <p className="mt-1 text-sm text-gray-900">
                 {new Date(record.date).toLocaleDateString()}
               </p>
-            </div>
+            </div> */}
 
             <div>
               <p className="text-sm font-medium text-gray-500">Current Status</p>

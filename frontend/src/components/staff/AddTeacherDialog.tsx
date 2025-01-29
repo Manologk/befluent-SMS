@@ -23,6 +23,7 @@ export function AddTeacherDialog({ open, onOpenChange, onSuccess }: AddTeacherDi
     name: "",
     email: "",
     password: "",
+    phone_number: "",
     specializations: [] as string[],
   })
   const { toast } = useToast()
@@ -30,11 +31,12 @@ export function AddTeacherDialog({ open, onOpenChange, onSuccess }: AddTeacherDi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await teacherApi.create({
+      await teacherApi.createWithUser({
         name: formData.name,
         email: formData.email,
         password: formData.password,
         specializations: formData.specializations,
+        phone_number: formData.phone_number,
       })
       toast({
         title: "Success",
@@ -47,6 +49,7 @@ export function AddTeacherDialog({ open, onOpenChange, onSuccess }: AddTeacherDi
         email: "",
         password: "",
         specializations: [],
+        phone_number: "",
       })
     } catch (error) {
       toast({

@@ -8,16 +8,15 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Student, Teacher, Group, Assignment } from '@/types'
+import { Student, Teacher, Assignment, Group as ApiGroup } from '@/types'
 import  MultipleSelector, { Option } from "@/components/ui/multiple-selector"
 
-import { toast, useToast } from '@/hooks/use-toast';
 import { scheduleApi } from '@/services/api';
 import { CreateSchedulePayload } from '@/services/api';
 import { teacherApi } from '@/services/api'
 import { studentApi } from '@/services/api'
 import { groupApi } from '@/services/api'
-
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   teacher_id: z.string().min(1, "Teacher is required"),
@@ -55,10 +54,12 @@ const formSchema = z.object({
 )
 
 interface CreateScheduleProps {
-  // students: Student[]
-  groups: Group[]
-  assignments: Assignment[]
-  setAssignments: React.Dispatch<React.SetStateAction<Assignment[]>>
+  teachers: Teacher[];
+  students: Student[];
+  groups: ApiGroup[];
+  assignments: Assignment[];
+  setTeachers: React.Dispatch<React.SetStateAction<Teacher[]>>;
+  setAssignments: React.Dispatch<React.SetStateAction<Assignment[]>>;
 }
 
 const DAYS_OPTIONS: Option[] = [
@@ -72,17 +73,53 @@ const DAYS_OPTIONS: Option[] = [
 ]
 
 export default function CreateSchedule({ 
-  // students, 
-  groups, 
-  assignments, 
-  setAssignments 
+  teachers, 
+  students,
+  groups,
+  assignments,
+  setTeachers,
+  setAssignments,
 }: CreateScheduleProps) {
   const [assignmentType, setAssignmentType] = useState<'group' | 'private'>('private')
   const [loading, setLoading] = useState(false)
-  const [teachers, setTeachers] = useState<Teacher[]>([])
-  const [students, setStudents] = useState<Student[]>([])
-  const [groupsState, setGroups] = useState<Group[]>([])
   const { toast } = useToast()
+
+  const fetchStudents = async () => {
+    if (assignmentType === 'private') {
+      try {
+        const data = await studentApi.getAll()
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch students",
+          variant: "destructive",
+        })
+      }
+    }
+  }
+
+  useEffect(() => {
+    fetchStudents()
+  }, [toast, assignmentType])
+
+  useEffect(() => {
+    async function fetchGroups() {
+      if (assignmentType === 'group') {
+        try {
+          await groupApi.getAll()
+        } catch (error) {
+          console.error('Error fetching groups:', error)
+          toast({
+            title: "Error",
+            description: "Failed to fetch groups",
+            variant: "destructive",
+          })
+        }
+      }
+    }
+
+    fetchGroups()
+  }, [toast, assignmentType])
 
   useEffect(() => {
     async function fetchTeachers() {
@@ -90,14 +127,16 @@ export default function CreateSchedule({
         setLoading(true)
         const data = await teacherApi.getAll()
         // Transform the API response to match the UI's expected format
-        const transformedTeachers = data.map((teacher: any) => ({
-          id: teacher.id.toString(),
-          name: teacher.name || `${teacher.first_name} ${teacher.last_name}`,
+        const transformedTeachers = data.map(teacher => ({
+          id: teacher.id,
+          name: teacher.name,
           email: teacher.email,
+          contactDetails: teacher.phone_number || '',
           specializations: teacher.specializations || []
-        }))
+        }));
         setTeachers(transformedTeachers)
       } catch (error) {
+        console.error('Error fetching teachers:', error)
         toast({
           title: "Error",
           description: "Failed to fetch teachers",
@@ -109,54 +148,7 @@ export default function CreateSchedule({
     }
 
     fetchTeachers()
-  }, [toast])
-
-  useEffect(() => {
-    async function fetchStudents() {
-      try {
-        setLoading(true)
-        const data = await studentApi.getAll()
-        // Transform the API response to match the UI's expected format
-        const transformedStudents = data.map((student: any) => ({
-          id: student.id.toString(),
-          name: student.name || `${student.first_name} ${student.last_name}`,
-          email: student.email
-        }))
-        setStudents(transformedStudents)
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to fetch students",
-          variant: "destructive",
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchStudents()
-  }, [toast])
-
-  useEffect(() => {
-    async function fetchGroups() {
-      try {
-        setLoading(true)
-        const groups = await groupApi.getAll()
-        setGroups(groups)
-      } catch (error) {
-        console.error('Error fetching groups:', error)
-        toast({
-          title: "Error",
-          description: "Failed to fetch groups",
-          variant: "destructive",
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchGroups()
-  }, [toast])
+  }, [setTeachers, toast])
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -216,224 +208,232 @@ export default function CreateSchedule({
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Create Schedule</h2>
+    <div className="space-y-4 p-4">
+      <h2 className="text-lg font-semibold">Create New Schedule</h2>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField
-            control={form.control}
-            name="teacher_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Teacher</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loading}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={loading ? "Loading teachers..." : "Select a teacher"} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {teachers.map((teacher) => (
-                      <SelectItem key={teacher.id} value={teacher.id}>
-                        {teacher.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="assignmentType"
-            render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel>Assignment Type</FormLabel>
-                <FormControl>
-                  <RadioGroup
-                    onValueChange={(value) => {
-                      field.onChange(value)
-                      setAssignmentType(value as 'group' | 'private')
-                    }}
-                    defaultValue={field.value}
-                    className="flex flex-col space-y-1"
-                  >
-                    <FormItem className="flex items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <RadioGroupItem value="private" />
-                      </FormControl>
-                      <FormLabel className="font-normal">
-                        Private Lesson
-                      </FormLabel>
-                    </FormItem>
-                    <FormItem className="flex items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <RadioGroupItem value="group" />
-                      </FormControl>
-                      <FormLabel className="font-normal">
-                        Group Lesson
-                      </FormLabel>
-                    </FormItem>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="group_id"
-            render={({ field }) => (
-              <>
-                {assignmentType === 'group' ? (
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {loading ? (
+            <div className="flex items-center justify-center p-4">
+              <p className="text-sm text-muted-foreground">Loading...</p>
+            </div>
+          ) : (
+            <>
+              <FormField
+                control={form.control}
+                name="teacher_id"
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Group</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a group">
-                            {groupsState.find(g => g.id.toString() === field.value)?.name || "Select a group"}
-                          </SelectValue>
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {groupsState.map((group) => (
-                          <SelectItem key={group.id} value={group.id.toString()}>
-                            {group.name} ({group.current_capacity}/{group.max_capacity} students)
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Select a group for the lesson
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                ) : null}
-              </>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="student_id"
-            render={({ field }) => (
-              <>
-                {assignmentType === 'private' ? (
-                  <FormItem>
-                    <FormLabel>Student</FormLabel>
+                    <FormLabel>Teacher</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={loading ? "Loading students..." : "Select a student"} />
+                          <SelectValue placeholder="Select a teacher" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {students.map((student) => (
-                          <SelectItem key={student.id} value={student.id}>
-                            {student.name}
+                        {teachers.map((teacher) => (
+                          <SelectItem key={teacher.id} value={teacher.id}>
+                            {teacher.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
-                ) : null}
-              </>
-            )}
-          />
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name="days"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Days</FormLabel>
-                <FormControl>
-                  <MultipleSelector
-                    value={field.value?.map((day: number) => DAYS_OPTIONS[day])}
-                    options={DAYS_OPTIONS}
-                    placeholder="Select days"
-                    onChange={(options: Option[]) => {
-                      field.onChange(options.map(opt => parseInt(opt.value)))
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <FormField
+                control={form.control}
+                name="assignmentType"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Assignment Type</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={(value) => {
+                          field.onChange(value)
+                          setAssignmentType(value as 'group' | 'private')
+                        }}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-1"
+                      >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="private" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Private Lesson
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="group" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Group Lesson
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name="start_time"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Start Time</FormLabel>
-                <FormControl>
-                  <Input type="time" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <FormField
+                control={form.control}
+                name="group_id"
+                render={({ field }) => (
+                  <>
+                    {assignmentType === 'group' ? (
+                      <FormItem>
+                        <FormLabel>Group</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a group">
+                                {groups.find(g => g.id.toString() === field.value)?.name || "Select a group"}
+                              </SelectValue>
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {groups.map((group) => (
+                              <SelectItem key={group.id} value={group.id.toString()}>
+                                {group.name} ({group.current_capacity}/{group.max_capacity} students)
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Select a group for the lesson
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    ) : null}
+                  </>
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name="end_time"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>End Time</FormLabel>
-                <FormControl>
-                  <Input type="time" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <FormField
+                control={form.control}
+                name="student_id"
+                render={({ field }) => (
+                  <>
+                    {assignmentType === 'private' ? (
+                      <FormItem>
+                        <FormLabel>Student</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a student" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {students.map((student) => (
+                              <SelectItem key={student.id} value={student.id}>
+                                {student.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    ) : null}
+                  </>
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name="is_recurring"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Is Recurring</FormLabel>
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    disabled={field.disabled}
-                    name={field.name}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <FormField
+                control={form.control}
+                name="days"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Days</FormLabel>
+                    <FormControl>
+                      <MultipleSelector
+                        value={field.value?.map((day: number) => DAYS_OPTIONS[day])}
+                        options={DAYS_OPTIONS}
+                        placeholder="Select days"
+                        onChange={(options: Option[]) => {
+                          field.onChange(options.map(opt => parseInt(opt.value)))
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <FormField
-            control={form.control}
-            name="payment"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Payment</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    placeholder="Enter payment amount"
-                    {...field}
-                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              <FormField
+                control={form.control}
+                name="start_time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Start Time</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          <Button type="submit">Create Schedule</Button>
+              <FormField
+                control={form.control}
+                name="end_time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>End Time</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="is_recurring"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Is Recurring</FormLabel>
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={field.disabled}
+                        name={field.name}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="payment"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Payment</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Enter payment amount"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Button type="submit">Create Schedule</Button>
+            </>
+          )}
         </form>
       </Form>
     </div>

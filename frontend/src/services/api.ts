@@ -1,6 +1,5 @@
 import axios from 'axios';
-import { TeacherSession, AttendanceRecord, ClassSchedule } from '@/types/session';
-// import { User } from '../types/auth';
+import { Session } from '@/types';
 
 const API_URL = 'http://localhost:8000/api';
 
@@ -113,6 +112,7 @@ export interface CreateGroupPayload {
   teacher: string;  // teacher ID
   max_capacity: number;
   status: string;
+  level: string;
   schedule?: {
     day: number;
     start_time: string;
@@ -450,7 +450,7 @@ export const groupApi = {
 
 // Session endpoint
 export const sessionApi = {
-  getSessionsByDate: async (date: string) => {
+  getSessionsByDate: async (date: string): Promise<Session[]> => {
     try {
       const { data } = await api.get(`/students/sessions/?date=${date}`);
       return data;
@@ -677,14 +677,27 @@ export const userApi = {
 
 // Attendance endpoint
 export const attendanceApi = {
-  getAttendanceLogs: async (startDate?: string, endDate?: string) => {
+  async getAttendanceLogs(startDate?: string, endDate?: string) {
     try {
       const params = new URLSearchParams();
       if (startDate) params.append('start_date', startDate);
       if (endDate) params.append('end_date', endDate);
+
+      const response = await api.get(`/attendance/logs/?${params.toString()}`);
       
-      const response = await api.get('/students/attendance-logs/', { params });
-      return response.data;
+      // Transform the data to match frontend requirements
+      return response.data.map((record: any) => ({
+        ...record,
+        // Add computed properties for frontend display
+        studentName: record.student.name,
+        date: record.session.date,
+        timeIn: record.session.start_time,
+        timeOut: record.session.end_time,
+        notes: '', // Optional field
+        grade: record.student.level || '', // Map from student level
+        language: record.session.type || '', // Map from session type
+        classId: record.session.id
+      }));
     } catch (error) {
       console.error('Error fetching attendance logs:', error);
       throw error;

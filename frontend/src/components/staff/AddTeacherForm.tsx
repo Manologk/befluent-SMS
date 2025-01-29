@@ -29,20 +29,25 @@ const formSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  phoneNumber: z.string().regex(phoneRegex, {
-    message: "Please enter a valid phone number.",
-  }),
   password: z.string().min(6, {
     message: "Password must be at least 6 characters.",
   }),
-  specializations: z.string().min(1, {
-    message: "Please enter at least one specialization.",
+  phone_number: z.string().min(10, {
+    message: "Phone number must be at least 10 digits.",
+  }).regex(phoneRegex, {
+    message: "Please enter a valid phone number.",
   }),
+  specializations: z.array(z.string()),
 })
 
 type FormValues = z.infer<typeof formSchema>
 
-export function AddTeacherForm({ className }: React.HTMLAttributes<HTMLDivElement>) {
+interface AddTeacherFormProps {
+  onSuccess: () => void;
+  className?: string;
+}
+
+export function AddTeacherForm({ onSuccess, className }: AddTeacherFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
 
@@ -51,41 +56,35 @@ export function AddTeacherForm({ className }: React.HTMLAttributes<HTMLDivElemen
     defaultValues: {
       name: "",
       email: "",
-      phoneNumber: "",
       password: "",
-      specializations: "",
+      phone_number: "",
+      specializations: [],
     },
   })
 
-  async function onSubmit(values: FormValues) {
+  async function onSubmit(data: FormValues) {
     setIsSubmitting(true)
     try {
       await teacherApi.createWithUser({
-        name: values.name,
-        email: values.email,
-        password: values.password,
-        phone_number: values.phoneNumber,
-        specializations: values.specializations.split(",").map(s => s.trim()).filter(Boolean),
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        phone_number: data.phone_number,
+        specializations: data.specializations,
       })
-
+      
       toast({
-        title: "Success!",
-        description: "Teacher has been successfully registered.",
+        title: "Success",
+        description: "Teacher added successfully",
       })
-
-      // Clear the form
+      
       form.reset()
-      
+      onSuccess()
       navigate('/staff')
-    } catch (error: any) {
-      console.error('Registration error:', error)
-      const errorMessage = error.response?.data?.detail || 
-                          Object.values(error.response?.data || {}).flat().join(', ') ||
-                          "Failed to register teacher. Please try again."
-      
+    } catch (error) {
       toast({
         title: "Error",
-        description: errorMessage,
+        description: "Failed to add teacher",
         variant: "destructive",
       })
     } finally {
@@ -106,43 +105,29 @@ export function AddTeacherForm({ className }: React.HTMLAttributes<HTMLDivElemen
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Full Name</FormLabel>
+                  <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="John Doe" {...field} />
+                    <Input {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
+            
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email Address</FormLabel>
+                  <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="john@example.com" {...field} />
+                    <Input type="email" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            <FormField
-              control={form.control}
-              name="phoneNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="+7 (999) 999-99-99" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+            
             <FormField
               control={form.control}
               name="password"
@@ -152,14 +137,25 @@ export function AddTeacherForm({ className }: React.HTMLAttributes<HTMLDivElemen
                   <FormControl>
                     <Input type="password" {...field} />
                   </FormControl>
-                  <FormDescription>
-                    At least 6 characters long.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="phone_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <Input type="tel" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
             <FormField
               control={form.control}
               name="specializations"

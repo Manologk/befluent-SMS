@@ -41,7 +41,27 @@ export const useAttendanceStore = create<AttendanceState & AttendanceActions>((s
     newScannedStudents.add(key);
 
     set({ 
-      records: [...records, newRecord],
+      records: [...records, {
+        id: newRecord.studentId + newRecord.timestamp,
+        student: {
+          id: newRecord.studentId,
+          name: 'Student',
+        },
+        studentName: 'Student',
+        session: {
+          id: newRecord.classId,
+          date: new Date().toISOString().split('T')[0],
+          start_time: '00:00',
+          end_time: '00:00',
+          type: 'GROUP'
+        },
+        date: new Date().toISOString().split('T')[0],
+        timeIn: '00:00',
+        timeOut: '00:00',
+        scanned_at: newRecord.timestamp,
+        valid: true,
+        status: 'present'
+      }],
       scannedStudents: newScannedStudents
     });
 
@@ -50,7 +70,7 @@ export const useAttendanceStore = create<AttendanceState & AttendanceActions>((s
 
   getAttendanceStatus: (classId) => {
     const { records } = get();
-    const classRecords = records.filter(r => r.classId === classId);
+    const classRecords = records.filter(r => r.session.id === classId);
     return {
       total: 3, // This would come from the class roster
       present: classRecords.length

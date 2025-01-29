@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input"
 import { toast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { userApi, studentApi, planApi, parentApi } from "@/services/api"
+import { studentApi, planApi, parentApi } from "@/services/api"
 import { useNavigate } from "react-router-dom"
 
 const phoneRegex = /^(\+7|8)?[\s-]?\(?[489][0-9]{2}\)?[\s-]?[0-9]{3}[\s-]?[0-9]{2}[\s-]?[0-9]{2}$/

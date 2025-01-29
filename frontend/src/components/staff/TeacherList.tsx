@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Users, UserPlus, Book, Edit, Eye } from 'lucide-react'
 import { teacherApi } from '@/services/api'
 import { AddTeacherDialog } from './AddTeacherDialog'
@@ -51,6 +51,7 @@ export function TeacherList() {
   }
 
   const handleViewAssignments = (teacher: Teacher) => {
+    console.log(`Viewing assignments for teacher: ${teacher.name}`);
     // TODO: Implement view assignments functionality
     toast({
       title: "Coming Soon",

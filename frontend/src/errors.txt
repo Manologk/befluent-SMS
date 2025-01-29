@@ -1,0 +1,53 @@
+src/components/CreateSchedule.tsx:90:15 - error TS6133: 'data' is declared but its value is never read.
+
+90         const data = await studentApi.getAll()
+                 ~~~~
+
+src/components/edit-student-dialog.tsx:140:72 - error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+
+140       const newParentId = values.parentId === "none" ? null : parseInt(values.parentId)
+                                                                           ~~~~~~~~~~~~~~~
+
+src/components/GroupManager/GroupManagement.tsx:15:35 - error TS6133: 'mockStudents' is declared but its value is never read.
+
+15 import { Student, Teacher, Group, mockStudents } from '@/types/groupManager';
+                                     ~~~~~~~~~~~~
+
+src/components/GroupManager/GroupManagement.tsx:23:10 - error TS6133: 'students' is declared but its value is never read.
+
+23   const [students, setStudents] = useState<Student[]>([]);
+            ~~~~~~~~
+
+src/components/GroupManager/GroupManagement.tsx:23:20 - error TS6133: 'setStudents' is declared but its value is never read.
+
+23   const [students, setStudents] = useState<Student[]>([]);
+                      ~~~~~~~~~~~
+
+src/components/GroupManager/GroupManagement.tsx:24:10 - error TS6133: 'teachers' is declared but its value is never read.
+
+24   const [teachers, setTeachers] = useState<Teacher[]>([]);
+            ~~~~~~~~
+
+src/components/GroupManager/GroupManagement.tsx:24:20 - error TS6133: 'setTeachers' is declared but its value is never read.
+
+24   const [teachers, setTeachers] = useState<Teacher[]>([]);
+                      ~~~~~~~~~~~
+
+src/components/GroupManager/GroupManagement.tsx:32:49 - error TS7006: Parameter 'g' implicitly has an 'any' type.
+
+32         const updatedGroup = response.data.find(g => g.id === selectedGroup.id);
+                                                   ~
+
+src/components/GroupManager/GroupManagement.tsx:154:13 - error TS2322: Type '(groupId: number) => Promise<void>' is not assignable to type '(groupId: string) => void'.
+  Types of parameters 'groupId' and 'groupId' are incompatible.
+    Type 'string' is not assignable to type 'number'.
+
+154             onDelete={handleDeleteGroup}
+                ~~~~~~~~
+
+  src/components/GroupManager/GroupList.tsx:17:3
+    17   onDelete: (groupId: string) => void;
+         ~~~~~~~~
+    The expected type comes from property 'onDelete' which is declared here on type 'IntrinsicAttributes & GroupListProps'
+

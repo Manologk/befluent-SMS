@@ -55,7 +55,7 @@ const LessonsCard = () => {
     }
 
 
-    const { lessons_remaining, subscription_balance, level } = studentData;
+    const { lessons_remaining } = studentData;
     const remainingLessons = lessons_remaining;
     const percentage = (remainingLessons / totalLessons) * 100;
     console.log("Remaining Lessons", lessons_remaining)   

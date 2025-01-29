@@ -1,11 +1,11 @@
-import React from 'react';
+// import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from "../lib/utils";
 import { useSidebar } from "@/components/SidebarProvider";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 import { Sheet, SheetContent } from "./ui/sheet";
-import { NotebookPen, Users, BookOpen, UserCog, Users2, PiggyBank, Bus, Library, UtensilsCrossed, Calendar, MessageSquare, BarChart, Settings, ChevronLeft, GraduationCap, QrCode } from 'lucide-react';
+import { NotebookPen, Users, BookOpen, UserCog, Users2, PiggyBank, Calendar, MessageSquare, BarChart, Settings, ChevronLeft, GraduationCap, QrCode } from 'lucide-react';
 
 const sidebarItems = [
   { name: "Dashboard", href: "/", icon: BarChart },
@@ -22,8 +22,10 @@ const sidebarItems = [
 ];
 
 export function Sidebar() {
-  const location = useLocation();
+  // const location = useLocation();
   const { state, open, setOpen, isMobile, openMobile, setOpenMobile } = useSidebar();
+
+  // const isActive = (href: string) => location.pathname === href;
 
   if (isMobile) {
     return (
@@ -64,6 +66,8 @@ function SidebarContent() {
   const location = useLocation();
   const { open } = useSidebar();
 
+  const isActive = (href: string) => location.pathname === href;
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex h-[52px] items-center gap-2 px-4 py-2">
@@ -78,9 +82,7 @@ function SidebarContent() {
               variant="ghost"
               className={cn(
                 "w-full justify-start",
-                location.pathname === item.href
-                  ? "bg-secondary"
-                  : "hover:bg-secondary/50",
+                isActive(item.href) ? "bg-secondary active-link-class" : "hover:bg-secondary/50",
                 !open && "justify-center"
               )}
               asChild

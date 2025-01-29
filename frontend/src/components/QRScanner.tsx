@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { toast } from 'react-hot-toast';
-import { studentApi } from '../services/api';
+// import { toast } from 'react-hot-toast';
+// import { studentApi } from '../services/api';
 
 interface QRScannerProps {
     onScanSuccess: (qrData: string) => void;

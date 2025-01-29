@@ -15,7 +15,7 @@ interface PlanTableProps {
 export const PlanTable: React.FC<PlanTableProps> = ({
   plans,
   selectedPlans,
-  sortConfig,
+  // sortConfig,
   onSort,
   onEdit,
   onDelete,
@@ -30,7 +30,7 @@ export const PlanTable: React.FC<PlanTableProps> = ({
               <input
                 type="checkbox"
                 className="rounded border-gray-300"
-                onChange={(e) => {
+                onChange={() => {
                   plans.forEach((plan) => onSelectPlan(plan.id));
                 }}
                 checked={selectedPlans.length === plans.length}

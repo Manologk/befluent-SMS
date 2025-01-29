@@ -98,10 +98,12 @@ export function StaffManagement() {
                 Fill in the details to add a new teacher.
               </DialogDescription>
             </DialogHeader>
-            <AddTeacherForm onSuccess={() => {
-              setIsAddTeacherOpen(false)
-              loadTeachers()
-            }} />
+            <AddTeacherForm 
+              onSuccess={() => {
+                loadTeachers();
+                setIsAddTeacherOpen(false);
+              }}
+            />
           </DialogContent>
         </Dialog>
       </CardHeader>

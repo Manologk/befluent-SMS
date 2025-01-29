@@ -1,4 +1,4 @@
-import React from 'react';
+// import React from 'react';
 import { QRCodeSection } from '@/components/QrCodeSection';
 import { LessonSchedule } from '@/components/LessonSchedule';
 import { LessonStatistics } from '@/components/LessonStatistics';

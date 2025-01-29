@@ -1,21 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import {  Clock } from 'lucide-react';
 import { format, startOfWeek, addDays, addWeeks, subWeeks, parseISO } from 'date-fns';
 import { sessionApi } from '@/services/api';
-
-interface Session {
-  id: number;
-  date: string;
-  start_time: string;
-  end_time: string;
-  type: 'GROUP' | 'PRIVATE';
-  status: string;
-  teacher: number;
-  student?: number;
-  group?: number;
-  student_name?: string;
-  group_name?: string;
-}
+import { Session } from '@/types';
 
 const WeeklyCalendar = () => {
   const [currentWeek, setCurrentWeek] = useState(new Date());
@@ -67,11 +54,11 @@ const WeeklyCalendar = () => {
   };
 
   const getSessionDisplayName = (session: Session) => {
-    if (session.type === 'PRIVATE' && session.student_name) {
-      return session.student_name;
+    if (session.type === 'PRIVATE' && session.student_details?.name) {
+      return session.student_details.name;
     }
-    if (session.type === 'GROUP' && session.group_name) {
-      return session.group_name;
+    if (session.type === 'GROUP' && session.className) {
+      return session.className;
     }
     return session.type;
   };

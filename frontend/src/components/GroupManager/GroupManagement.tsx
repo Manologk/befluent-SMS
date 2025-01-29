@@ -12,7 +12,7 @@ import { groupService } from '../../services/api';
 import GroupForm from './GroupForm';
 import GroupList from './GroupList';
 import MembersModal from './MembersModal';
-import { Student, Teacher, Group, mockStudents, mockTeachers } from '@/types/groupManager';
+import { Student, Teacher, Group, mockStudents } from '@/types/groupManager';
 
 export const GroupManagement: React.FC = () => {
   const [groups, setGroups] = useState<Group[]>([]);

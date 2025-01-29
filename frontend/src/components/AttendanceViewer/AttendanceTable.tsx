@@ -4,7 +4,7 @@ import { AttendanceRecord, AttendanceStatus } from '../../types/attendance';
 
 interface AttendanceTableProps {
   records: AttendanceRecord[];
-  onSort: (column: keyof AttendanceRecord) => void;
+  onSort: (column: 'student' | 'session' | 'status') => void;
   onExport: () => void;
   onPrint: () => void;
   onEdit: (record: AttendanceRecord) => void;
@@ -55,7 +55,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => onSort('studentName')}
+                onClick={() => onSort('student')}
               >
                 <div className="flex items-center">
                   Student Name
@@ -65,7 +65,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => onSort('date')}
+                onClick={() => onSort('session')}
               >
                 <div className="flex items-center">
                   Date
@@ -90,10 +90,10 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
             {records.map((record) => (
               <tr key={record.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {record.studentName}
+                  {record.student.name}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(record.date).toLocaleDateString()}
+                  {new Date(record.session.date).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(record.status)}`}>
@@ -101,7 +101,8 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {record.timeIn && record.timeOut ? `${record.timeIn} - ${record.timeOut}` : '-'}
+                  {record.session.start_time && record.session.end_time ? 
+                    `${record.session.start_time} - ${record.session.end_time}` : '-'}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {record.notes || '-'}

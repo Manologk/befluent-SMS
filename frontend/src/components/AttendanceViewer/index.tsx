@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Users, UserCheck, UserX, Clock } from 'lucide-react';
-import { Header } from './Header';
+import { Users, UserCheck, UserX } from 'lucide-react';
+import { Header } from "@/components/Header";
 import { StatsCard } from '@/components/AttendanceViewer/StatsCard';
 import { FilterBar } from '@/components/AttendanceViewer/FilterBar';
 import { DataTable } from '@/components/AttendanceViewer/DataTable';
@@ -73,27 +73,50 @@ export const AttendanceViewer: React.FC = () => {
     fetchAttendanceData();
   }, [filters.dateRange]);
 
-  const stats = {
-    total: filteredRecords.length,
-    present: filteredRecords.filter(r => r.status === 'present').length,
-    absent: filteredRecords.filter(r => r.status === 'absent').length,
-    late: filteredRecords.filter(r => r.status === 'late').length,
+  const handleFilterChange = (key: keyof AttendanceFilters, value: any) => {
+    setFilters(prev => ({
+      ...prev,
+      [key]: value
+    }));
   };
 
-  const handleFilterChange = (newFilters: AttendanceFilters) => {
-    setFilters(newFilters);
-  };
-
-  const handleSort = (column: keyof AttendanceRecord) => {
+  const handleSort = (column: 'student' | 'session' | 'status') => {
     const sorted = [...filteredRecords].sort((a, b) => {
-      const valueA = a[column];
-      const valueB = b[column];
-      
-      if (valueA === valueB) return 0;
+      // Get the values to compare based on the column
+      let valueA: any;
+      let valueB: any;
+
+      switch (column) {
+        case 'student':
+          valueA = a.student.name;
+          valueB = b.student.name;
+          break;
+        case 'session':
+          valueA = new Date(a.session.date).getTime();
+          valueB = new Date(b.session.date).getTime();
+          break;
+        case 'status':
+          valueA = a.status;
+          valueB = b.status;
+          break;
+        default:
+          return 0;
+      }
+
+      // Handle null/undefined values
       if (valueA === null || valueA === undefined) return 1;
       if (valueB === null || valueB === undefined) return -1;
+      if (valueA === valueB) return 0;
+
+      // Handle string comparisons
+      if (typeof valueA === 'string' && typeof valueB === 'string') {
+        return valueA.localeCompare(valueB);
+      }
+
+      // Default comparison
       return valueA < valueB ? -1 : 1;
     });
+
     setFilteredRecords(sorted);
   };
 
@@ -128,21 +151,6 @@ export const AttendanceViewer: React.FC = () => {
   const handleEdit = (record: AttendanceRecord) => {
     setSelectedRecord(record);
     setIsEditModalOpen(true);
-  };
-
-  const handleSaveRecord = async (updatedRecord: AttendanceRecord) => {
-    try {
-      await attendanceApi.updateAttendanceStatus(updatedRecord.id, updatedRecord.status);
-      const updatedRecords = records.map(record =>
-        record.id === updatedRecord.id ? updatedRecord : record
-      );
-      setRecords(updatedRecords);
-      setIsEditModalOpen(false);
-      setSelectedRecord(null);
-    } catch (err) {
-      console.error('Error updating record:', err);
-      setError('Failed to update attendance record');
-    }
   };
 
   const handleStatusChange = async (id: string, newStatus: 'present' | 'absent' | 'late') => {
@@ -190,17 +198,17 @@ export const AttendanceViewer: React.FC = () => {
     if (filters.dateRange.start && filters.dateRange.end) {
       filtered = filtered.filter(
         (record) =>
-          record.date >= filters.dateRange.start && record.date <= filters.dateRange.end
+          record.session.date >= filters.dateRange.start && record.session.date <= filters.dateRange.end
       );
     }
 
     if (filters.level) {
-      filtered = filtered.filter((record) => record.grade === filters.level);
+      filtered = filtered.filter((record) => (record.student.level || '') === filters.level);
     }
 
     if (filters.studentSearch) {
       filtered = filtered.filter((record) =>
-        record.studentName.toLowerCase().includes(filters.studentSearch.toLowerCase())
+        record.student.name.toLowerCase().includes(filters.studentSearch.toLowerCase())
       );
     }
 
@@ -209,7 +217,10 @@ export const AttendanceViewer: React.FC = () => {
     }
 
     if (filters.language) {
-      filtered = filtered.filter((record) => record.language === filters.language);
+      filtered = filtered.filter((record) => {
+        const sessionType = record.session.type === 'GROUP' ? 'Group' : 'Private';
+        return sessionType === filters.language;
+      });
     }
 
     setFilteredRecords(filtered);
@@ -218,7 +229,7 @@ export const AttendanceViewer: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Header />
+        <Header title="Loading Attendance Viewer" />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>

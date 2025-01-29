@@ -1,83 +1,71 @@
 import React from 'react';
 import { Search, Filter } from 'lucide-react';
-import { AttendanceFilters, AttendanceStatus, Language } from '../../types/attendance';
+import { AttendanceFilters } from '@/types/attendance';
 import { StatusFilter } from '@/components/AttendanceViewer/Filters/StatusFilter';
-import { LanguageFilter } from '@/components/AttendanceViewer/Filters/LanguangeFilter';
 
 interface FilterBarProps {
   filters: AttendanceFilters;
-  onFilterChange: (filters: AttendanceFilters) => void;
+  onFilterChange: (key: keyof AttendanceFilters, value: any) => void;
+  levels: string[];
+  statuses: string[];
 }
 
-export const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange }) => {
+export const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange, levels }) => {
   const handleChange = (field: keyof AttendanceFilters, value: any) => {
-    onFilterChange({ ...filters, [field]: value });
+    onFilterChange(field, value);
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-      <div className="p-4">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:space-x-4 space-y-4 lg:space-y-0">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                value={filters.studentSearch}
-                onChange={(e) => handleChange('studentSearch', e.target.value)}
-                placeholder="Search students..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-          
-          <div className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <select
-                value={filters.grade}
-                onChange={(e) => handleChange('grade', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              >
-                <option value="">All Grades</option>
-                <option value="10A">Grade 10A</option>
-                <option value="10B">Grade 10B</option>
-              </select>
-            </div>
-
-            <StatusFilter 
-              value={filters.status}
-              onChange={(value) => handleChange('status', value)}
-            />
-
-            <LanguageFilter
-              value={filters.language}
-              onChange={(value) => handleChange('language', value)}
-            />
-
-            <button className="inline-flex items-center px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50">
-              <Filter className="h-4 w-4 mr-2 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">More Filters</span>
-            </button>
-          </div>
+    <div className="bg-white p-4 rounded-lg shadow">
+      <div className="space-y-4">
+        <div className="relative">
+          <input
+            type="text"
+            value={filters.studentSearch}
+            onChange={(e) => handleChange('studentSearch', e.target.value)}
+            placeholder="Search students..."
+            className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          />
+          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
         </div>
-      </div>
-      
-      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <span className="text-sm text-gray-500">Date Range:</span>
-          <input
-            type="date"
-            value={filters.dateRange.start}
-            onChange={(e) => handleChange('dateRange', { ...filters.dateRange, start: e.target.value })}
-            className="px-3 py-1 border border-gray-200 rounded-md text-sm"
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="flex-1 min-w-[200px]">
+            <select
+              value={filters.level}
+              onChange={(e) => handleChange('level', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            >
+              <option value="">All Levels</option>
+              {levels.map((level) => (
+                <option key={level} value={level}>
+                  {level}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <StatusFilter
+            value={filters.status}
+            onChange={(value) => handleChange('status', value)}
           />
-          <span>-</span>
-          <input
-            type="date"
-            value={filters.dateRange.end}
-            onChange={(e) => handleChange('dateRange', { ...filters.dateRange, end: e.target.value })}
-            className="px-3 py-1 border border-gray-200 rounded-md text-sm"
-          />
+
+          <div className="flex-1 min-w-[200px]">
+            <select
+              value={filters.language}
+              onChange={(e) => handleChange('language', e.target.value as string)}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            >
+              <option value="">All Types</option>
+              <option value="Group">Group</option>
+              <option value="Private">Private</option>
+            </select>
+          </div>
+
+          <button className="inline-flex items-center px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50">
+            <Filter className="h-4 w-4 mr-2 text-gray-500" />
+            <span>More Filters</span>
+          </button>
         </div>
       </div>
     </div>

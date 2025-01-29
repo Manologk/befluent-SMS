@@ -24,7 +24,11 @@ interface StudentData {
     phone_numer: string;
 }
 
-const Header = () => {
+export interface HeaderProps {
+  title: string;
+}
+
+export const Header: React.FC<HeaderProps> = ({ title }) => {
     const [profileOpen, setProfileOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -48,7 +52,7 @@ const Header = () => {
             } catch (error) {
                 console.error('Failed to fetch student data:', error);
             } finally {
-                setLoading (false);
+                setLoading(false);
             }
         };
 
@@ -84,7 +88,7 @@ const Header = () => {
                             <p className="text-lg font-bold">{name}</p>
                             <p className="text-xs text-muted-foreground">{email}</p>
                             <p className="text-xs text-muted-foreground">
-                                {level} • {course}
+                                {level} • {title || course}
                             </p>
                         </div>
 

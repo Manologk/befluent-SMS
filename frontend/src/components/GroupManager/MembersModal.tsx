@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { X, Search, UserPlus, UserMinus, Users } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { X, Search, UserPlus, UserMinus, 
+  // Users
+ } from 'lucide-react';
 import { Student, Teacher, Group } from '@/types/groupManager';
 import { studentApi, teacherApi } from '@/services/api';
 
@@ -94,21 +96,31 @@ export function MembersModal({
     return [group.teacher];
   }, [group]);
 
-  const searchResults = activeTab === 'students'
-    ? students.filter(student => 
-        !localStudentIds.includes(student.id.toString()) && (
-          student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (student.level || '').toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      )
-    : teachers.filter(teacher =>
-        !localTeacherIds.includes(teacher.id.toString()) && (
-          teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (teacher.specializations || []).join(' ').toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      );
+  const searchResults = useMemo(() => {
+    setIsSearching(true);
+    try {
+      const results = activeTab === 'students'
+        ? students.filter(student => 
+            !localStudentIds.includes(student.id.toString()) && (
+              student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              (student.level || '').toLowerCase().includes(searchTerm.toLowerCase())
+            )
+          )
+        : teachers.filter(teacher =>
+            !localTeacherIds.includes(teacher.id.toString()) && (
+              teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              (teacher.specializations || []).join(' ').toLowerCase().includes(searchTerm.toLowerCase())
+            )
+          );
+      setIsSearching(false);
+      return results;
+    } catch (error) {
+      setIsSearching(false);
+      return [];
+    }
+  }, [activeTab, students, teachers, localStudentIds, localTeacherIds, searchTerm]);
 
   const toggleMember = async (id: string) => {
     try {
@@ -179,8 +191,8 @@ export function MembersModal({
             <h3 className="font-medium">{item.name}</h3>
             <p className="text-sm text-gray-500">
               {type === 'students' 
-                ? `Grade: ${(item as Student).grade} • ${item.email}`
-                : `Subject: ${(item as Teacher).subject} • ${item.email}`}
+                ? `Grade: ${(item as Student).name} • ${item.email}`
+                : `Subject: ${(item as Teacher).name} • ${item.email}`}
             </p>
           </div>
           {renderToggleButton(item.id.toString(), isSelected)}
@@ -255,45 +267,10 @@ export function MembersModal({
                   </h3>
                 </div>
                 <div className="flex-1 overflow-y-auto pr-2 space-y-2">
-                  {activeTab === 'students' ? (
-                    currentStudents.length > 0 ? (
-                      currentStudents.map((student) => (
-                        <div
-                          key={student.id}
-                          className="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
-                        >
-                          <div>
-                            <h3 className="font-medium">{student.name}</h3>
-                            <p className="text-sm text-gray-500">
-                              Level: {student.level} • {student.email}
-                            </p>
-                          </div>
-                          {renderToggleButton(student.id.toString(), true)}
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">No students in this group yet</p>
-                    )
-                  ) : (
-                    currentTeachers.length > 0 ? (
-                      currentTeachers.map((teacher) => (
-                        <div
-                          key={teacher.id}
-                          className="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
-                        >
-                          <div>
-                            <h3 className="font-medium">{teacher.name}</h3>
-                            <p className="text-sm text-gray-500">
-                              {teacher.specializations?.join(', ')} • {teacher.email}
-                            </p>
-                          </div>
-                          {renderToggleButton(teacher.id.toString(), true)}
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">No teachers in this group yet</p>
-                    )
-                  )}
+                  {activeTab === 'students' 
+                    ? renderMemberList(currentStudents, 'students')
+                    : renderMemberList(currentTeachers, 'teachers')
+                  }
                 </div>
               </div>
 
@@ -319,30 +296,17 @@ export function MembersModal({
                 </div>
 
                 <div className="flex-1 overflow-y-auto pr-2">
-                  <div className="space-y-2">
-                    {searchResults.length > 0 ? (
-                      searchResults.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center justify-between p-3 bg-white hover:bg-gray-50 rounded-lg border transition-colors"
-                        >
-                          <div>
-                            <h3 className="font-medium">{item.name}</h3>
-                            <p className="text-sm text-gray-500">
-                              {activeTab === 'students'
-                                ? `Level: ${(item as Student).level} • ${item.email}`
-                                : `${(item as Teacher).specializations?.join(', ')} • ${item.email}`}
-                            </p>
-                          </div>
-                          {renderToggleButton(item.id.toString(), false)}
-                        </div>
-                      ))
-                    ) : searchTerm ? (
-                      <p className="text-gray-500 text-center py-4">No results found</p>
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">Type to search...</p>
-                    )}
-                  </div>
+                  {isSearching ? (
+                    <div className="flex items-center justify-center p-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    </div>
+                  ) : searchResults.length > 0 ? (
+                    <div className="space-y-2">
+                      {renderMemberList(searchResults, activeTab)}
+                    </div>
+                  ) : searchTerm ? (
+                    <p className="text-gray-500 text-center py-4">No {activeTab} found matching "{searchTerm}"</p>
+                  ) : null}
                 </div>
               </div>
             </div>

@@ -4,13 +4,13 @@ import { ClassSchedule } from "@/types/attendance";
 import { useClassActivity } from "@/hooks/useClassActivity";
 import AttendanceScanner from "@/components/pages/AttendanceScanner";
 import { AttendanceProgress } from "./AttendanceProgress";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+// import {
+//   Card,
+//   CardContent,
+//   CardDescription,
+//   CardHeader,
+//   CardTitle,
+// } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,13 +23,9 @@ import {
 
 interface ClassCardProps {
   class_: ClassSchedule;
-  onStartScanning: (classId: string) => void;
 }
 
-export const ClassCard: React.FC<ClassCardProps> = ({
-  class_,
-  onStartScanning,
-}) => {
+export const ClassCard: React.FC<ClassCardProps> = ({ class_ }) => {
   const isActive = useClassActivity(class_.time);
 
   return (

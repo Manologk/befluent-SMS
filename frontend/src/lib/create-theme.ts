@@ -1,7 +1,5 @@
 export function createTheme(name: string, colors: Record<string, string>) {
-    return Object.entries(colors).map(([key, value]) => {
-      return `--${key}: ${value};`
+    return `/* Theme: ${name} */\n` + Object.entries(colors).map(([key, value]) => {
+      return `--${name}-${key}: ${value};`
     }).join('\n')
   }
-  
-  

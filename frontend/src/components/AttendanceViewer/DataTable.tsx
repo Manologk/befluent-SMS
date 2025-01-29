@@ -4,7 +4,7 @@ import { AttendanceRecord, AttendanceStatus } from '../../types/attendance';
 
 interface DataTableProps {
   records: AttendanceRecord[];
-  onSort: (column: keyof AttendanceRecord) => void;
+  onSort: (column: 'student' | 'session' | 'status') => void;
   onExport: () => void;
   onPrint: () => void;
   onEdit: (record: AttendanceRecord) => void;
@@ -56,7 +56,7 @@ export const DataTable: React.FC<DataTableProps> = ({
             <tr className="bg-gray-50">
               <th scope="col" className="px-6 py-3 text-left">
                 <button
-                  onClick={() => onSort('studentName')}
+                  onClick={() => onSort('student')}
                   className="flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Student
@@ -65,7 +65,7 @@ export const DataTable: React.FC<DataTableProps> = ({
               </th>
               <th scope="col" className="px-6 py-3 text-left">
                 <button
-                  onClick={() => onSort('date')}
+                  onClick={() => onSort('session')}
                   className="flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Date
@@ -93,26 +93,21 @@ export const DataTable: React.FC<DataTableProps> = ({
                   <div className="flex items-center">
                     <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
                       <span className="text-sm font-medium text-gray-600">
-                        {record.studentName.charAt(0)}
+                        {record.student.name.charAt(0)}
                       </span>
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">
-                        {record.studentName}
-                        {record.students && record.students.length > 0 && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            Group: {record.students.join(', ')}
-                          </div>
-                        )}
+                        {record.student.name}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {record.grade} • {record.language}
+                        {record.student.level || 'No Level'} • {record.session.type}
                       </div>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
-                  {new Date(record.date).toLocaleDateString()}
+                  {new Date(record.session.date).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4">
                   <span className={getStatusStyle(record.status)}>
@@ -120,10 +115,10 @@ export const DataTable: React.FC<DataTableProps> = ({
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
-                  {record.timeIn && record.timeOut ? (
+                  {record.session.start_time && record.session.end_time ? (
                     <div>
-                      <div>In: {record.timeIn}</div>
-                      <div>Out: {record.timeOut}</div>
+                      <div>In: {record.session.start_time}</div>
+                      <div>Out: {record.session.end_time}</div>
                     </div>
                   ) : (
                     '-'

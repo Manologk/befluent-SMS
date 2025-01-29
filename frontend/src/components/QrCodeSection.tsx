@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import QRCode from 'react-qr-code';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
 import { Maximize2, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+// import { motion, AnimatePresence } from 'framer-motion';
 
 export function QRCodeSection() {
   const [qrValue] = useState('https://example.com/student-id-12345');

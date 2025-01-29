@@ -19,18 +19,21 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { groupService } from '../../services/api';
+import { Group } from '@/types/groupManager';
 
 interface GroupFormProps {
   onSubmit: () => void;
   onCancel: () => void;
-  initialData?: {
-    id?: number;
-    name: string;
-    description: string;
-    language: string;
-    level: string;
-    max_capacity: number;
-  };
+  initialData?: Partial<Group>;
+}
+
+interface FormData {
+  name: string;
+  description: string;
+  language: string;
+  level: string;
+  max_capacity: number;
+  status: string;
 }
 
 const LANGUAGE_OPTIONS = [
@@ -60,12 +63,25 @@ export const GroupForm: React.FC<GroupFormProps> = ({
   onCancel,
   initialData,
 }) => {
-  const [formData, setFormData] = useState({
-    name: initialData?.name || '',
-    description: initialData?.description || '',
-    language: initialData?.language || '',
-    level: initialData?.level || '',
-    max_capacity: initialData?.max_capacity || 10,
+  const defaultFormData: FormData = {
+    name: '',
+    description: '',
+    language: '',
+    level: '',
+    max_capacity: 10,
+    status: 'active'
+  };
+
+  const [formData, setFormData] = useState<FormData>({
+    ...defaultFormData,
+    ...initialData && {
+      name: initialData.name ?? defaultFormData.name,
+      description: initialData.description ?? defaultFormData.description,
+      language: initialData.language ?? defaultFormData.language,
+      level: initialData.level ?? defaultFormData.level,
+      max_capacity: typeof initialData.max_capacity === 'number' ? initialData.max_capacity : defaultFormData.max_capacity,
+      status: initialData.status ?? defaultFormData.status,
+    }
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -98,15 +114,23 @@ export const GroupForm: React.FC<GroupFormProps> = ({
     }
 
     try {
+      const submitData = {
+        name: formData.name,
+        description: formData.description,
+        language: formData.language,
+        level: formData.level,
+        max_capacity: Number(formData.max_capacity),
+        status: formData.status
+      };
+
       if (initialData?.id) {
-        await groupService.updateGroup(initialData.id, formData);
+        await groupService.updateGroup(Number(initialData.id), submitData);
       } else {
-        await groupService.createGroup(formData);
+        await groupService.createGroup(submitData);
       }
       onSubmit();
     } catch (error) {
       console.error('Error saving group:', error);
-      // Handle error appropriately
     }
   };
 
@@ -139,7 +163,7 @@ export const GroupForm: React.FC<GroupFormProps> = ({
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
-              value={formData.description}
+              value={formData.description || ''}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Enter group description"
               rows={3}
@@ -196,8 +220,11 @@ export const GroupForm: React.FC<GroupFormProps> = ({
               id="max_capacity"
               type="number"
               min={1}
-              value={formData.max_capacity}
-              onChange={(e) => setFormData({ ...formData, max_capacity: parseInt(e.target.value) })}
+              value={formData.max_capacity.toString()}
+              onChange={(e) => {
+                const value = parseInt(e.target.value) || 1;
+                setFormData({ ...formData, max_capacity: value });
+              }}
               className={errors.max_capacity ? 'border-red-500' : ''}
             />
             {errors.max_capacity && (

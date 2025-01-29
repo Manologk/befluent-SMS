@@ -1,4 +1,4 @@
-import React from 'react';
+// import React from 'react';
 import { ParentManagement as ParentPortalComponent } from "@/components/ParentManagement";
 
 export default function ParentPortal() {

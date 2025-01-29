@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Calendar, Users } from 'lucide-react';
 
 export const Header = () => {

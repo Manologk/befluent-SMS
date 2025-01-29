@@ -1,4 +1,4 @@
-import React from 'react';
+// import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './components/theme-provider';
 import { Sidebar } from '@/components/Sidebar';
@@ -10,7 +10,7 @@ import Dashboard from '@/components/pages/Dashboard';
 import { Index as StudentDashboard } from '@/components/pages/StudentPortal';
 import StudentManagement from '@/components/pages/StudentManament';
 import ParentPortal from '@/components/pages/ParentPortal';
-import AttendanceScanner from '@/components/pages/AttendanceScanner';
+// import AttendanceScanner from '@/components/pages/AttendanceScanner';
 import StaffManagementPage from './components/pages/Staff';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LogoutButton } from './components/LogoutButton';

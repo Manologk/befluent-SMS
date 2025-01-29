@@ -1,17 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import QRScanner from '../QRScanner';
 import { useToast } from '@/hooks/use-toast';
-import { Card } from '../ui/card';
-import { studentApi, sessionApi, attendanceApi } from '@/services/api';
+import { 
+    // studentApi,
+     sessionApi, attendanceApi } from '@/services/api';
 import { format } from 'date-fns';
-
-interface Session {
-    id: string;
-    date: string;
-    start_time: string;
-    end_time: string;
-    status: string;
-}
+import { Session } from '@/types';
 
 const AttendanceScanner: React.FC = () => {
     const { toast } = useToast();
@@ -24,7 +18,7 @@ const AttendanceScanner: React.FC = () => {
             try {
                 setIsLoading(true);
                 const today = format(new Date(), 'yyyy-MM-dd');
-                const sessions = await sessionApi.getSessionsByDate(today);
+                const sessions: Session[] = await sessionApi.getSessionsByDate(today);
                 const activeSession = sessions.find(session => session.status === 'IN_PROGRESS');
                 
                 if (activeSession) {
@@ -66,7 +60,7 @@ const AttendanceScanner: React.FC = () => {
             const studentId = decodedText;
 
             // Create attendance log
-            const attendance = await attendanceApi.createAttendanceLog({
+            await attendanceApi.createAttendanceLog({
                 student: studentId,
                 session: currentSession.id
             });
