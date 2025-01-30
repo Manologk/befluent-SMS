@@ -212,6 +212,14 @@ class CreateStudentWithUserSerializer(serializers.Serializer):
     def create(self, validated_data):
         User = get_user_model()
         
+        # Get subscription plan details
+        subscription_plan = SubscriptionPlan.objects.filter(
+            name__iexact=validated_data['subscription_plan']
+        ).first()
+        
+        if not subscription_plan:
+            raise serializers.ValidationError(f"Subscription plan '{validated_data['subscription_plan']}' not found")
+
         # Create user
         user = User.objects.create_user(
             username=validated_data['email'],
@@ -220,14 +228,23 @@ class CreateStudentWithUserSerializer(serializers.Serializer):
             role='student'
         )
 
-        # Create student
+        # Create student with subscription details
         student = Student.objects.create(
             user=user,
             name=validated_data['name'],
             email=validated_data['email'],
             phone_number=validated_data.get('phone_number', ''),
-            level=validated_data.get('level', '')
+            level=validated_data.get('level', ''),
+            lessons_remaining=subscription_plan.number_of_lessons,
+            subscription_balance=subscription_plan.price
         )
+
+        # Generate QR code
+        try:
+            student.generate_qr_code()
+        except Exception as e:
+            # If QR generation fails, rollback the transaction
+            raise serializers.ValidationError(f"Failed to generate QR code: {str(e)}")
 
         return student
 

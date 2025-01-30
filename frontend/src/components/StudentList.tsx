@@ -47,6 +47,7 @@ interface Student {
   gpa: string;
   lessons_remaining: number;
   subscription_balance: number;
+  qr_code: string;
 }
 
 export type StudentListProps = {
@@ -174,7 +175,8 @@ export function StudentList({ className }: StudentListProps) {
         attendance: '95%',
         gpa: '3.8',
         lessons_remaining: student.lessons_remaining,
-        subscription_balance: student.subscription_balance
+        subscription_balance: student.subscription_balance,
+        qr_code: student.qr_code,
       }));
       
       setStudents(transformedData);
@@ -205,6 +207,11 @@ export function StudentList({ className }: StudentListProps) {
       columnFilters,
       columnVisibility,
       rowSelection,
+    },
+    initialState: {
+      pagination: {
+        pageSize: 6,
+      },
     },
   })
 
@@ -295,19 +302,7 @@ export function StudentList({ className }: StudentListProps) {
             ))}
           </TableHeader>
           <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  Loading...
-                </TableCell>
-              </TableRow>
-            ) : error ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center text-red-500">
-                  {error}
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows?.length ? (
+            {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -336,12 +331,12 @@ export function StudentList({ className }: StudentListProps) {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
+      <div className="flex items-center justify-between space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}
           {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
-        <div className="space-x-2">
+        <div className="flex items-center space-x-2">
           <Button
             variant="outline"
             size="sm"
@@ -350,6 +345,12 @@ export function StudentList({ className }: StudentListProps) {
           >
             Previous
           </Button>
+          <div className="flex items-center gap-1">
+            <span className="text-sm font-medium">
+              Page {table.getState().pagination.pageIndex + 1} of{" "}
+              {table.getPageCount()}
+            </span>
+          </div>
           <Button
             variant="outline"
             size="sm"
@@ -364,8 +365,11 @@ export function StudentList({ className }: StudentListProps) {
         <EditStudentDialog
           student={editingStudent}
           open={!!editingStudent}
-          onOpenChange={(open) => !open && setEditingStudent(null)}
-          onSuccess={fetchStudents}
+          onOpenChange={() => setEditingStudent(null)}
+          onSuccess={() => {
+            setEditingStudent(null)
+            fetchStudents()
+          }}
         />
       )}
     </div>

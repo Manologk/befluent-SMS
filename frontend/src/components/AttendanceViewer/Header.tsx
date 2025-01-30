@@ -1,7 +1,10 @@
-
 import { Calendar, Users } from 'lucide-react';
 
-export const Header = () => {
+interface HeaderProps {
+  title?: string;
+}
+
+export const Header: React.FC<HeaderProps> = () => {
   return (
     <div className="bg-white border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

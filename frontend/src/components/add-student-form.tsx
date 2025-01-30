@@ -228,21 +228,20 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a plan" />
+                        <SelectValue placeholder="Select a subscription plan" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {plans && plans.length > 0 ? (
-                        plans.map((plan) => (
-                          <SelectItem key={plan.id} value={plan.name.toLowerCase()}>
-                            {plan.name}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="no_plans" disabled>No plans available</SelectItem>
-                      )}
+                      {plans.map((plan) => (
+                        <SelectItem key={plan.id} value={plan.name}>
+                          {plan.name} - {plan.number_of_lessons} lessons (₽{plan.price})
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
+                  <FormDescription>
+                    The selected plan will determine the initial number of lessons and subscription balance.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

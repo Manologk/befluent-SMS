@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Users, UserCheck, UserX } from 'lucide-react';
-import { Header } from "@/components/Header";
+import { Header } from "@/components/AttendanceViewer/Header";
 import { StatsCard } from '@/components/AttendanceViewer/StatsCard';
 import { FilterBar } from '@/components/AttendanceViewer/FilterBar';
 import { DataTable } from '@/components/AttendanceViewer/DataTable';

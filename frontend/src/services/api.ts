@@ -683,7 +683,7 @@ export const attendanceApi = {
       if (startDate) params.append('start_date', startDate);
       if (endDate) params.append('end_date', endDate);
 
-      const response = await api.get(`/attendance/logs/?${params.toString()}`);
+      const response = await api.get(`/attendance-logs/?${params.toString()}`);
       
       // Transform the data to match frontend requirements
       return response.data.map((record: any) => ({
