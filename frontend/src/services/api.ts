@@ -1,5 +1,12 @@
 import axios from 'axios';
 import { Session } from '@/types';
+import { 
+  AttendanceStatus, 
+  Language, 
+  AttendanceRecord,
+  AttendanceFilters,
+  AttendanceUpdateResponse
+} from '@/types/attendance';
 
 const API_URL = 'http://localhost:8000/api';
 
@@ -675,36 +682,90 @@ export const userApi = {
   }
 };
 
-// Attendance endpoint
+// Updated attendance API endpoints
 export const attendanceApi = {
-  async getAttendanceLogs(startDate?: string, endDate?: string) {
+  async getAttendanceLogs(filters?: Partial<AttendanceFilters>) {
     try {
       const params = new URLSearchParams();
-      if (startDate) params.append('start_date', startDate);
-      if (endDate) params.append('end_date', endDate);
+      if (filters?.dateRange?.start) params.append('start_date', filters.dateRange.start);
+      if (filters?.dateRange?.end) params.append('end_date', filters.dateRange.end);
+      if (filters?.studentSearch) params.append('student_search', filters.studentSearch);
+      if (filters?.level) params.append('level', filters.level);
+      if (filters?.status) params.append('status', filters.status);
+      if (filters?.language) params.append('language', filters.language);
 
-      const response = await api.get(`/attendance-logs/?${params.toString()}`);
-      
-      // Transform the data to match frontend requirements
-      return response.data.map((record: any) => ({
-        ...record,
-        // Add computed properties for frontend display
-        studentName: record.student.name,
-        date: record.session.date,
-        timeIn: record.session.start_time,
-        timeOut: record.session.end_time,
-        notes: '', // Optional field
-        grade: record.student.level || '', // Map from student level
-        language: record.session.type || '', // Map from session type
-        classId: record.session.id
-      }));
+      console.log('Fetching attendance logs with params:', params.toString());
+      const response = await api.get(`/students/attendance-logs/?${params.toString()}`);
+      console.log('Raw API Response:', response.data);
+
+      if (!Array.isArray(response.data)) {
+        console.error('API response is not an array:', response.data);
+        return [];
+      }
+
+      const mappedRecords = response.data.map((record: any) => {
+        console.log('Processing record:', record);
+        
+        if (!record || !record.id) {
+          console.error('Invalid record structure:', record);
+          return null;
+        }
+
+        // Ensure status is a valid AttendanceStatus
+        const status = record.status === 'present' || record.status === 'absent' || record.status === 'late' 
+          ? record.status as AttendanceStatus 
+          : 'absent' as AttendanceStatus;
+
+        // Ensure language is a valid Language type
+        const language = record.language === 'Group' || record.language === 'Private'
+          ? record.language as Language
+          : undefined;
+
+        // Map the flattened structure to match AttendanceRecord interface
+        const mappedRecord: AttendanceRecord = {
+          id: record.id.toString(),
+          student: {
+            id: record.studentId?.toString() || '',
+            name: record.studentName || 'Unknown Student',
+            level: record.grade || ''
+          },
+          session: {
+            id: record.id.toString(),
+            date: record.date || '',
+            start_time: record.timeIn || '',
+            end_time: record.timeOut || '',
+            type: record.language === 'Group' ? 'GROUP' : 'PRIVATE'
+          },
+          scanned_at: record.timestamp || new Date().toISOString(),
+          valid: true,
+          status,
+          studentName: record.studentName || 'Unknown Student',
+          date: record.date || '',
+          timeIn: record.timeIn || '',
+          timeOut: record.timeOut || '',
+          notes: record.notes || '',
+          grade: record.grade || '',
+          language,
+          classId: record.id.toString()
+        };
+
+        return mappedRecord;
+      }).filter((record): record is AttendanceRecord => record !== null);
+
+      console.log('Mapped records:', mappedRecords);
+      return mappedRecords;
     } catch (error) {
       console.error('Error fetching attendance logs:', error);
       throw error;
     }
   },
 
-  createAttendanceLog: async (data: { student: string; session: string }) => {
+  async createAttendanceLog(data: {
+    student_id: number;
+    session_id: number;
+    status: AttendanceStatus;
+    notes?: string;
+  }) {
     try {
       const response = await api.post('/students/attendance-logs/', data);
       return response.data;
@@ -714,15 +775,43 @@ export const attendanceApi = {
     }
   },
 
-  updateAttendanceStatus: async (id: string, status: 'present' | 'absent' | 'late') => {
+  async updateAttendanceStatus(
+    attendanceId: number,
+    data: {
+      status: AttendanceStatus;
+      notes?: string;
+    }
+  ): Promise<AttendanceUpdateResponse> {
     try {
-      const response = await api.post('/students/attendance-logs/update_status/', {
-        id,
-        status
-      });
+      const response = await api.patch(`/students/attendance-logs/${attendanceId}/`, data);
       return response.data;
     } catch (error) {
       console.error('Error updating attendance status:', error);
+      throw error;
+    }
+  },
+
+  async getStudentAttendance(studentId: number, startDate?: string, endDate?: string) {
+    try {
+      const params = new URLSearchParams();
+      params.append('student_id', studentId.toString());
+      if (startDate) params.append('start_date', startDate);
+      if (endDate) params.append('end_date', endDate);
+
+      const response = await api.get(`/students/attendance-logs/student/?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching student attendance:', error);
+      throw error;
+    }
+  },
+
+  async getSessionAttendance(sessionId: number) {
+    try {
+      const response = await api.get(`/students/attendance-logs/session/${sessionId}/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching session attendance:', error);
       throw error;
     }
   }

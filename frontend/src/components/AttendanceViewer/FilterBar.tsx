@@ -2,6 +2,7 @@ import React from 'react';
 import { Search, Filter } from 'lucide-react';
 import { AttendanceFilters } from '@/types/attendance';
 import { StatusFilter } from '@/components/AttendanceViewer/Filters/StatusFilter';
+import { DateRangeFilter } from '@/components/AttendanceViewer/Filters/DateRangeFilter';
 
 interface FilterBarProps {
   filters: AttendanceFilters;
@@ -18,6 +19,13 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange, l
   return (
     <div className="bg-white p-4 rounded-lg shadow">
       <div className="space-y-4">
+        <DateRangeFilter
+          startDate={filters.dateRange.start}
+          endDate={filters.dateRange.end}
+          onStartDateChange={(date) => handleChange('dateRange', { ...filters.dateRange, start: date })}
+          onEndDateChange={(date) => handleChange('dateRange', { ...filters.dateRange, end: date })}
+        />
+
         <div className="relative">
           <input
             type="text"

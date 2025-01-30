@@ -5,7 +5,7 @@ import { StatsCard } from '@/components/AttendanceViewer/StatsCard';
 import { FilterBar } from '@/components/AttendanceViewer/FilterBar';
 import { DataTable } from '@/components/AttendanceViewer/DataTable';
 import { EditRecordModal } from '@/components/AttendanceViewer/Modals/EditRecordModal';
-import { AttendanceRecord, AttendanceFilters } from '../../types/attendance';
+import { AttendanceRecord, AttendanceFilters, AttendanceStatus } from '../../types/attendance';
 import { attendanceApi } from '@/services/api';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -29,7 +29,7 @@ export const AttendanceViewer: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<AttendanceFilters>({
     dateRange: { 
-      start: format(new Date(), 'yyyy-MM-dd'),
+      start: format(new Date(new Date().setDate(new Date().getDate() - 30)), 'yyyy-MM-dd'), // Last 30 days
       end: format(new Date(), 'yyyy-MM-dd')
     },
     level: '',
@@ -42,6 +42,13 @@ export const AttendanceViewer: React.FC = () => {
 
   const paginatedRecords = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
+    console.log('Paginating records:', {
+      total: filteredRecords.length,
+      currentPage,
+      startIndex,
+      itemsPerPage,
+      pageRecords: filteredRecords.slice(startIndex, startIndex + itemsPerPage)
+    });
     return filteredRecords.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredRecords, currentPage]);
 
@@ -55,10 +62,20 @@ export const AttendanceViewer: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await attendanceApi.getAttendanceLogs(
-        filters.dateRange.start,
-        filters.dateRange.end
-      );
+      console.log('Fetching attendance with filters:', filters); // Debug log
+      const data = await attendanceApi.getAttendanceLogs({
+        dateRange: {
+          start: filters.dateRange.start,
+          end: filters.dateRange.end
+        }
+      });
+      console.log('Raw attendance data:', data); // Debug log
+      if (!Array.isArray(data)) {
+        throw new Error('Received invalid data format from API');
+      }
+      if (data.length === 0) {
+        console.log('No attendance records found for the date range');
+      }
       setRecords(data);
       setFilteredRecords(data);
     } catch (err) {
@@ -153,18 +170,20 @@ export const AttendanceViewer: React.FC = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleStatusChange = async (id: string, newStatus: 'present' | 'absent' | 'late') => {
+  const handleStatusChange = async (id: string | number, newStatus: AttendanceStatus) => {
     try {
       setLoading(true);
       console.log('Updating status:', { id, newStatus }); // Debug log
       
-      const result = await attendanceApi.updateAttendanceStatus(id, newStatus);
+      const result = await attendanceApi.updateAttendanceStatus(Number(id), {
+        status: newStatus
+      });
       console.log('API response:', result); // Debug log
       
       // Update the records with the new attendance status
       setRecords(prevRecords => 
         prevRecords.map(record => 
-          record.id === id 
+          record.id === id.toString() 
             ? { 
                 ...record, 
                 status: newStatus,
@@ -185,7 +204,7 @@ export const AttendanceViewer: React.FC = () => {
     }
   };
 
-  const handleEditSubmit = async (data: { status: 'present' | 'absent' | 'late' }) => {
+  const handleEditSubmit = async (data: { status: AttendanceStatus }) => {
     if (selectedRecord) {
       await handleStatusChange(selectedRecord.id, data.status);
       setIsEditModalOpen(false);
@@ -196,10 +215,12 @@ export const AttendanceViewer: React.FC = () => {
     let filtered = [...records];
 
     if (filters.dateRange.start && filters.dateRange.end) {
-      filtered = filtered.filter(
-        (record) =>
-          record.session.date >= filters.dateRange.start && record.session.date <= filters.dateRange.end
-      );
+      filtered = filtered.filter((record) => {
+        const recordDate = new Date(record.session.date);
+        const startDate = new Date(filters.dateRange.start);
+        const endDate = new Date(filters.dateRange.end);
+        return recordDate >= startDate && recordDate <= endDate;
+      });
     }
 
     if (filters.level) {
@@ -217,10 +238,7 @@ export const AttendanceViewer: React.FC = () => {
     }
 
     if (filters.language) {
-      filtered = filtered.filter((record) => {
-        const sessionType = record.session.type === 'GROUP' ? 'Group' : 'Private';
-        return sessionType === filters.language;
-      });
+      filtered = filtered.filter((record) => record.language === filters.language);
     }
 
     setFilteredRecords(filtered);

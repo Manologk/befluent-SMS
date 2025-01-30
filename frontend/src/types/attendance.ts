@@ -34,7 +34,7 @@ export interface AttendanceRecord {
     date: string;
     start_time: string;
     end_time: string;
-    type: 'GROUP' | 'PRIVATE';
+    type: SessionType;
   };
   scanned_at: string;
   valid: boolean;
@@ -46,7 +46,7 @@ export interface AttendanceRecord {
   timeOut: string;     // Computed from session.end_time
   notes?: string;      // Optional notes field
   grade?: string;      // Optional grade field
-  language?: string;   // Optional language field
+  language?: Language;  // Optional language field
   classId?: string;    // Optional class ID reference
 }
 
