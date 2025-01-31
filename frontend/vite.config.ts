@@ -12,6 +12,7 @@ export default defineConfig({
         secure: false,
         configure: (proxy, _options) => {
           proxy.on('proxyReq', (proxyReq, _req, _res) => {
+            proxyReq.setHeader('Origin', 'https://befluent-sms.vercel.app');
             proxyReq.setHeader('Access-Control-Allow-Credentials', 'true');
           });
         },

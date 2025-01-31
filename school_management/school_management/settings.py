@@ -167,7 +167,6 @@ REST_FRAMEWORK = {
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://befluent-sms.onrender.com",
     "https://befluent-sms.vercel.app"
 ]
 
@@ -175,9 +174,11 @@ CORS_ALLOW_CREDENTIALS = True
 
 CORS_ORIGIN_WHITELIST = [
     "http://localhost:5173",
-    "https://befluent-sms.onrender.com",
     "https://befluent-sms.vercel.app"
 ]
+
+# Remove CORS_ALLOW_ALL_ORIGINS if it exists
+CORS_ALLOW_ALL_ORIGINS = False
 
 CORS_ALLOW_METHODS = [
     'DELETE',
@@ -198,9 +199,9 @@ CORS_ALLOW_HEADERS = [
     'user-agent',
     'x-csrftoken',
     'x-requested-with',
+    'access-control-allow-credentials',
 ]
 
-# Add CORS_EXPOSE_HEADERS
 CORS_EXPOSE_HEADERS = [
     'access-control-allow-origin',
     'access-control-allow-credentials',
@@ -222,8 +223,8 @@ CSRF_COOKIE_SAMESITE = 'None'
 
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = [
-    "https://befluent-sms.onrender.com",
-    "http://localhost:5173",
+    "https://befluent-sms.vercel.app",
+    "http://localhost:5173"
 ]
 
 # Add this to handle preflight requests

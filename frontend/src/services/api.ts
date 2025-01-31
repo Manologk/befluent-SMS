@@ -23,9 +23,15 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Add request interceptor
+// Add request interceptor with debug logging
 api.interceptors.request.use(
   (config) => {
+    // Add CORS headers for production
+    if (import.meta.env.PROD) {
+      config.headers['Access-Control-Allow-Origin'] = 'https://befluent-sms.vercel.app';
+      config.headers['Access-Control-Allow-Credentials'] = 'true';
+    }
+    
     console.log('Request Config:', {
       url: config.url,
       method: config.method,
