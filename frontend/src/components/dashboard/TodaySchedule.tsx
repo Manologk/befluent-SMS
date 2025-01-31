@@ -1,74 +1,103 @@
-import { useEffect, useState } from 'react';
-import { format } from 'date-fns';
+import { useState, useEffect } from 'react';
 import { ClassSchedule } from '@/types/attendance';
+import { ClassCard } from './ClassCard';
+import { useAttendanceStore } from '../../store/attendanceStore';
 import { sessionApi } from '@/services/api';
-// import { useAttendanceStore } from '@/store/attendanceStore';
-import { useToast } from '@/hooks/use-toast';
-import { ClassCard } from '@/components/ClassCard';
+import { format } from 'date-fns';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useToast } from '@/hooks/use-toast';
+import AttendanceScanner from '@/components/pages/AttendanceScanner';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 const TodaySchedule = () => {
+  const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [sessions, setSessions] = useState<ClassSchedule[]>([]);
-  // const { startScanning } = useAttendanceStore();
+  const { startScanning, stopScanning, isScanning } = useAttendanceStore();
   const { toast } = useToast();
 
   useEffect(() => {
-    async function fetchData() {
+    const fetchSessions = async () => {
       try {
         const today = format(new Date(), 'yyyy-MM-dd');
         console.log('Fetching sessions for date:', today);
         const data = await sessionApi.getTeacherSessions(today);
+        // Sort sessions by start time
         const sortedData = data.sort((a: ClassSchedule, b: ClassSchedule) => {
-          const timeA = new Date(`1970/01/01 ${a.time}`).getTime();
-          const timeB = new Date(`1970/01/01 ${b.time}`).getTime();
-          return timeA - timeB;
+          return a.time.localeCompare(b.time);
         });
         setSessions(sortedData);
       } catch (error) {
         console.error('Error fetching sessions:', error);
         toast({
-          title: "Error",
-          description: "Failed to fetch today's sessions",
-          variant: "destructive",
+          title: 'Error',
+          description: 'Failed to load sessions. Please try again.',
+          variant: 'destructive',
         });
       } finally {
         setLoading(false);
       }
-    }
+    };
 
-    fetchData();
+    fetchSessions();
   }, [toast]);
 
-  // const handleStartScanning = () => {
-  //   startScanning();
-  // };
+  const handleStartScanning = (classId: string) => {
+    setSelectedClass(classId);
+    startScanning();
+  };
+
+  const handleStopScanning = () => {
+    setSelectedClass(null);
+    stopScanning();
+  };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <LoadingSpinner />
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="flex items-center justify-center h-48">
+          <LoadingSpinner className="w-8 h-8 text-blue-500" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Today's Schedule</h2>
+    <div className="bg-white rounded-lg shadow-sm p-6">
+      <h2 className="text-2xl font-semibold text-gray-800 mb-6">Today's Schedule</h2>
       {sessions.length === 0 ? (
-        <div className="text-center text-gray-500">
+        <div className="text-center py-8 text-gray-500">
           No sessions scheduled for today
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sessions.map((class_) => (
+        <div className="space-y-4">
+          {sessions.map((session) => (
             <ClassCard
-              key={class_.id}
-              class_={class_}
+              key={session.id}
+              class_={session}
+              onStartScanning={handleStartScanning}
             />
           ))}
         </div>
       )}
+
+      <Dialog open={isScanning} onOpenChange={(open) => !open && handleStopScanning()}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Mark Attendance</DialogTitle>
+            <DialogDescription>
+              Scan the student's QR code to mark attendance for this class.
+            </DialogDescription>
+          </DialogHeader>
+          {isScanning && <AttendanceScanner />}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

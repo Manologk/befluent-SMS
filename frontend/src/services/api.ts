@@ -38,11 +38,23 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
-      // Handle token refresh or logout
+    const originalRequest = error.config;
+
+    // Handle token expiration
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      // Clear auth data
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      localStorage.removeItem('user');
+      localStorage.removeItem('refresh');
+
+      // Only redirect to login if not already on login page
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
     }
+
     return Promise.reject(error);
   }
 );
@@ -150,24 +162,11 @@ export interface CreatePlanPayload {
 export const authApi = {
   login: async (credentials: { email: string; password: string }) => {
     try {
-      console.log('Sending login request with:', credentials);
       const { data } = await api.post('/token/', credentials);
-      console.log('Raw login response:', data);
       
-      // Store the tokens
-      localStorage.setItem('token', data.access);
-      if (data.refresh) {
-        localStorage.setItem('refresh', data.refresh);
+      if (!data || !data.access) {
+        throw new Error('Invalid response from server');
       }
-
-      // Get user details from token response
-      // const userResponse = await api.get('/accounts/', {
-      //   headers: {
-      //     Authorization: `Bearer ${data.access}`
-      //   }
-      // });
-      
-      // console.log('User details:', userResponse.data);
 
       return {
         access: data.access,
@@ -184,6 +183,7 @@ export const authApi = {
 
   logout: async (): Promise<void> => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     localStorage.removeItem('refresh');
   }
 };

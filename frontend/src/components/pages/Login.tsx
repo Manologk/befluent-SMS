@@ -26,13 +26,12 @@ export default function Login() {
     try {
       const response = await authApi.login({ email, password })
       
-      if (!response.access) {
+      // Check for valid response with required fields
+      if (!response || !response.access || !response.user_id || !response.email || !response.role) {
         throw new Error('Invalid response from server')
       }
 
-      // Store token in localStorage
-      localStorage.setItem('token', response.access)
-      
+      // Login successful - update auth context
       login(response.access, {
         user_id: response.user_id,
         email: response.email,
@@ -44,14 +43,29 @@ export default function Login() {
         description: 'Welcome back!',
       })
 
-      navigate('/')
-    } catch (error) {
+      // Only navigate on successful login
+      navigate('/', { replace: true })
+    } catch (error: any) {
       console.error('Login error:', error)
+      
+      // Handle specific error cases
+      let errorMessage = 'Please check your credentials and try again.'
+      if (error.response?.status === 401) {
+        errorMessage = 'Invalid email or password.'
+      } else if (error.response?.status === 429) {
+        errorMessage = 'Too many login attempts. Please try again later.'
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+
       toast({
         title: 'Login failed',
-        description: error instanceof Error ? error.message : 'Please check your credentials and try again.',
+        description: errorMessage,
         variant: 'destructive',
       })
+
+      // Clear password on failed login
+      setPassword('')
     } finally {
       setIsLoading(false)
     }
