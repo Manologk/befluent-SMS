@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://moenytransfer.onrender.com',
+        target: 'https://befluent-sms.onrender.com',
         changeOrigin: true,
         secure: false,
         configure: (proxy, _options) => {
