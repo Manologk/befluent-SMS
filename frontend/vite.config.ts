@@ -10,7 +10,11 @@ export default defineConfig({
         target: 'https://moenytransfer.onrender.com',
         changeOrigin: true,
         secure: false,
-        //withCredentials: true,
+        configure: (proxy, _options) => {
+          proxy.on('proxyReq', (proxyReq, _req, _res) => {
+            proxyReq.setHeader('Access-Control-Allow-Credentials', 'true');
+          });
+        },
         rewrite: (path) => path.replace(/^\/api/, '/api'),
       },
     },
