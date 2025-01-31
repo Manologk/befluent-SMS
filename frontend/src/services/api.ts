@@ -8,7 +8,7 @@ import {
   AttendanceUpdateResponse
 } from '@/types/attendance';
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = 'https://moenytransfer.onrender.com/api';
 
 // Create axios instance with default config
 const api = axios.create({
