@@ -78,14 +78,28 @@ WSGI_APPLICATION = 'school_management.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'school_management',
+#         'USER': 'postgres',
+#         'PASSWORD': 'Manolo29',
+#     }
+# }
+
+
+#LIVE DB
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'school_management',
-        'USER': 'postgres',
-        'PASSWORD': 'Manolo29',
+        'HOST': 'befluent-db-payslipapp.g.aivencloud.com',
+        'NAME': 'defaultdb',
+        'USER': 'avnadmin',
+        'PASSWORD': 'AVNS_vHj4SJKsiWdjW6wxzvX',
+        'PORT': '16595'
     }
 }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
