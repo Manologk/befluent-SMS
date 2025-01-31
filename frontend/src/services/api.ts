@@ -10,7 +10,7 @@ import {
 
 // Use the full URL in production, relative URL in development
 const API_URL = import.meta.env.PROD 
-  ? 'https://moenytransfer.onrender.com/api'
+  ? 'https://befluent-sms.onrender.com/api'
   : '/api';
 
 // Create axios instance with default config
