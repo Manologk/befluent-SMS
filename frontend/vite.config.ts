@@ -10,6 +10,7 @@ export default defineConfig({
         target: 'https://moenytransfer.onrender.com',
         changeOrigin: true,
         secure: false,
+        //withCredentials: true,
         rewrite: (path) => path.replace(/^\/api/, '/api'),
       },
     },
