@@ -21,15 +21,15 @@ const api = axios.create({
     'Accept': 'application/json',
   },
   withCredentials: true,
+  timeout: 10000, // 10 second timeout
 });
 
-// Add request interceptor with debug logging
+// Add request interceptor
 api.interceptors.request.use(
   (config) => {
     // Add CORS headers for production
     if (import.meta.env.PROD) {
-      config.headers['Access-Control-Allow-Origin'] = 'https://befluent-sms.vercel.app';
-      config.headers['Access-Control-Allow-Credentials'] = 'true';
+      config.headers['Origin'] = 'https://befluent-sms.vercel.app';
     }
     
     console.log('Request Config:', {
@@ -63,6 +63,15 @@ api.interceptors.response.use(
     return response;
   },
   async (error) => {
+    // Network error handling
+    if (!error.response) {
+      console.error('Network Error:', {
+        message: error.message,
+        config: error.config
+      });
+      throw new Error('Network error: Please check your connection and try again');
+    }
+
     console.error('Response Error:', {
       status: error.response?.status,
       headers: error.response?.headers,
