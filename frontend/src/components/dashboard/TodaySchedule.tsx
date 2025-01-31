@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dialog";
 
 const TodaySchedule = () => {
-  const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [sessions, setSessions] = useState<ClassSchedule[]>([]);
   const { startScanning, stopScanning, isScanning } = useAttendanceStore();
@@ -48,14 +47,8 @@ const TodaySchedule = () => {
     fetchSessions();
   }, [toast]);
 
-  const handleStartScanning = (classId: string) => {
-    setSelectedClass(classId);
+  const handleStartScanning = () => {
     startScanning();
-  };
-
-  const handleStopScanning = () => {
-    setSelectedClass(null);
-    stopScanning();
   };
 
   if (loading) {
@@ -87,7 +80,7 @@ const TodaySchedule = () => {
         </div>
       )}
 
-      <Dialog open={isScanning} onOpenChange={(open) => !open && handleStopScanning()}>
+      <Dialog open={isScanning} onOpenChange={(open) => !open && stopScanning()}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Mark Attendance</DialogTitle>

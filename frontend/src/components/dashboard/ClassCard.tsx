@@ -1,22 +1,15 @@
 import React from "react";
 import { Clock, Users, Video, BookOpen, QrCode } from "lucide-react";
 import { ClassSchedule } from "@/types/attendance";
-import { useClassActivity } from "@/hooks/useClassActivity";
 import { AttendanceProgress } from "@/components/AttendanceProgress";
 import { Button } from "@/components/ui/button";
 
 interface ClassCardProps {
   class_: ClassSchedule;
-  onStartScanning: (classId: string) => void;
+  onStartScanning: () => void;
 }
 
 export const ClassCard: React.FC<ClassCardProps> = ({ class_, onStartScanning }) => {
-  const isActive = useClassActivity(class_.time);
-
-  const handleAttendanceClick = () => {
-    onStartScanning(class_.id);
-  };
-
   return (
     <div className="border rounded-lg p-6 hover:border-blue-500 transition-colors">
       <div className="flex items-center justify-between space-y-0 pb-4">
@@ -34,11 +27,6 @@ export const ClassCard: React.FC<ClassCardProps> = ({ class_, onStartScanning })
           >
             {class_.isOnline ? "Online" : "In-Person"}
           </span>
-          {isActive && (
-            <span className="px-3 py-1.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-              Active
-            </span>
-          )}
         </div>
       </div>
 
@@ -93,7 +81,7 @@ export const ClassCard: React.FC<ClassCardProps> = ({ class_, onStartScanning })
         <Button 
           variant="outline" 
           className="inline-flex items-center space-x-2 px-3.5 py-2 bg-green-50 text-green-700 rounded-md text-sm font-medium hover:bg-green-100"
-          onClick={handleAttendanceClick}
+          onClick={onStartScanning}
         >
           <QrCode className="w-4 h-4" />
           <span>Mark Attendance</span>

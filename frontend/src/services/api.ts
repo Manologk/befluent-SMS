@@ -761,9 +761,9 @@ export const attendanceApi = {
   },
 
   async createAttendanceLog(data: {
-    student_id: number;
-    session_id: number;
-    status: AttendanceStatus;
+    student: string | number;  // Changed from student_id to student
+    session: string | number;  // Changed from session_id to session
+    status?: AttendanceStatus;
     notes?: string;
   }) {
     try {
