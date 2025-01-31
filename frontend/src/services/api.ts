@@ -8,7 +8,10 @@ import {
   AttendanceUpdateResponse
 } from '@/types/attendance';
 
-const API_URL = 'https://moenytransfer.onrender.com/api';
+// Use the full URL in production, relative URL in development
+const API_URL = import.meta.env.PROD 
+  ? 'https://moenytransfer.onrender.com/api'
+  : '/api';
 
 // Create axios instance with default config
 const api = axios.create({
