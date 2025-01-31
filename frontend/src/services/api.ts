@@ -19,16 +19,21 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'Access-Control-Allow-Credentials': 'true',
   },
   withCredentials: true,
-  xsrfCookieName: 'csrftoken',
-  xsrfHeaderName: 'X-CSRFToken',
 });
 
 // Add request interceptor
 api.interceptors.request.use(
   (config) => {
+    console.log('Request Config:', {
+      url: config.url,
+      method: config.method,
+      headers: config.headers,
+      baseURL: config.baseURL,
+      withCredentials: config.withCredentials
+    });
+    
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -36,14 +41,29 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('Request Error:', error);
     return Promise.reject(error);
   }
 );
 
 // Add response interceptor
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('Response:', {
+      status: response.status,
+      headers: response.headers,
+      data: response.data
+    });
+    return response;
+  },
   async (error) => {
+    console.error('Response Error:', {
+      status: error.response?.status,
+      headers: error.response?.headers,
+      data: error.response?.data,
+      message: error.message
+    });
+
     const originalRequest = error.config;
 
     // Handle token expiration

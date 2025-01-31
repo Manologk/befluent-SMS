@@ -168,18 +168,16 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://befluent-sms.onrender.com",
+    "https://befluent-sms.vercel.app"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
-# Add CORS_ALLOW_ORIGIN_WHITELIST for explicit whitelisting
 CORS_ORIGIN_WHITELIST = [
     "http://localhost:5173",
     "https://befluent-sms.onrender.com",
+    "https://befluent-sms.vercel.app"
 ]
-
-# Remove CORS_ALLOW_ALL_ORIGINS if it exists
-# CORS_ALLOW_ALL_ORIGINS = False
 
 CORS_ALLOW_METHODS = [
     'DELETE',
@@ -200,13 +198,20 @@ CORS_ALLOW_HEADERS = [
     'user-agent',
     'x-csrftoken',
     'x-requested-with',
-    'access-control-allow-credentials',
 ]
 
 # Add CORS_EXPOSE_HEADERS
 CORS_EXPOSE_HEADERS = [
+    'access-control-allow-origin',
     'access-control-allow-credentials',
 ]
+
+# Security settings
+SECURE_SSL_REDIRECT = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
 
 # Session and Cookie settings
 SESSION_COOKIE_SECURE = True
@@ -214,10 +219,15 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'None'
 CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = 'None'
+
+# CSRF settings
 CSRF_TRUSTED_ORIGINS = [
     "https://befluent-sms.onrender.com",
     "http://localhost:5173",
 ]
+
+# Add this to handle preflight requests
+CORS_PREFLIGHT_MAX_AGE = 86400  # 24 hours
 
 # JWT settings
 SIMPLE_JWT = {
@@ -234,10 +244,3 @@ SIMPLE_JWT = {
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
 }
-
-# Security settings
-SECURE_SSL_REDIRECT = True
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_HSTS_SECONDS = 31536000  # 1 year
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
