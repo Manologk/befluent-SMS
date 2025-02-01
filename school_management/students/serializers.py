@@ -206,7 +206,7 @@ class CreateStudentWithUserSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
     phone_number = serializers.CharField(max_length=20)
     subscription_plan = serializers.CharField(max_length=255)
-    level = serializers.CharField(max_length=50)
+    level = serializers.CharField(max_length=50, required=False, allow_blank=True)
 
     @transaction.atomic
     def create(self, validated_data):
@@ -234,7 +234,7 @@ class CreateStudentWithUserSerializer(serializers.Serializer):
             name=validated_data['name'],
             email=validated_data['email'],
             phone_number=validated_data.get('phone_number', ''),
-            level=validated_data.get('level', ''),
+            level=validated_data.get('level', ''),  # Default to empty string if not provided
             lessons_remaining=subscription_plan.number_of_lessons,
             subscription_balance=subscription_plan.price
         )

@@ -36,12 +36,10 @@ const formSchema = z.object({
   subscriptionPlan: z.string({
     required_error: "Please select a subscription plan.",
   }),
-  level: z.string({
-    required_error: "Please select an academic level.",
-  }),
+  level: z.string().optional(),
   parentId: z.string().optional(),
-  password: z.string().min(8, {
-    message: "Password must be at least 8 characters.",
+  password: z.string().min(4, {
+    message: "Password must be at least 4 characters.",
   }),
 })
 
@@ -124,7 +122,7 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
         email: values.email,
         phone_number: values.phoneNumber,
         subscription_plan: values.subscriptionPlan.toLowerCase(),
-        level: values.level.toLowerCase(),
+        level: values.level?.toLowerCase() || "",
         password: values.password,
       })
 
@@ -314,7 +312,7 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
                     />
                   </FormControl>
                   <FormDescription>
-                    Password must be at least 8 characters long
+                    Password must be at least 4 characters long
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
