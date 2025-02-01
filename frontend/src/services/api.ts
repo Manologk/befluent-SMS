@@ -318,21 +318,9 @@ export const studentApi = {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error('Error creating student:', {
-          status: error.response?.status,
-          data: error.response?.data,
-          message: error.message
-        });
-        
-        if (error.response?.status === 500) {
-          throw new Error('Server error: Unable to create student. Please try again later.');
-        }
-        
-        if (error.response?.data?.detail) {
-          throw new Error(error.response.data.detail);
-        }
-        
-        throw new Error('Failed to create student. Please check your input and try again.');
+        // Log the full error response for debugging
+        console.error('Full error response:', error.response);
+        throw error;
       }
       throw error;
     }
