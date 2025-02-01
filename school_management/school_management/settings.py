@@ -187,71 +187,55 @@ else:
     CORS_ALLOW_ALL_ORIGINS = False
     SECURE_SSL_REDIRECT = True
 
-# CORS_ALLOW_METHODS = [
-#     'DELETE',
-#     'GET',
-#     'OPTIONS',
-#     'PATCH',
-#     'POST',
-#     'PUT',
-# ]
-
 CORS_ALLOW_METHODS = [
-"*"
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
 ]
-
-
-# CORS_ALLOW_HEADERS = [
-#     'accept',
-#     'accept-encoding',
-#     'authorization',
-#     'content-type',
-#     'dnt',
-#     'origin',
-#     'user-agent',
-#     'x-csrftoken',
-#     'x-requested-with',
-#     'access-control-allow-credentials',
-# ]
-
 
 CORS_ALLOW_HEADERS = [
-    "*"
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'access-control-allow-credentials',
 ]
 
-# Add CORS_EXPOSE_HEADERS
 CORS_EXPOSE_HEADERS = [
     'access-control-allow-origin',
     'access-control-allow-credentials',
 ]
 
 # Security settings
-# SECURE_BROWSER_XSS_FILTER = True
-# SECURE_HSTS_SECONDS = 31536000  # 1 year
-# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-# SECURE_HSTS_PRELOAD = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
 
 # Session and Cookie settings
-# SESSION_COOKIE_SECURE = not DEBUG
-# SESSION_COOKIE_HTTPONLY = True
-# SESSION_COOKIE_SAMESITE = 'None'
-# CSRF_COOKIE_SECURE = not DEBUG
-# CSRF_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SAMESITE = 'None'
 
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = [
-    # "https://befluent-sms.vercel.app",
-    # "http://localhost:5173",
-    # "http://localhost:3000"
-    "*"
+    "https://befluent-sms.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:3000"
 ]
-
 
 # Add this to handle preflight requests
 CORS_PREFLIGHT_MAX_AGE = 86400  # 24 hours
-
-# Add this to allow credentials
-CORS_ALLOW_CREDENTIALS = True
 
 # JWT settings
 SIMPLE_JWT = {
