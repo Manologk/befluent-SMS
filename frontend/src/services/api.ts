@@ -27,11 +27,6 @@ const api = axios.create({
 // Add request interceptor
 api.interceptors.request.use(
   (config) => {
-    // Add CORS headers for production
-    if (import.meta.env.PROD) {
-      config.headers['Origin'] = 'https://befluent-sms.vercel.app';
-    }
-    
     console.log('Request Config:', {
       url: config.url,
       method: config.method,
@@ -52,7 +47,7 @@ api.interceptors.request.use(
   }
 );
 
-// Add response interceptor
+// Add response interceptor with improved error handling
 api.interceptors.response.use(
   (response) => {
     console.log('Response:', {
@@ -72,11 +67,14 @@ api.interceptors.response.use(
       throw new Error('Network error: Please check your connection and try again');
     }
 
+    // Log detailed error information
     console.error('Response Error:', {
       status: error.response?.status,
       headers: error.response?.headers,
       data: error.response?.data,
-      message: error.message
+      message: error.message,
+      url: error.config?.url,
+      method: error.config?.method
     });
 
     const originalRequest = error.config;
@@ -94,6 +92,11 @@ api.interceptors.response.use(
       if (!window.location.pathname.includes('/login')) {
         window.location.href = '/login';
       }
+    }
+
+    // Handle 500 errors with more detail
+    if (error.response?.status === 500) {
+      throw new Error(`Server error: ${error.response?.data?.detail || 'An unexpected error occurred. Please try again.'}`);
     }
 
     return Promise.reject(error);
@@ -263,16 +266,6 @@ export const studentApi = {
     } catch (error) {
       console.error('Failed to fetch dashboard:', error);
       throw error;
-      getDashboard: async () => {
-        try {
-          const { data } = await api.get('/students/dashboard/');
-          console.log('Dashboard data:', data); // Debug log
-          return data;
-        } catch (error) {
-          console.error('Failed to fetch dashboard:', error);
-          throw error;
-        }
-      }
     }
   },
 
@@ -309,11 +302,32 @@ export const studentApi = {
     password: string;
   }) => {
     try {
+      console.log('Creating student with data:', {
+        ...data,
+        password: '[REDACTED]' // Don't log the actual password
+      });
+      
       const response = await api.post('/students/students/create-with-user/', data);
-      console.log('Create student with user response:', response);
-      return response;
+      console.log('Create student success:', response.data);
+      return response.data;
     } catch (error) {
-      console.error('Error creating student with user:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Error creating student:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
+        
+        if (error.response?.status === 500) {
+          throw new Error('Server error: Unable to create student. Please try again later.');
+        }
+        
+        if (error.response?.data?.detail) {
+          throw new Error(error.response.data.detail);
+        }
+        
+        throw new Error('Failed to create student. Please check your input and try again.');
+      }
       throw error;
     }
   },
@@ -678,28 +692,72 @@ export const scheduleApi = {
 export const planApi = {
   getAll: async () => {
     try {
+      console.log('Fetching subscription plans...');
       const response = await api.get('/students/subscription-plans/');
-      console.log('Full API Response:', response);
-      console.log('Subscription plans data:', response.data);
-      return response; // Return the whole response, not just response.data
-    } catch (error) {
-      console.error('Error fetching subscription plans:', error);
-      throw error;
+      console.log('Full API Response:', {
+        status: response.status,
+        headers: response.headers,
+        data: response.data
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Error details:', {
+        error,
+        config: error?.config,
+        response: error?.response,
+        message: error?.message
+      });
+      
+      if (axios.isAxiosError(error) && error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        throw new Error(`Server error: ${error.response.data?.detail || error.response.statusText}`);
+      } else if (axios.isAxiosError(error) && error.request) {
+        // The request was made but no response was received
+        throw new Error('No response received from server. Please try again.');
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        throw new Error(`Error: ${error?.message || 'Unknown error occurred'}`);
+      }
     }
   },
   
   create: async (planData: CreatePlanPayload) => {
-    const response = await api.post('/students/subscription-plans/', planData);
-    return response.data;
+    try {
+      const response = await api.post('/students/subscription-plans/', planData);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('Error creating subscription plan:', error.response?.data || error.message);
+        throw new Error(error.response?.data?.detail || 'Failed to create subscription plan');
+      }
+      throw error;
+    }
   },
   
   update: async (id: number, planData: Partial<CreatePlanPayload>) => {
-    const response = await api.patch(`/students/subscription-plans/${id}/`, planData);
-    return response.data;
+    try {
+      const response = await api.patch(`/students/subscription-plans/${id}/`, planData);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('Error updating subscription plan:', error.response?.data || error.message);
+        throw new Error(error.response?.data?.detail || 'Failed to update subscription plan');
+      }
+      throw error;
+    }
   },
   
   delete: async (id: number) => {
-    await api.delete(`/students/subscription-plans/${id}/`);
+    try {
+      await api.delete(`/students/subscription-plans/${id}/`);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('Error deleting subscription plan:', error.response?.data || error.message);
+        throw new Error(error.response?.data?.detail || 'Failed to delete subscription plan');
+      }
+      throw error;
+    }
   }
 };
 
