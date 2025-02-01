@@ -160,8 +160,8 @@ interface CreateStudentWithUserPayload {
   email: string;
   phone_number: string;
   subscription_plan: string;
-  level?: string;
-  password: string;
+  level: string;
+  password: string;  // Add password field
 }
 
 export interface Group {
@@ -304,7 +304,6 @@ export const studentApi = {
 
   createWithUser: async (data: CreateStudentWithUserPayload) => {
     try {
-      // Log the request data (excluding sensitive info)
       console.log('Creating student with data:', {
         ...data,
         password: '[REDACTED]' // Don't log the actual password
@@ -312,51 +311,29 @@ export const studentApi = {
       
       const response = await api.post('/students/students/create-with-user/', data);
       
-      console.log('Success response:', response.data);
+      if (!response.data) {
+        throw new Error('No data received from server');
+      }
+
       return response.data;
     } catch (error) {
-      // Enhanced error logging
       if (axios.isAxiosError(error)) {
-        console.error('Detailed error information:', {
+        console.error('Error creating student:', {
           status: error.response?.status,
-          statusText: error.response?.statusText,
-          headers: error.response?.headers,
           data: error.response?.data,
-          message: error.message,
-          url: error.config?.url,
-          method: error.config?.method,
-          requestData: {
-            ...error.config?.data,
-            password: '[REDACTED]'
-          }
+          message: error.message
         });
-
-        // If we have HTML in the error response, it might be a Django debug page
-        if (typeof error.response?.data === 'string' && error.response.data.includes('<!doctype html>')) {
-          console.error('Server returned HTML error page. Check server logs for details.');
-          throw new Error('Server error: Please check the server logs for more details.');
-        }
-
-        // Handle specific error cases
-        if (error.response?.status === 400) {
-          const errorMessage = error.response.data?.detail || 
-                             Object.values(error.response.data || {}).flat().join(', ');
-          throw new Error(`Validation error: ${errorMessage}`);
-        }
-
+        
         if (error.response?.status === 500) {
-          throw new Error('Server error: An internal error occurred. Please try again later.');
+          throw new Error('Server error: Unable to create student. Please try again later.');
         }
-
-        // Generic error with available details
-        const errorMessage = error.response?.data?.detail || 
-                           Object.values(error.response?.data || {}).flat().join(', ') ||
-                           error.message;
-        throw new Error(`Request failed: ${errorMessage}`);
+        
+        if (error.response?.data?.detail) {
+          throw new Error(error.response.data.detail);
+        }
+        
+        throw new Error('Failed to create student. Please check your input and try again.');
       }
-      
-      // For non-Axios errors
-      console.error('Non-Axios error:', error);
       throw error;
     }
   },

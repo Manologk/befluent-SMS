@@ -206,7 +206,7 @@ class CreateStudentWithUserSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
     phone_number = serializers.CharField(max_length=20)
     subscription_plan = serializers.CharField(max_length=255)
-    level = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    level = serializers.CharField(max_length=50)
 
     @transaction.atomic
     def create(self, validated_data):
@@ -218,9 +218,7 @@ class CreateStudentWithUserSerializer(serializers.Serializer):
         ).first()
         
         if not subscription_plan:
-            raise serializers.ValidationError({
-                'subscription_plan': f"Subscription plan '{validated_data['subscription_plan']}' not found"
-            })
+            raise serializers.ValidationError(f"Subscription plan '{validated_data['subscription_plan']}' not found")
 
         # Create user
         user = User.objects.create_user(
@@ -231,41 +229,22 @@ class CreateStudentWithUserSerializer(serializers.Serializer):
         )
 
         # Create student with subscription details
-        student_data = {
-            'user': user,
-            'name': validated_data['name'],
-            'email': validated_data['email'],
-            'phone_number': validated_data.get('phone_number', ''),
-            'level': validated_data.get('level', ''),
-            'lessons_remaining': subscription_plan.number_of_lessons,
-            'subscription_balance': subscription_plan.price
-        }
-
-        # Try to create student with student_type field if it exists
-        try:
-            student = Student.objects.create(**student_data)
-        except Exception as e:
-            if 'student_type' in str(e):
-                # If student_type field exists, add a default value
-                student_data['student_type'] = 'GROUP'  # or 'PRIVATE', depending on your needs
-                student = Student.objects.create(**student_data)
-            else:
-                raise
-
-        # Create StudentSubscription record
-        StudentSubscription.objects.create(
-            student=student,
-            subscription_plan=subscription_plan,
-            start_date=timezone.now().date()
+        student = Student.objects.create(
+            user=user,
+            name=validated_data['name'],
+            email=validated_data['email'],
+            phone_number=validated_data.get('phone_number', ''),
+            level=validated_data.get('level', ''),
+            lessons_remaining=subscription_plan.number_of_lessons,
+            subscription_balance=subscription_plan.price
         )
 
         # Generate QR code
         try:
             student.generate_qr_code()
         except Exception as e:
-            raise serializers.ValidationError({
-                'qr_code': f"Failed to generate QR code: {str(e)}"
-            })
+            # If QR generation fails, rollback the transaction
+            raise serializers.ValidationError(f"Failed to generate QR code: {str(e)}")
 
         return student
 
