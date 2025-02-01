@@ -164,45 +164,69 @@ REST_FRAMEWORK = {
     ],
 }
 
-# CORS settings - Allow everything for testing
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS settings
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "https://befluent-sms.vercel.app"
+]
+
 CORS_ALLOW_CREDENTIALS = True
 
-# Allow all headers and methods
-CORS_ALLOW_HEADERS = [
-    '*'
-]
-
 CORS_ALLOW_METHODS = [
-    '*'
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
 ]
 
-CORS_EXPOSE_HEADERS = ['*']
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'Authorization',  # Add explicit Authorization header
+    'access-control-allow-credentials',
+    'access-control-allow-origin',
+]
 
-# For testing, disable security restrictions
+CORS_EXPOSE_HEADERS = [
+    'access-control-allow-origin',
+    'access-control-allow-credentials',
+]
+
+# For development only
 if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
     SECURE_SSL_REDIRECT = False
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE = False
 else:
+    CORS_ALLOW_ALL_ORIGINS = False
     SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
 
 # Session and Cookie settings
+SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SAMESITE = 'None'
 
-# CSRF settings - Allow all origins for testing
-CSRF_TRUSTED_ORIGINS = ['*']
+# CSRF settings
+CSRF_TRUSTED_ORIGINS = [
+    "https://befluent-sms.vercel.app",
+    "http://localhost:5173",
+]
 
 # Add this to handle preflight requests
 CORS_PREFLIGHT_MAX_AGE = 86400  # 24 hours
 
 # Remove any CORS whitelist restrictions
 CORS_ORIGIN_WHITELIST = []
-CORS_ALLOWED_ORIGINS = []
 
 # JWT settings
 SIMPLE_JWT = {
