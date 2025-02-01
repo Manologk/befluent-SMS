@@ -699,7 +699,34 @@ export const planApi = {
         headers: response.headers,
         data: response.data
       });
-      return response.data;
+
+      // Ensure we always return an array, even if empty
+      if (!response.data) {
+        console.warn('No data received from subscription plans endpoint');
+        return [];
+      }
+
+      // If data is not an array, wrap it in an array
+      const plans = Array.isArray(response.data) ? response.data : [response.data];
+
+      // Filter out any null or invalid plans
+      const validPlans = plans.filter(plan => {
+        if (!plan || typeof plan !== 'object') {
+          console.warn('Invalid plan data:', plan);
+          return false;
+        }
+        return true;
+      }).map(plan => ({
+        id: plan.id || 0,
+        name: plan.name || '',
+        description: plan.description || '',
+        price: plan.price || 0,
+        number_of_lessons: plan.number_of_lessons || 0,
+        // Add any other fields with default values
+      }));
+
+      console.log('Processed plans:', validPlans);
+      return validPlans;
     } catch (error: any) {
       console.error('Error details:', {
         error,
@@ -725,7 +752,16 @@ export const planApi = {
   create: async (planData: CreatePlanPayload) => {
     try {
       const response = await api.post('/students/subscription-plans/', planData);
-      return response.data;
+      if (!response.data) {
+        throw new Error('No data received from server');
+      }
+      return {
+        id: response.data.id || 0,
+        name: response.data.name || '',
+        description: response.data.description || '',
+        price: response.data.price || 0,
+        number_of_lessons: response.data.number_of_lessons || 0,
+      };
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error('Error creating subscription plan:', error.response?.data || error.message);
@@ -738,7 +774,16 @@ export const planApi = {
   update: async (id: number, planData: Partial<CreatePlanPayload>) => {
     try {
       const response = await api.patch(`/students/subscription-plans/${id}/`, planData);
-      return response.data;
+      if (!response.data) {
+        throw new Error('No data received from server');
+      }
+      return {
+        id: response.data.id || id,
+        name: response.data.name || '',
+        description: response.data.description || '',
+        price: response.data.price || 0,
+        number_of_lessons: response.data.number_of_lessons || 0,
+      };
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error('Error updating subscription plan:', error.response?.data || error.message);
