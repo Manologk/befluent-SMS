@@ -218,7 +218,9 @@ class CreateStudentWithUserSerializer(serializers.Serializer):
         ).first()
         
         if not subscription_plan:
-            raise serializers.ValidationError(f"Subscription plan '{validated_data['subscription_plan']}' not found")
+            raise serializers.ValidationError({
+                'subscription_plan': f"Subscription plan '{validated_data['subscription_plan']}' not found"
+            })
 
         # Create user
         user = User.objects.create_user(
@@ -239,12 +241,21 @@ class CreateStudentWithUserSerializer(serializers.Serializer):
             subscription_balance=subscription_plan.price
         )
 
+        # Create StudentSubscription record
+        StudentSubscription.objects.create(
+            student=student,
+            subscription_plan=subscription_plan,
+            start_date=timezone.now().date()
+        )
+
         # Generate QR code
         try:
             student.generate_qr_code()
         except Exception as e:
             # If QR generation fails, rollback the transaction
-            raise serializers.ValidationError(f"Failed to generate QR code: {str(e)}")
+            raise serializers.ValidationError({
+                'qr_code': f"Failed to generate QR code: {str(e)}"
+            })
 
         return student
 

@@ -160,9 +160,43 @@ class StudentSubscription(models.Model):
     subscription_plan = models.ForeignKey(SubscriptionPlan, on_delete=models.CASCADE)
     start_date = models.DateField()
     end_date = models.DateField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.student.name} - {self.subscription_plan.name}"
+
+    def deactivate(self):
+        """Deactivate the subscription"""
+        self.is_active = False
+        self.end_date = timezone.now().date()
+        self.save()
+
+    def renew(self, subscription_plan=None):
+        """Renew the subscription with the same or a new plan"""
+        if not subscription_plan:
+            subscription_plan = self.subscription_plan
+
+        # Create a new subscription
+        new_subscription = StudentSubscription.objects.create(
+            student=self.student,
+            subscription_plan=subscription_plan,
+            start_date=timezone.now().date()
+        )
+
+        # Update student's lessons and balance
+        self.student.lessons_remaining = subscription_plan.number_of_lessons
+        self.student.subscription_balance = subscription_plan.price
+        self.student.save()
+
+        # Deactivate the current subscription
+        self.deactivate()
+
+        return new_subscription
+
+    @property
+    def is_expired(self):
+        """Check if the subscription has expired"""
+        return not self.is_active or (self.end_date and self.end_date < timezone.now().date())
 
 
 class Teacher(models.Model):

@@ -347,6 +347,83 @@ class StudentViewSet(viewsets.ModelViewSet):
         response_serializer = StudentSerializer(student)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, methods=['post'])
+    def renew_subscription(self, request, pk=None):
+        """Renew a student's subscription"""
+        student = self.get_object()
+        plan_name = request.data.get('subscription_plan')
+
+        try:
+            # Get the subscription plan
+            subscription_plan = SubscriptionPlan.objects.filter(
+                name__iexact=plan_name
+            ).first() if plan_name else None
+
+            # Get the current active subscription
+            current_subscription = StudentSubscription.objects.filter(
+                student=student,
+                is_active=True
+            ).first()
+
+            if not current_subscription:
+                if not subscription_plan:
+                    return Response(
+                        {'error': 'No active subscription found and no new plan specified'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                # Create a new subscription if none exists
+                subscription = StudentSubscription.objects.create(
+                    student=student,
+                    subscription_plan=subscription_plan,
+                    start_date=timezone.now().date()
+                )
+                student.lessons_remaining = subscription_plan.number_of_lessons
+                student.subscription_balance = subscription_plan.price
+                student.save()
+            else:
+                # Renew the existing subscription
+                subscription = current_subscription.renew(subscription_plan)
+
+            return Response({
+                'message': 'Subscription renewed successfully',
+                'subscription': StudentSubscriptionSerializer(subscription).data
+            })
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=True, methods=['get'])
+    def subscription_history(self, request, pk=None):
+        """Get a student's subscription history"""
+        student = self.get_object()
+        subscriptions = StudentSubscription.objects.filter(
+            student=student
+        ).order_by('-start_date')
+        
+        return Response(
+            StudentSubscriptionSerializer(subscriptions, many=True).data
+        )
+
+    @action(detail=True, methods=['get'])
+    def current_subscription(self, request, pk=None):
+        """Get a student's current active subscription"""
+        student = self.get_object()
+        subscription = StudentSubscription.objects.filter(
+            student=student,
+            is_active=True
+        ).first()
+        
+        if not subscription:
+            return Response(
+                {'error': 'No active subscription found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+        return Response(StudentSubscriptionSerializer(subscription).data)
+
 
 class ScheduleViewSet(viewsets.ModelViewSet):
     queryset = Schedule.objects.all()
