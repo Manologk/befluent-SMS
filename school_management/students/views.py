@@ -223,8 +223,8 @@ class GroupViewSet(viewsets.ModelViewSet):
 class StudentViewSet(viewsets.ModelViewSet):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    authentication_classes = []
+    permission_classes = []
 
     def get_serializer_class(self):
         if self.action == 'create_with_user':
@@ -232,15 +232,7 @@ class StudentViewSet(viewsets.ModelViewSet):
         return StudentSerializer
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_authenticated:
-            if user.role == 'student':
-                # If user is a student, return only their data
-                return Student.objects.filter(user=user)
-            elif user.role == 'admin':
-                # If user is admin, return all students
-                return Student.objects.all()
-        return Student.objects.none()
+        return Student.objects.all()
 
     def retrieve(self, request, *args, **kwargs):
         # For single student retrieval
