@@ -23,9 +23,9 @@ export const PlanManager: React.FC = () => {
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const response = await planApi.getAll();
-        console.log('Fetched plans:', response.data);
-        setPlans(Array.isArray(response.data) ? response.data : []);
+        const fetchedPlans = await planApi.getAll();
+        console.log('Fetched plans:', fetchedPlans);
+        setPlans(fetchedPlans);
       } catch (error) {
         console.error('Error fetching plans:', error);
         toast({
@@ -36,6 +36,7 @@ export const PlanManager: React.FC = () => {
         setPlans([]);
       }
     };
+
     fetchPlans();
   }, []);
 

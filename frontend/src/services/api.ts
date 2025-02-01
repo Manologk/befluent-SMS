@@ -155,6 +155,15 @@ interface CreateStudentPayload {
   lessons_remaining: number;
 }
 
+interface CreateStudentWithUserPayload {
+  name: string;
+  email: string;
+  phone_number: string;
+  subscription_plan: string;
+  level: string;
+  password: string;  // Add password field
+}
+
 export interface Group {
   id: string;
   name: string;
@@ -293,14 +302,7 @@ export const studentApi = {
     return api.post('/students/students/', data);
   },
 
-  createWithUser: async (data: {
-    name: string;
-    email: string;
-    phone_number: string;
-    subscription_plan: string;
-    level: string;
-    password: string;
-  }) => {
+  createWithUser: async (data: CreateStudentWithUserPayload) => {
     try {
       console.log('Creating student with data:', {
         ...data,
@@ -308,7 +310,11 @@ export const studentApi = {
       });
       
       const response = await api.post('/students/students/create-with-user/', data);
-      console.log('Create student success:', response.data);
+      
+      if (!response.data) {
+        throw new Error('No data received from server');
+      }
+
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -688,9 +694,18 @@ export const scheduleApi = {
   }
 };
 
+// Subscription Plan interfaces
+interface SubscriptionPlan {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  number_of_lessons: number;
+}
+
 // Subscription Plan endpoints
 export const planApi = {
-  getAll: async () => {
+  getAll: async (): Promise<SubscriptionPlan[]> => {
     try {
       console.log('Fetching subscription plans...');
       const response = await api.get('/students/subscription-plans/');
@@ -722,7 +737,6 @@ export const planApi = {
         description: plan.description || '',
         price: plan.price || 0,
         number_of_lessons: plan.number_of_lessons || 0,
-        // Add any other fields with default values
       }));
 
       console.log('Processed plans:', validPlans);
@@ -736,14 +750,10 @@ export const planApi = {
       });
       
       if (axios.isAxiosError(error) && error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
         throw new Error(`Server error: ${error.response.data?.detail || error.response.statusText}`);
       } else if (axios.isAxiosError(error) && error.request) {
-        // The request was made but no response was received
         throw new Error('No response received from server. Please try again.');
       } else {
-        // Something happened in setting up the request that triggered an Error
         throw new Error(`Error: ${error?.message || 'Unknown error occurred'}`);
       }
     }

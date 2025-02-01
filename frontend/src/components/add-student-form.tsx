@@ -40,6 +40,9 @@ const formSchema = z.object({
     required_error: "Please select an academic level.",
   }),
   parentId: z.string().optional(),
+  password: z.string().min(8, {
+    message: "Password must be at least 8 characters.",
+  }),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -59,39 +62,39 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const response = await planApi.getAll()
-        console.log('Fetched plans:', response.data)
-        setPlans(response.data)
+        const plans = await planApi.getAll();
+        console.log('Fetched plans:', plans);
+        setPlans(plans);
       } catch (error) {
-        console.error('Error fetching plans:', error)
+        console.error('Error fetching plans:', error);
         toast({
           title: "Error",
           description: "Failed to load subscription plans",
           variant: "destructive",
-        })
-        setPlans([])
+        });
+        setPlans([]);
       }
-    }
+    };
 
     const fetchParents = async () => {
       try {
-        const parents = await parentApi.getAll()
-        console.log('Fetched parents:', parents)
-        setParents(parents)
+        const parents = await parentApi.getAll();
+        console.log('Fetched parents:', parents);
+        setParents(parents);
       } catch (error) {
-        console.error('Error fetching parents:', error)
+        console.error('Error fetching parents:', error);
         toast({
           title: "Error",
           description: "Failed to load parents",
           variant: "destructive",
-        })
-        setParents([])
+        });
+        setParents([]);
       }
-    }
+    };
 
-    fetchPlans()
-    fetchParents()
-  }, [])
+    fetchPlans();
+    fetchParents();
+  }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -102,6 +105,7 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
       subscriptionPlan: undefined,
       level: undefined,
       parentId: undefined,
+      password: "",
     },
   })
 
@@ -121,15 +125,15 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
         phone_number: values.phoneNumber,
         subscription_plan: values.subscriptionPlan.toLowerCase(),
         level: values.level.toLowerCase(),
-        password: 'student123',
+        password: values.password,
       })
 
       // If parent is selected, create the link
-      if (values.parentId) {
+      if (values.parentId && studentResponse.id) {
         try {
           await parentApi.linkToStudent({
             parent_id: parseInt(values.parentId),
-            student_id: studentResponse.data.id
+            student_id: studentResponse.id
           })
         } catch (error) {
           console.error('Error linking parent:', error)
@@ -290,6 +294,27 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
                   </Select>
                   <FormDescription>
                     Optional: Link this student to a parent
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder="Enter password"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Password must be at least 8 characters long
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
