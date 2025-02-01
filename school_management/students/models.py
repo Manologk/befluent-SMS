@@ -12,10 +12,6 @@ from datetime import datetime, timedelta
 
 # Create your models here.
 class Student(models.Model):
-    # STUDENT_TYPE_CHOICES = [
-    #     ('GROUP', 'Group Student'),
-    #     ('PRIVATE', 'Private Student'),
-    # ]
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -27,7 +23,6 @@ class Student(models.Model):
     lessons_remaining = models.IntegerField(default=0)
     qr_code = models.TextField(blank=True)
     phone_number = models.CharField(max_length=20, blank=True)
-    # student_type = models.CharField(max_length=10, choices=STUDENT_TYPE_CHOICES)
     level = models.CharField(max_length=50, blank=True)
 
     def __str__(self):

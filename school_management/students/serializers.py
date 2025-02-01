@@ -231,15 +231,26 @@ class CreateStudentWithUserSerializer(serializers.Serializer):
         )
 
         # Create student with subscription details
-        student = Student.objects.create(
-            user=user,
-            name=validated_data['name'],
-            email=validated_data['email'],
-            phone_number=validated_data.get('phone_number', ''),
-            level=validated_data.get('level', ''),  # Default to empty string if not provided
-            lessons_remaining=subscription_plan.number_of_lessons,
-            subscription_balance=subscription_plan.price
-        )
+        student_data = {
+            'user': user,
+            'name': validated_data['name'],
+            'email': validated_data['email'],
+            'phone_number': validated_data.get('phone_number', ''),
+            'level': validated_data.get('level', ''),
+            'lessons_remaining': subscription_plan.number_of_lessons,
+            'subscription_balance': subscription_plan.price
+        }
+
+        # Try to create student with student_type field if it exists
+        try:
+            student = Student.objects.create(**student_data)
+        except Exception as e:
+            if 'student_type' in str(e):
+                # If student_type field exists, add a default value
+                student_data['student_type'] = 'GROUP'  # or 'PRIVATE', depending on your needs
+                student = Student.objects.create(**student_data)
+            else:
+                raise
 
         # Create StudentSubscription record
         StudentSubscription.objects.create(
@@ -252,7 +263,6 @@ class CreateStudentWithUserSerializer(serializers.Serializer):
         try:
             student.generate_qr_code()
         except Exception as e:
-            # If QR generation fails, rollback the transaction
             raise serializers.ValidationError({
                 'qr_code': f"Failed to generate QR code: {str(e)}"
             })
