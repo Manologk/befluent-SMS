@@ -202,12 +202,12 @@ CORS_EXPOSE_HEADERS = [
 ]
 
 # For development only
-if DEBUG:
-    CORS_ALLOW_ALL_ORIGINS = True
-    SECURE_SSL_REDIRECT = False
-else:
-    CORS_ALLOW_ALL_ORIGINS = False
-    SECURE_SSL_REDIRECT = True
+# if DEBUG:
+#     CORS_ALLOW_ALL_ORIGINS = True
+#     SECURE_SSL_REDIRECT = False
+# else:
+#     CORS_ALLOW_ALL_ORIGINS = False
+#     SECURE_SSL_REDIRECT = True
 
 # Session and Cookie settings
 SESSION_COOKIE_SECURE = not DEBUG

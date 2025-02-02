@@ -212,13 +212,21 @@ class CreateStudentWithUserSerializer(serializers.Serializer):
     def create(self, validated_data):
         User = get_user_model()
         
-        # Get subscription plan details
+        # Debug logging
+        print(f"Looking for subscription plan: {validated_data['subscription_plan']}")
+        print("Available plans:", [p.name for p in SubscriptionPlan.objects.all()])
+        
+        # Get subscription plan details with more lenient matching
         subscription_plan = SubscriptionPlan.objects.filter(
-            name__iexact=validated_data['subscription_plan']
+            name__icontains=validated_data['subscription_plan'].split('-')[0].strip()
         ).first()
         
         if not subscription_plan:
-            raise serializers.ValidationError(f"Subscription plan '{validated_data['subscription_plan']}' not found")
+            available_plans = ", ".join([p.name for p in SubscriptionPlan.objects.all()])
+            raise serializers.ValidationError(
+                f"Subscription plan '{validated_data['subscription_plan']}' not found. "
+                f"Available plans: {available_plans}"
+            )
 
         # Create user
         user = User.objects.create_user(

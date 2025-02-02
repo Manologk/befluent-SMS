@@ -17,8 +17,8 @@ const API_URL = import.meta.env.PROD
 const api = axios.create({
   baseURL: API_URL,
   headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    'Content-Type': 'application/json; charset=utf-8',
+    'Accept': 'application/json; charset=utf-8',
   },
   withCredentials: true,
   timeout: 10000, // 10 second timeout
