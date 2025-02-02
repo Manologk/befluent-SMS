@@ -205,28 +205,17 @@ class CreateStudentWithUserSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
     phone_number = serializers.CharField(max_length=20)
-    subscription_plan = serializers.CharField(max_length=255)
+    subscription_plan_id = serializers.IntegerField()
     level = serializers.CharField(max_length=50)
 
     @transaction.atomic
     def create(self, validated_data):
         User = get_user_model()
         
-        # Debug logging
-        print(f"Looking for subscription plan: {validated_data['subscription_plan']}")
-        print("Available plans:", [p.name for p in SubscriptionPlan.objects.all()])
-        
-        # Get subscription plan details with more lenient matching
-        subscription_plan = SubscriptionPlan.objects.filter(
-            name__icontains=validated_data['subscription_plan'].split('-')[0].strip()
-        ).first()
-        
-        if not subscription_plan:
-            available_plans = ", ".join([p.name for p in SubscriptionPlan.objects.all()])
-            raise serializers.ValidationError(
-                f"Subscription plan '{validated_data['subscription_plan']}' not found. "
-                f"Available plans: {available_plans}"
-            )
+        try:
+            subscription_plan = SubscriptionPlan.objects.get(id=validated_data['subscription_plan_id'])
+        except SubscriptionPlan.DoesNotExist:
+            raise serializers.ValidationError(f"Subscription plan with ID {validated_data['subscription_plan_id']} not found")
 
         # Create user
         user = User.objects.create_user(

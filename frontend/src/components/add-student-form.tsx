@@ -33,7 +33,7 @@ const formSchema = z.object({
   phoneNumber: z.string().regex(phoneRegex, {
     message: "Please enter a valid phone number.",
   }),
-  subscriptionPlan: z.string({
+  subscriptionPlanId: z.number({
     required_error: "Please select a subscription plan.",
   }),
   level: z.string({
@@ -102,7 +102,7 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
       name: "",
       email: "",
       phoneNumber: "",
-      subscriptionPlan: undefined,
+      subscriptionPlanId: undefined,
       level: undefined,
       parentId: undefined,
       password: "",
@@ -112,18 +112,12 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
     try {
-      const selectedPlan = plans.find(p => p.name.toLowerCase() === values.subscriptionPlan.toLowerCase())
-      
-      if (!selectedPlan) {
-        throw new Error('Selected plan not found')
-      }
-
       // Create student with user
       const studentResponse = await studentApi.createWithUser({
         name: values.name,
         email: values.email,
         phone_number: values.phoneNumber,
-        subscription_plan: values.subscriptionPlan.toLowerCase(),
+        subscription_plan_id: values.subscriptionPlanId,
         level: values.level.toLowerCase(),
         password: values.password,
       })
@@ -225,11 +219,11 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
 
             <FormField
               control={form.control}
-              name="subscriptionPlan"
+              name="subscriptionPlanId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Subscription Plan</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a subscription plan" />
@@ -237,7 +231,7 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
                     </FormControl>
                     <SelectContent>
                       {plans.map((plan) => (
-                        <SelectItem key={plan.id} value={plan.name}>
+                        <SelectItem key={plan.id} value={plan.id.toString()}>
                           {plan.name} - {plan.number_of_lessons} lessons (₽{plan.price})
                         </SelectItem>
                       ))}

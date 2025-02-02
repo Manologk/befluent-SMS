@@ -159,9 +159,9 @@ interface CreateStudentWithUserPayload {
   name: string;
   email: string;
   phone_number: string;
-  subscription_plan: string;
+  subscription_plan_id: number;
   level: string;
-  password: string;  // Add password field
+  password: string;  
 }
 
 export interface Group {
@@ -181,7 +181,7 @@ export interface Group {
 
 export interface CreateGroupPayload {
   name: string;
-  teacher: string;  // teacher ID
+  teacher: string;  
   max_capacity: number;
   status: string;
   level: string;
@@ -197,7 +197,7 @@ export interface CreateSchedulePayload {
   type: 'group' | 'private';
   student_id?: string;
   group_id?: string;
-  days: number[];  // Changed to number[] to match Django's expectation
+  days: number[];  
   start_time: string;
   end_time: string;
   is_recurring: boolean;
@@ -259,7 +259,7 @@ export const studentApi = {
   getById: async (id: number) => {
     try {
       const { data } = await api.get(`/students/students/${id}/`);
-      console.log('Student data response:', data); // Debug log
+      console.log('Student data response:', data); 
       return data;
     } catch (error) {
       console.error('Failed to fetch student:', error);
@@ -270,7 +270,7 @@ export const studentApi = {
   getDashboard: async () => {
     try {
       const { data } = await api.get('/students/dashboard/');
-      console.log('Dashboard data:', data); // Debug log
+      console.log('Dashboard data:', data); 
       return data;
     } catch (error) {
       console.error('Failed to fetch dashboard:', error);
@@ -306,7 +306,7 @@ export const studentApi = {
     try {
       console.log('Creating student with data:', {
         ...data,
-        password: '[REDACTED]' // Don't log the actual password
+        password: '[REDACTED]' 
       });
       
       const response = await api.post('/students/students/create-with-user/', data);
@@ -354,7 +354,7 @@ export const teacherApi = {
   async getAll() {
     try {
       const response = await api.get('/students/teachers/');
-      console.log('Teacher API Response:', response); // Debug log
+      console.log('Teacher API Response:', response); 
       return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
       console.error('Error fetching teachers:', error);
@@ -535,7 +535,7 @@ export const sessionApi = {
           date: date
         }
       });
-      console.log('Teacher sessions response:', response.data); // Debug log
+      console.log('Teacher sessions response:', response.data); 
       return response.data;
     } catch (error) {
       console.error('Error fetching teacher sessions:', error);
@@ -915,8 +915,8 @@ export const attendanceApi = {
   },
 
   async createAttendanceLog(data: {
-    student: string | number;  // Changed from student_id to student
-    session: string | number;  // Changed from session_id to session
+    student: string | number;  
+    session: string | number;  
     status?: AttendanceStatus;
     notes?: string;
   }) {
