@@ -77,7 +77,7 @@ api.interceptors.response.use(
       method: error.config?.method
     });
 
-    const originalRequest = error.config;
+    // const originalRequest = error.config;
 
     // Handle token expiration and unauthorized access
     if (error.response?.status === 401) {
