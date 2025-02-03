@@ -65,12 +65,17 @@ export function AddTeacherForm({ onSuccess, className }: AddTeacherFormProps) {
   async function onSubmit(data: FormValues) {
     setIsSubmitting(true)
     try {
+      const specializations = data.specializations
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+
       await teacherApi.createWithUser({
         name: data.name,
         email: data.email,
         password: data.password,
         phone_number: data.phone_number,
-        specializations: data.specializations.split(',').map(s => s.trim()).filter(Boolean),
+        specializations,
       })
       
       toast({
