@@ -35,9 +35,9 @@ api.interceptors.request.use(
       withCredentials: config.withCredentials
     });
     
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('access'); 
     if (token) {
-      config.headers.Authorization = `Token ${token}`;
+      config.headers.Authorization = `Bearer ${token}`; 
     }
     return config;
   },
@@ -77,18 +77,35 @@ api.interceptors.response.use(
       method: error.config?.method
     });
 
-    // const originalRequest = error.config;
+    const originalRequest = error.config;
 
-    // Handle token expiration and unauthorized access
-    if (error.response?.status === 401) {
-      // Clear auth data
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+    // Handle token expiration
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        // Try to refresh the token
+        const refresh = localStorage.getItem('refresh');
+        if (refresh) {
+          const response = await api.post('/auth/token/refresh/', { refresh });
+          const { access } = response.data;
+          localStorage.setItem('access', access);
+          originalRequest.headers.Authorization = `Bearer ${access}`;
+          return api(originalRequest);
+        }
+      } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError);
+      }
+
+      // Clear auth data if refresh failed
+      localStorage.removeItem('access');
       localStorage.removeItem('refresh');
+      localStorage.removeItem('user');
 
-      // Redirect to login page
-      window.location.href = '/login';
-      return Promise.reject(error);
+      // Only redirect to login if not already on login page
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
     }
 
     // Handle 500 errors with more detail
@@ -219,7 +236,8 @@ export const authApi = {
       }
 
       // Store the token immediately after successful login
-      localStorage.setItem('token', data.access);
+      localStorage.setItem('access', data.access);
+      localStorage.setItem('refresh', data.refresh);
       localStorage.setItem('user', JSON.stringify({
         user_id: data.user_id,
         email: data.email,
@@ -240,9 +258,9 @@ export const authApi = {
   },
 
   logout: async (): Promise<void> => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem('access');
     localStorage.removeItem('refresh');
+    localStorage.removeItem('user');
     window.location.href = '/login';
   }
 };
