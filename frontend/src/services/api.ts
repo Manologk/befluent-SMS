@@ -79,19 +79,16 @@ api.interceptors.response.use(
 
     const originalRequest = error.config;
 
-    // Handle token expiration
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
+    // Handle token expiration and unauthorized access
+    if (error.response?.status === 401) {
       // Clear auth data
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('refresh');
 
-      // Only redirect to login if not already on login page
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
-      }
+      // Redirect to login page
+      window.location.href = '/login';
+      return Promise.reject(error);
     }
 
     // Handle 500 errors with more detail
@@ -221,6 +218,14 @@ export const authApi = {
         throw new Error('Invalid response from server');
       }
 
+      // Store the token immediately after successful login
+      localStorage.setItem('token', data.access);
+      localStorage.setItem('user', JSON.stringify({
+        user_id: data.user_id,
+        email: data.email,
+        role: data.role
+      }));
+
       return {
         access: data.access,
         refresh: data.refresh,
@@ -238,6 +243,7 @@ export const authApi = {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('refresh');
+    window.location.href = '/login';
   }
 };
 
