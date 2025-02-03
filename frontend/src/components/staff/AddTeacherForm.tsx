@@ -37,7 +37,7 @@ const formSchema = z.object({
   }).regex(phoneRegex, {
     message: "Please enter a valid phone number.",
   }),
-  specializations: z.array(z.string()),
+  specializations: z.string()
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -58,7 +58,7 @@ export function AddTeacherForm({ onSuccess, className }: AddTeacherFormProps) {
       email: "",
       password: "",
       phone_number: "",
-      specializations: [],
+      specializations: ""
     },
   })
 
@@ -70,7 +70,7 @@ export function AddTeacherForm({ onSuccess, className }: AddTeacherFormProps) {
         email: data.email,
         password: data.password,
         phone_number: data.phone_number,
-        specializations: data.specializations,
+        specializations: data.specializations.split(',').map(s => s.trim()).filter(Boolean),
       })
       
       toast({
@@ -165,11 +165,13 @@ export function AddTeacherForm({ onSuccess, className }: AddTeacherFormProps) {
                   <FormControl>
                     <Input 
                       placeholder="English, Business, IELTS" 
-                      {...field} 
+                      {...field}
+                      value={Array.isArray(field.value) ? field.value.join(', ') : field.value}
+                      onChange={e => field.onChange(e.target.value)}
                     />
                   </FormControl>
                   <FormDescription>
-                    Enter specializations separated by commas.
+                    Enter specializations separated by commas (e.g., "English, Business, IELTS")
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

@@ -208,39 +208,58 @@ class CreateStudentWithUserSerializer(serializers.Serializer):
     subscription_plan_id = serializers.IntegerField()
     level = serializers.CharField(max_length=50)
 
+    def validate(self, data):
+        print("Validating data:", {k: v if k != 'password' else '[REDACTED]' for k, v in data.items()})
+        return data
+
     @transaction.atomic
     def create(self, validated_data):
         User = get_user_model()
+        print("Creating student with validated data:", {k: v if k != 'password' else '[REDACTED]' for k, v in validated_data.items()})
         
         try:
             subscription_plan = SubscriptionPlan.objects.get(id=validated_data['subscription_plan_id'])
+            print(f"Found subscription plan: {subscription_plan.id} - {subscription_plan.name}")
         except SubscriptionPlan.DoesNotExist:
+            print(f"Subscription plan with ID {validated_data['subscription_plan_id']} not found")
+            print("Available plans:", [(p.id, p.name) for p in SubscriptionPlan.objects.all()])
             raise serializers.ValidationError(f"Subscription plan with ID {validated_data['subscription_plan_id']} not found")
 
         # Create user
-        user = User.objects.create_user(
-            username=validated_data['email'],
-            email=validated_data['email'],
-            password=validated_data['password'],
-            role='student'
-        )
+        try:
+            user = User.objects.create_user(
+                username=validated_data['email'],
+                email=validated_data['email'],
+                password=validated_data['password'],
+                role='student'
+            )
+            print(f"Created user with ID: {user.id}")
+        except Exception as e:
+            print(f"Error creating user: {str(e)}")
+            raise
 
         # Create student with subscription details
-        student = Student.objects.create(
-            user=user,
-            name=validated_data['name'],
-            email=validated_data['email'],
-            phone_number=validated_data.get('phone_number', ''),
-            level=validated_data.get('level', ''),
-            lessons_remaining=subscription_plan.number_of_lessons,
-            subscription_balance=subscription_plan.price
-        )
+        try:
+            student = Student.objects.create(
+                user=user,
+                name=validated_data['name'],
+                email=validated_data['email'],
+                phone_number=validated_data.get('phone_number', ''),
+                level=validated_data.get('level', ''),
+                lessons_remaining=subscription_plan.number_of_lessons,
+                subscription_balance=subscription_plan.price
+            )
+            print(f"Created student with ID: {student.id}")
+        except Exception as e:
+            print(f"Error creating student: {str(e)}")
+            raise
 
         # Generate QR code
         try:
             student.generate_qr_code()
+            print("Generated QR code successfully")
         except Exception as e:
-            # If QR generation fails, rollback the transaction
+            print(f"Error generating QR code: {str(e)}")
             raise serializers.ValidationError(f"Failed to generate QR code: {str(e)}")
 
         return student
