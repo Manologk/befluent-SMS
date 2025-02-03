@@ -42,6 +42,11 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'DEBUG',
         },
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     },
 }
 
@@ -112,10 +117,10 @@ WSGI_APPLICATION = 'school_management.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'HOST': 'befluent-db-payslipapp.g.aivencloud.com',
+        'HOST': 'befluentsms-payslipapp.f.aivencloud.com',
         'NAME': 'defaultdb',
         'USER': 'avnadmin',
-        'PASSWORD': 'AVNS_vHj4SJKsiWdjW6wxzvX',
+        'PASSWORD': 'AVNS_8MSVN3-6oemqzbtDe5X',
         'PORT': '16595'
     }
 }
