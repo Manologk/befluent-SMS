@@ -37,7 +37,7 @@ const formSchema = z.object({
   }).regex(phoneRegex, {
     message: "Please enter a valid phone number.",
   }),
-  specializations: z.string()
+  specializations: z.array(z.string()).default([])
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -58,24 +58,19 @@ export function AddTeacherForm({ onSuccess, className }: AddTeacherFormProps) {
       email: "",
       password: "",
       phone_number: "",
-      specializations: ""
+      specializations: []
     },
   })
 
   async function onSubmit(data: FormValues) {
     setIsSubmitting(true)
     try {
-      const specializations = data.specializations
-        .split(',')
-        .map(s => s.trim())
-        .filter(Boolean);
-
       await teacherApi.createWithUser({
         name: data.name,
         email: data.email,
         password: data.password,
         phone_number: data.phone_number,
-        specializations,
+        specializations: data.specializations
       })
       
       toast({
@@ -169,14 +164,20 @@ export function AddTeacherForm({ onSuccess, className }: AddTeacherFormProps) {
                   <FormLabel>Specializations</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="English, Business, IELTS" 
-                      {...field}
-                      value={Array.isArray(field.value) ? field.value.join(', ') : field.value}
-                      onChange={e => field.onChange(e.target.value)}
+                      placeholder="English Business IELTS (separate with spaces or commas)" 
+                      value={field.value.join(' ')}
+                      onChange={(e) => {
+                        // Split by both commas and spaces, then clean up the array
+                        const specializations = e.target.value
+                          .split(/[,\s]+/) // Split by comma or space
+                          .map(s => s.trim())
+                          .filter(Boolean); // Remove empty strings
+                        field.onChange(specializations);
+                      }}
                     />
                   </FormControl>
                   <FormDescription>
-                    Enter specializations separated by commas (e.g., "English, Business, IELTS")
+                    Enter specializations separated by spaces or commas (e.g., "English Business IELTS" or "English, Business, IELTS")
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
