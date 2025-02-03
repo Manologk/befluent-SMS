@@ -165,19 +165,20 @@ export function AddTeacherForm({ onSuccess, className }: AddTeacherFormProps) {
                   <FormControl>
                     <Input 
                       placeholder="English Business IELTS (separate with spaces or commas)" 
-                      value={field.value.join(' ')}
+                      value={Array.isArray(field.value) ? field.value.join(', ') : ''}
                       onChange={(e) => {
+                        const value = e.target.value;
                         // Split by both commas and spaces, then clean up the array
-                        const specializations = e.target.value
+                        const specializations = value
                           .split(/[,\s]+/) // Split by comma or space
                           .map(s => s.trim())
-                          .filter(Boolean); // Remove empty strings
+                          .filter(s => s !== ''); // Remove empty strings
                         field.onChange(specializations);
                       }}
                     />
                   </FormControl>
                   <FormDescription>
-                    Enter specializations separated by spaces or commas (e.g., "English Business IELTS" or "English, Business, IELTS")
+                    Enter specializations separated by spaces or commas (e.g., "English, Business, IELTS")
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
