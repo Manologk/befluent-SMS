@@ -1,11 +1,15 @@
 export interface Student {
     id: string;
     name: string;
-  }
-  
-  export type AttendanceStatus = 'present' | 'absent' | 'late';
+    email: string;
+    grade: string;
+    language: Language;
+    qr_code: string;
+}
 
-export type Language = 'english' | 'spanish' | 'french' | 'mandarin' | 'arabic';
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED';
+
+export type Language = 'ENGLISH' | 'FRENCH' | 'SPANISH' | 'GERMAN' | 'CHINESE';
 
 export interface ClassSchedule {
     id: string;
@@ -17,36 +21,24 @@ export interface ClassSchedule {
     proficiencyLevel: string;
 }
 
-export interface Student {
-  id: string;
-  name: string;
-  grade: string;
-  language: Language;
+export interface AttendanceFilters {
+    startDate: string;
+    endDate: string;
+    studentId?: string;
+    status?: AttendanceStatus;
+    language?: Language;
+    grade?: string;
+    groupId?: string;
 }
 
 export interface AttendanceRecord {
-  id: string;
-  studentId: string;
-  studentName: string;
-  date: string;
-  status: AttendanceStatus;
-  timeIn?: string;
-  timeOut?: string;
-  notes?: string;
-  grade: string;
-  language: string;
-  students?: string[]; // Array of student names for group sessions
-}
-
-export interface AttendanceFilters {
-  dateRange: {
-    start: string;
-    end: string;
-  };
-  level: string;
-  studentSearch: string;
-  status: string;
-  language: string;
+    id: string;
+    student_id: string;
+    session_id: string;
+    status: AttendanceStatus;
+    timestamp: string;
+    notes?: string;
+    student?: Student;
 }
 
 export interface AttendanceStats {

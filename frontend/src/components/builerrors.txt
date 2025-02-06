@@ -1,0 +1,703 @@
+src/components/add-student-form.tsx:21:10 - error TS6133: 'userApi' is declared but its value is never read.
+
+21 import { userApi, studentApi, planApi, parentApi } from "@/services/api"
+            ~~~~~~~
+
+src/components/AttendanceProgress.tsx:1:8 - error TS6133: 'React' is declared but its value is never read.
+
+1 import React, { useEffect, useState } from 'react';
+         ~~~~~
+
+src/components/AttendanceViewer/AttendanceFilters.tsx:48:28 - error TS2339: Property 'grade' does not exist on type 'AttendanceFilters'.
+
+48             value={filters.grade}
+                              ~~~~~
+
+src/components/AttendanceViewer/AttendanceFilters.tsx:49:43 - error TS2345: Argument of type '"grade"' is not assignable to parameter of type 'keyof AttendanceFilters'.
+
+49             onChange={(e) => handleChange('grade', e.target.value)}
+                                             ~~~~~~~
+
+src/components/AttendanceViewer/FilterBar.tsx:3:29 - error TS6133: 'AttendanceStatus' is declared but its value is never read.
+
+3 import { AttendanceFilters, AttendanceStatus, Language } from '../../types/attendance';
+                              ~~~~~~~~~~~~~~~~
+
+src/components/AttendanceViewer/FilterBar.tsx:3:47 - error TS6133: 'Language' is declared but its value is never read.
+
+3 import { AttendanceFilters, AttendanceStatus, Language } from '../../types/attendance';
+                                                ~~~~~~~~
+
+src/components/AttendanceViewer/FilterBar.tsx:37:32 - error TS2339: Property 'grade' does not exist on type 'AttendanceFilters'.
+
+37                 value={filters.grade}
+                                  ~~~~~
+
+src/components/AttendanceViewer/FilterBar.tsx:38:47 - error TS2345: Argument of type '"grade"' is not assignable to parameter of type 'keyof AttendanceFilters'.
+
+38                 onChange={(e) => handleChange('grade', e.target.value)}
+                                                 ~~~~~~~
+
+src/components/AttendanceViewer/FilterBar.tsx:48:15 - error TS2322: Type 'string' is not assignable to type '"" | AttendanceStatus'.
+
+48               value={filters.status}
+                 ~~~~~
+
+  src/components/AttendanceViewer/Filters/StatusFilter.tsx:5:3
+    5   value: AttendanceStatus | '';
+        ~~~~~
+    The expected type comes from property 'value' which is declared here on type 'IntrinsicAttributes & StatusFilterProps'
+
+src/components/AttendanceViewer/FilterBar.tsx:53:15 - error TS2322: Type 'string' is not assignable to type '"" | Language'.
+
+53               value={filters.language}
+                 ~~~~~
+
+  src/components/AttendanceViewer/Filters/LanguangeFilter.tsx:5:3
+    5   value: Language | '';
+        ~~~~~
+    The expected type comes from property 'value' which is declared here on type 'IntrinsicAttributes & LanguageFilterProps'
+
+src/components/AttendanceViewer/index.tsx:2:35 - error TS6133: 'Clock' is declared but its value is never read.
+
+2 import { Users, UserCheck, UserX, Clock } from 'lucide-react';
+                                    ~~~~~
+
+src/components/AttendanceViewer/index.tsx:76:9 - error TS6133: 'stats' is declared but its value is never read.
+
+76   const stats = {
+           ~~~~~
+
+src/components/AttendanceViewer/index.tsx:133:9 - error TS6133: 'handleSaveRecord' is declared but its value is never read.
+
+133   const handleSaveRecord = async (updatedRecord: AttendanceRecord) => {
+            ~~~~~~~~~~~~~~~~
+
+src/components/AttendanceViewer/index.tsx:233:15 - error TS2322: Type '{ title: string; }' is not assignable to type 'IntrinsicAttributes'.
+  Property 'title' does not exist on type 'IntrinsicAttributes'.
+
+233       <Header title="Attendance Viewer" />
+                  ~~~~~
+
+src/components/AttendanceViewer/index.tsx:267:13 - error TS2322: Type '{ filters: AttendanceFilters; onFilterChange: (newFilters: AttendanceFilters) => void; levels: string[]; statuses: string[]; }' is not assignable to type 'IntrinsicAttributes & FilterBarProps'.
+  Property 'levels' does not exist on type 'IntrinsicAttributes & FilterBarProps'.
+
+267             levels={STUDENT_LEVELS}
+                ~~~~~~
+
+src/components/AttendanceViewer/StatsCard.tsx:2:1 - error TS6133: 'LucideIcon' is declared but its value is never read.
+
+2 import { LucideIcon } from 'lucide-react';
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/ClassCard.tsx:7:1 - error TS6192: All imports in import declaration are unused.
+
+  7 import {
+    ~~~~~~~~
+  8   Card,
+    ~~~~~~~
+...
+ 12   CardTitle,
+    ~~~~~~~~~~~~
+ 13 } from "@/components/ui/card";
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/ClassCard.tsx:31:3 - error TS6133: 'onStartScanning' is declared but its value is never read.
+
+31   onStartScanning,
+     ~~~~~~~~~~~~~~~
+
+src/components/CreateSchedule.tsx:14:10 - error TS6133: 'toast' is declared but its value is never read.
+
+14 import { toast, useToast } from '@/hooks/use-toast';
+            ~~~~~
+
+src/components/CreateSchedule.tsx:76:3 - error TS6133: 'groups' is declared but its value is never read.
+
+76   groups,
+     ~~~~~~
+
+src/components/CreateSchedule.tsx:99:21 - error TS2345: Argument of type '{ id: any; name: any; email: any; specializations: any; }[]' is not assignable to parameter of type 'SetStateAction<Teacher[]>'.   
+  Type '{ id: any; name: any; email: any; specializations: any; }[]' is not assignable to type 'Teacher[]'.
+    Property 'contactDetails' is missing in type '{ id: any; name: any; email: any; specializations: any; }' but required in type 'Teacher'.
+
+99         setTeachers(transformedTeachers)
+                       ~~~~~~~~~~~~~~~~~~~
+
+  src/types/index.ts:13:5
+    13     contactDetails: string;
+           ~~~~~~~~~~~~~~
+    'contactDetails' is declared here.
+
+src/components/CreateSchedule.tsx:305:50 - error TS2339: Property 'current_capacity' does not exist on type 'Group'.
+
+305                             {group.name} ({group.current_capacity}/{group.max_capacity} students)
+                                                     ~~~~~~~~~~~~~~~~
+
+src/components/CreateSchedule.tsx:305:75 - error TS2551: Property 'max_capacity' does not exist on type 'Group'. Did you mean 'maxCapacity'?
+
+305                             {group.name} ({group.current_capacity}/{group.max_capacity} students)
+                                                                              ~~~~~~~~~~~~
+
+  src/types/index.ts:19:5
+    19     maxCapacity: number;
+           ~~~~~~~~~~~
+    'maxCapacity' is declared here.
+
+src/components/dashboard/AdminFunctions.tsx:1:1 - error TS6133: 'React' is declared but its value is never read.
+
+1 import React from 'react';
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/dashboard/ClassManagement.tsx:1:1 - error TS6133: 'React' is declared but its value is never read.
+
+1 import React from 'react';
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/dashboard/FinancialOverview.tsx:1:1 - error TS6133: 'React' is declared but its value is never read.
+
+1 import React from 'react';
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/dashboard/StudentProgress.tsx:1:1 - error TS6133: 'React' is declared but its value is never read.
+
+1 import React from 'react';
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/dashboard/StudentProgress.tsx:2:10 - error TS6133: 'TrendingUp' is declared but its value is never read.
+
+2 import { TrendingUp, CheckCircle, AlertCircle, Star } from 'lucide-react';
+           ~~~~~~~~~~
+
+src/components/dashboard/TodaySchedule.tsx:1:8 - error TS6133: 'React' is declared but its value is never read.
+
+1 import React, { useState, useEffect } from 'react';
+         ~~~~~
+
+src/components/dashboard/TodaySchedule.tsx:11:10 - error TS6133: 'selectedClass' is declared but its value is never read.
+
+11   const [selectedClass, setSelectedClass] = useState<string | null>(null);
+            ~~~~~~~~~~~~~
+
+src/components/dashboard/TodaySchedule.tsx:14:40 - error TS6133: 'isScanning' is declared but its value is never read.
+
+14   const { startScanning, stopScanning, isScanning } = useAttendanceStore();
+                                          ~~~~~~~~~~
+
+src/components/dashboard/TodaySchedule.tsx:24:39 - error TS7006: Parameter 'a' implicitly has an 'any' type.
+
+24         const sortedData = data.sort((a, b) => {
+                                         ~
+
+src/components/dashboard/TodaySchedule.tsx:24:42 - error TS7006: Parameter 'b' implicitly has an 'any' type.
+
+24         const sortedData = data.sort((a, b) => {
+                                            ~
+
+src/components/dashboard/TodaySchedule.tsx:48:9 - error TS6133: 'handleStopScanning' is declared but its value is never read.
+
+48   const handleStopScanning = () => {
+           ~~~~~~~~~~~~~~~~~~
+
+src/components/dashboard/WeeklyCalendar.tsx:1:8 - error TS6133: 'React' is declared but its value is never read.
+
+1 import React, { useState, useEffect } from 'react';
+         ~~~~~
+
+src/components/dashboard/WeeklyCalendar.tsx:2:10 - error TS6133: 'Calendar' is declared but its value is never read.
+
+2 import { Calendar, Clock } from 'lucide-react';
+           ~~~~~~~~
+
+src/components/edit-student-dialog.tsx:140:72 - error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+
+140       const newParentId = values.parentId === "none" ? null : parseInt(values.parentId)
+                                                                           ~~~~~~~~~~~~~~~
+
+src/components/GroupManagement.tsx:32:3 - error TS6133: 'students' is declared but its value is never read.
+
+32   students,
+     ~~~~~~~~
+
+src/components/GroupManagement.tsx:33:3 - error TS6133: 'setStudents' is declared but its value is never read.
+
+33   setStudents,
+     ~~~~~~~~~~~
+
+src/components/GroupManagement.tsx:47:35 - error TS2339: Property 'createGroup' does not exist on type '{ getAll: () => Promise<any>; getById: (id: string) => Promise<any>; create: (data: CreateGroupPayload) => Promise<AxiosResponse<any, any>>; ... 5 more ...; getStudentGroups: (studentId: string) => Promise<...>; }'.
+
+47       const data = await groupApi.createGroup(values.name, values.maxCapacity)
+                                     ~~~~~~~~~~~
+
+src/components/GroupManager/GroupManagement.tsx:15:35 - error TS6133: 'mockStudents' is declared but its value is never read.
+
+15 import { Student, Teacher, Group, mockStudents, mockTeachers } from '@/types/groupManager';
+                                     ~~~~~~~~~~~~
+
+src/components/GroupManager/GroupManagement.tsx:15:49 - error TS6133: 'mockTeachers' is declared but its value is never read.
+
+15 import { Student, Teacher, Group, mockStudents, mockTeachers } from '@/types/groupManager';
+                                                   ~~~~~~~~~~~~
+
+src/components/GroupManager/GroupManagement.tsx:23:10 - error TS6133: 'students' is declared but its value is never read.
+
+23   const [students, setStudents] = useState<Student[]>([]);
+            ~~~~~~~~
+
+src/components/GroupManager/GroupManagement.tsx:23:20 - error TS6133: 'setStudents' is declared but its value is never read.
+
+23   const [students, setStudents] = useState<Student[]>([]);
+                      ~~~~~~~~~~~
+
+src/components/GroupManager/GroupManagement.tsx:24:10 - error TS6133: 'teachers' is declared but its value is never read.
+
+24   const [teachers, setTeachers] = useState<Teacher[]>([]);
+            ~~~~~~~~
+
+src/components/GroupManager/GroupManagement.tsx:24:20 - error TS6133: 'setTeachers' is declared but its value is never read.
+
+24   const [teachers, setTeachers] = useState<Teacher[]>([]);
+                      ~~~~~~~~~~~
+
+src/components/GroupManager/GroupManagement.tsx:32:49 - error TS7006: Parameter 'g' implicitly has an 'any' type.
+
+32         const updatedGroup = response.data.find(g => g.id === selectedGroup.id);
+                                                   ~
+
+src/components/GroupManager/GroupManagement.tsx:154:13 - error TS2322: Type '(groupId: number) => Promise<void>' is not assignable to type '(groupId: string) => void'.
+  Types of parameters 'groupId' and 'groupId' are incompatible.
+    Type 'string' is not assignable to type 'number'.
+
+154             onDelete={handleDeleteGroup}
+                ~~~~~~~~
+
+  src/components/GroupManager/GroupList.tsx:17:3
+    17   onDelete: (groupId: string) => void;
+         ~~~~~~~~
+    The expected type comes from property 'onDelete' which is declared here on type 'IntrinsicAttributes & GroupListProps'
+
+src/components/GroupManager/GroupManagement.tsx:173:13 - error TS2322: Type 'Group | undefined' is not assignable to type '{ id?: number | undefined; name: string; description: string; language: string; level: string; max_capacity: number; } | undefined'.
+  Type 'Group' is not assignable to type '{ id?: number | undefined; name: string; description: string; language: string; level: string; max_capacity: number; }'.
+    Types of property 'id' are incompatible.
+      Type 'string' is not assignable to type 'number'.
+
+173             initialData={selectedGroup || undefined}
+                ~~~~~~~~~~~
+
+  src/components/GroupManager/GroupForm.tsx:26:3
+    26   initialData?: {
+         ~~~~~~~~~~~
+    The expected type comes from property 'initialData' which is declared here on type 'IntrinsicAttributes & GroupFormProps'
+
+src/components/GroupManager/MembersModal.tsx:1:8 - error TS6133: 'React' is declared but its value is never read.
+
+1 import React, { useState, useEffect, useMemo } from 'react';
+         ~~~~~
+
+src/components/GroupManager/MembersModal.tsx:2:42 - error TS6133: 'Users' is declared but its value is never read.
+
+2 import { X, Search, UserPlus, UserMinus, Users } from 'lucide-react';
+                                           ~~~~~
+
+src/components/GroupManager/MembersModal.tsx:21:10 - error TS6133: 'isSearching' is declared but its value is never read.
+
+21   const [isSearching, setIsSearching] = useState(false);
+            ~~~~~~~~~~~
+
+src/components/GroupManager/MembersModal.tsx:167:9 - error TS6133: 'renderMemberList' is declared but its value is never read.
+
+167   const renderMemberList = (items: (Student | Teacher)[], type: 'students' | 'teachers') => {
+            ~~~~~~~~~~~~~~~~
+
+src/components/GroupManager/MembersModal.tsx:182:47 - error TS2339: Property 'grade' does not exist on type 'Student'.
+
+182                 ? `Grade: ${(item as Student).grade} • ${item.email}`
+                                                  ~~~~~
+
+src/components/GroupManager/MembersModal.tsx:183:49 - error TS2339: Property 'subject' does not exist on type 'Teacher'.
+
+183                 : `Subject: ${(item as Teacher).subject} • ${item.email}`}
+                                                    ~~~~~~~
+
+src/components/LessonsCard.tsx:58:32 - error TS6133: 'subscription_balance' is declared but its value is never read.
+
+58     const { lessons_remaining, subscription_balance, level } = studentData;
+                                  ~~~~~~~~~~~~~~~~~~~~
+
+src/components/LessonsCard.tsx:58:54 - error TS6133: 'level' is declared but its value is never read.
+
+58     const { lessons_remaining, subscription_balance, level } = studentData;
+                                                        ~~~~~
+
+src/components/LessonSchedule.tsx:1:1 - error TS6133: 'React' is declared but its value is never read.
+
+1 import React from 'react';
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/LessonStatistics.tsx:1:8 - error TS6133: 'React' is declared but its value is never read.
+
+1 import React, { useEffect, useState } from 'react';
+         ~~~~~
+
+src/components/LogoutButton.tsx:1:1 - error TS6133: 'React' is declared but its value is never read.
+
+1 import React from 'react'
+  ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/OLD_SessionCard.tsx:45:62 - error TS2551: Property 'start_time' does not exist on type 'TeacherSession'. Did you mean 'startTime'?
+
+45     const sessionStart = new Date(`${session.date}T${session.start_time}`);
+                                                                ~~~~~~~~~~
+
+  src/types/session.ts:13:3
+    13   startTime: string;
+         ~~~~~~~~~
+    'startTime' is declared here.
+
+src/components/OLD_SessionCard.tsx:46:60 - error TS2551: Property 'end_time' does not exist on type 'TeacherSession'. Did you mean 'endTime'?
+
+46     const sessionEnd = new Date(`${session.date}T${session.end_time}`);
+                                                              ~~~~~~~~
+
+  src/types/session.ts:14:3
+    14   endTime: string;
+         ~~~~~~~
+    'endTime' is declared here.
+
+src/components/OLD_SessionCard.tsx:56:24 - error TS2339: Property 'language' does not exist on type 'TeacherSession'.
+
+56               {session.language} - {session.level}
+                          ~~~~~~~~
+
+src/components/OLD_SessionCard.tsx:56:45 - error TS2339: Property 'level' does not exist on type 'TeacherSession'.
+
+56               {session.language} - {session.level}
+                                               ~~~~~
+
+src/components/OLD_SessionCard.tsx:60:30 - error TS2551: Property 'start_time' does not exist on type 'TeacherSession'. Did you mean 'startTime'?
+
+60               <span>{session.start_time} - {session.end_time}</span>
+                                ~~~~~~~~~~
+
+  src/types/session.ts:13:3
+    13   startTime: string;
+         ~~~~~~~~~
+    'startTime' is declared here.
+
+src/components/OLD_SessionCard.tsx:60:53 - error TS2551: Property 'end_time' does not exist on type 'TeacherSession'. Did you mean 'endTime'?
+
+60               <span>{session.start_time} - {session.end_time}</span>
+                                                       ~~~~~~~~
+
+  src/types/session.ts:14:3
+    14   endTime: string;
+         ~~~~~~~
+    'endTime' is declared here.
+
+src/components/OLD_SessionCard.tsx:63:27 - error TS2367: This comparison appears to be unintentional because the types '"GROUP" | "PRIVATE"' and '"Private"' have no overlap.
+
+63           <Badge variant={session.type === 'Private' ? 'default' : 'secondary'}>
+                             ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/OLD_SessionCard.tsx:72:28 - error TS2339: Property 'topic' does not exist on type 'TeacherSession'.
+
+72             <span>{session.topic || 'No topic set'}</span>
+                              ~~~~~
+
+src/components/OLD_SessionCard.tsx:76:14 - error TS2367: This comparison appears to be unintentional because the types '"GROUP" | "PRIVATE"' and '"Private"' have no overlap.
+
+76             {session.type === 'Private' ? (
+                ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/OLD_SessionCard.tsx:79:32 - error TS2339: Property 'student_name' does not exist on type 'TeacherSession'.
+
+79                 <span>{session.student_name}</span>
+                                  ~~~~~~~~~~~~
+
+src/components/OLD_SessionCard.tsx:84:32 - error TS2339: Property 'group_name' does not exist on type 'TeacherSession'.
+
+84                 <span>{session.group_name}</span>
+                                  ~~~~~~~~~~
+
+src/components/pages/AcademicPlanning.tsx:10:20 - error TS6133: 'setStudents' is declared but its value is never read.
+
+10   const [students, setStudents] = useState<Student[]>([])
+                      ~~~~~~~~~~~
+
+src/components/pages/AcademicPlanning.tsx:11:20 - error TS6133: 'setTeachers' is declared but its value is never read.
+
+11   const [teachers, setTeachers] = useState<Teacher[]>([])
+                      ~~~~~~~~~~~
+
+src/components/pages/AcademicPlanning.tsx:12:18 - error TS6133: 'setGroups' is declared but its value is never read.
+
+12   const [groups, setGroups] = useState<Group[]>([])
+                    ~~~~~~~~~
+
+src/components/pages/AcademicPlanning.tsx:50:13 - error TS2322: Type 'import("D:/Programing/BeFluent School Management System/befluent-SMS/frontend/src/types/groupManager").Group[]' is not assignable to type 'import("D:/Programing/BeFluent School Management System/befluent-SMS/frontend/src/types/index").Group[]'.
+  Type 'Group' is missing the following properties from type 'Group': maxCapacity, studentIds
+
+50             groups={groups}
+               ~~~~~~
+
+  src/components/CreateSchedule.tsx:59:3
+    59   groups: Group[]
+         ~~~~~~
+    The expected type comes from property 'groups' which is declared here on type 'IntrinsicAttributes & CreateScheduleProps'
+
+src/components/pages/AttendanceScanner.tsx:4:1 - error TS6133: 'Card' is declared but its value is never read.
+
+4 import { Card } from '../ui/card';
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/pages/AttendanceScanner.tsx:5:10 - error TS6133: 'studentApi' is declared but its value is never read.
+
+5 import { studentApi, sessionApi, attendanceApi } from '@/services/api';
+           ~~~~~~~~~~
+
+src/components/pages/AttendanceScanner.tsx:28:53 - error TS7006: Parameter 'session' implicitly has an 'any' type.
+
+28                 const activeSession = sessions.find(session => session.status === 'IN_PROGRESS');
+                                                       ~~~~~~~
+
+src/components/pages/AttendanceScanner.tsx:69:19 - error TS6133: 'attendance' is declared but its value is never read.
+
+69             const attendance = await attendanceApi.createAttendanceLog({
+                     ~~~~~~~~~~
+
+src/components/pages/Dashboard.tsx:1:1 - error TS6133: 'React' is declared but its value is never read.
+
+1 import React from "react";
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/pages/Login.tsx:36:30 - error TS2345: Argument of type '{ user_id: any; email: any; role: any; }' is not assignable to parameter of type 'User'.
+  Property 'qr_code' is missing in type '{ user_id: any; email: any; role: any; }' but required in type 'User'.
+
+ 36       login(response.access, {
+                                 ~
+ 37         user_id: response.user_id,
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+...
+ 39         role: response.role,
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 40       })
+    ~~~~~~~
+
+  src/types/auth.ts:8:5
+    8     qr_code: string;
+          ~~~~~~~
+    'qr_code' is declared here.
+
+src/components/pages/ParentPortal.tsx:1:1 - error TS6133: 'React' is declared but its value is never read.
+
+1 import React from 'react';
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/pages/StudentManament.tsx:1:1 - error TS6133: 'React' is declared but its value is never read.
+
+1 import React from 'react';
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/pages/StudentPortal old.tsx:1:1 - error TS6133: 'React' is declared but its value is never read.
+
+1 import React from 'react';
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/ParentManagement.tsx:45:10 - error TS6133: 'error' is declared but its value is never read.
+
+45   const [error, setError] = useState<string | null>(null)
+            ~~~~~
+
+src/components/ParentManagement.tsx:58:20 - error TS2345: Argument of type 'Parent[]' is not assignable to parameter of type 'SetStateAction<Parent[]>'.
+  Type 'import("D:/Programing/BeFluent School Management System/befluent-SMS/frontend/src/services/api").Parent[]' is not assignable to type 'Parent[]'.
+    Type 'Parent' is missing the following properties from type 'Parent': total_lessons_remaining, total_subscription_balance
+
+58         setParents(data)
+                      ~~~~
+
+src/components/ParentManagement.tsx:128:18 - error TS2345: Argument of type 'Parent[]' is not assignable to parameter of type 'SetStateAction<Parent[]>'.
+  Type 'import("D:/Programing/BeFluent School Management System/befluent-SMS/frontend/src/services/api").Parent[]' is not assignable to type 'Parent[]'.
+    Type 'Parent' is missing the following properties from type 'Parent': total_lessons_remaining, total_subscription_balance
+
+128       setParents(data)
+                     ~~~~
+
+src/components/PlanManager/PlanTable.tsx:18:3 - error TS6133: 'sortConfig' is declared but its value is never read.
+
+18   sortConfig,
+     ~~~~~~~~~~
+
+src/components/PlanManager/PlanTable.tsx:33:28 - error TS6133: 'e' is declared but its value is never read.
+
+33                 onChange={(e) => {
+                              ~
+
+src/components/ProfileIcon.tsx:1:8 - error TS6133: 'React' is declared but its value is never read.
+
+1 import React, { useState } from 'react';
+         ~~~~~
+
+src/components/ProfileIcon.tsx:4:16 - error TS6133: 'LogOut' is declared but its value is never read.
+
+4 import { User, LogOut, LogIn } from 'lucide-react';
+                 ~~~~~~
+
+src/components/ProfileIcon.tsx:17:9 - error TS6133: 'handleLogout' is declared but its value is never read.
+
+17   const handleLogout = () => {
+           ~~~~~~~~~~~~
+
+src/components/QRCodeCard.tsx:15:1 - error TS6133: 'toast' is declared but its value is never read.
+
+15 import { toast } from "react-hot-toast";
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/QrCodeSection.tsx:1:8 - error TS6133: 'React' is declared but its value is never read.
+
+1 import React, { useState, useEffect } from 'react';
+         ~~~~~
+
+src/components/QrCodeSection.tsx:6:1 - error TS6192: All imports in import declaration are unused.
+
+6 import { motion, AnimatePresence } from 'framer-motion';
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/QRScanner.tsx:5:1 - error TS6133: 'toast' is declared but its value is never read.
+
+5 import { toast } from 'react-hot-toast';
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/QRScanner.tsx:6:1 - error TS6133: 'studentApi' is declared but its value is never read.
+
+6 import { studentApi } from '../services/api';
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/ReportGeneration.tsx:1:1 - error TS6133: 'React' is declared but its value is never read.
+
+1 import React from 'react'
+  ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/ReportGeneration.tsx:2:1 - error TS6133: 'Button' is declared but its value is never read.
+
+2 import { Button } from "@/components/ui/button"
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/ReportGeneration.tsx:5:11 - error TS6196: 'ReportGenerationProps' is declared but never used.
+
+5 interface ReportGenerationProps {
+            ~~~~~~~~~~~~~~~~~~~~~
+
+src/components/Sidebar.tsx:1:1 - error TS6133: 'React' is declared but its value is never read.
+
+1 import React from 'react';
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/Sidebar.tsx:8:68 - error TS6133: 'Bus' is declared but its value is never read.
+
+8 import { NotebookPen, Users, BookOpen, UserCog, Users2, PiggyBank, Bus, Library, UtensilsCrossed, Calendar, MessageSquare, BarChart, Settings, ChevronLeft, GraduationCap, QrCode } from 'lucide-react';   
+                                                                     ~~~
+
+src/components/Sidebar.tsx:8:73 - error TS6133: 'Library' is declared but its value is never read.
+
+8 import { NotebookPen, Users, BookOpen, UserCog, Users2, PiggyBank, Bus, Library, UtensilsCrossed, Calendar, MessageSquare, BarChart, Settings, ChevronLeft, GraduationCap, QrCode } from 'lucide-react';   
+                                                                          ~~~~~~~
+
+src/components/Sidebar.tsx:8:82 - error TS6133: 'UtensilsCrossed' is declared but its value is never read.
+
+8 import { NotebookPen, Users, BookOpen, UserCog, Users2, PiggyBank, Bus, Library, UtensilsCrossed, Calendar, MessageSquare, BarChart, Settings, ChevronLeft, GraduationCap, QrCode } from 'lucide-react';   
+                                                                                   ~~~~~~~~~~~~~~~
+
+src/components/Sidebar.tsx:25:9 - error TS6133: 'location' is declared but its value is never read.
+
+25   const location = useLocation();
+           ~~~~~~~~
+
+src/components/staff/AddTeacherDialog.tsx:33:24 - error TS2339: Property 'create' does not exist on type '{ getAll(): Promise<any[]>; createWithUser(data: { name: string; email: string; password: string; phone_number: string; specializations: string[]; }): Promise<AxiosResponse<any, any>>; update(id: string, data: { ...; }): Promise<...>; delete(id: string): Promise<...>; }'.
+
+33       await teacherApi.create({
+                          ~~~~~~
+
+src/components/staff/TeacherList.tsx:3:8 - error TS6133: 'React' is declared but its value is never read.
+
+3 import React, { useState, useEffect } from 'react'
+         ~~~~~
+
+src/components/staff/TeacherList.tsx:53:34 - error TS6133: 'teacher' is declared but its value is never read.
+
+53   const handleViewAssignments = (teacher: Teacher) => {
+                                    ~~~~~~~
+
+src/components/StaffManagement.tsx:101:29 - error TS2322: Type '{ onSuccess: () => void; }' is not assignable to type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+  Property 'onSuccess' does not exist on type 'IntrinsicAttributes & HTMLAttributes<HTMLDivElement>'.
+
+101             <AddTeacherForm onSuccess={() => {
+                                ~~~~~~~~~
+
+src/components/StudentRegistration.tsx:1:17 - error TS6133: 'useState' is declared but its value is never read.
+
+1 import React, { useState } from 'react'
+                  ~~~~~~~~
+
+src/components/StudentRegistration.tsx:6:29 - error TS6133: 'FormDescription' is declared but its value is never read.
+
+6 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+                              ~~~~~~~~~~~~~~~
+
+src/components/TeacherAssignment.tsx:31:3 - error TS6133: 'students' is declared but its value is never read.
+
+31   students,
+     ~~~~~~~~
+
+src/components/TeacherAssignment.tsx:32:3 - error TS6133: 'groups' is declared but its value is never read.
+
+32   groups,
+     ~~~~~~
+
+src/components/TeacherAssignment.tsx:33:3 - error TS6133: 'assignments' is declared but its value is never read.
+
+33   assignments,
+     ~~~~~~~~~~~
+
+src/components/TeacherAssignment.tsx:34:3 - error TS6133: 'setAssignments' is declared but its value is never read.
+
+34   setAssignments
+     ~~~~~~~~~~~~~~
+
+src/components/theme-swticher.tsx:3:1 - error TS6133: 'React' is declared but its value is never read.
+
+3 import * as React from "react"
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/components/theme-swticher.tsx:13:17 - error TS6133: 'ThemeName' is declared but its value is never read.
+
+13 import { Theme, ThemeName } from "@/types/theme"
+                   ~~~~~~~~~
+
+src/components/theme-swticher.tsx:25:11 - error TS6133: 'theme' is declared but its value is never read.
+
+25   const { theme, setTheme } = useTheme()
+             ~~~~~
+
+src/components/ui/calendar.tsx:55:20 - error TS6133: 'props' is declared but its value is never read.
+
+55         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
+                      ~~~~~~~~~~~~
+
+src/components/ui/calendar.tsx:56:21 - error TS6133: 'props' is declared but its value is never read.
+
+56         IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+                       ~~~~~~~~~~~~
+
+src/data/mockData.ts:1:37 - error TS6133: 'Language' is declared but its value is never read.
+
+1 import { AttendanceRecord, Student, Language } from '../types/attendance';
+                                      ~~~~~~~~
+
+src/services/api.ts:2:1 - error TS6192: All imports in import declaration are unused.
+
+2 import { AttendanceRecord, ClassSchedule } from '@/types/session';
+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Found 122 errors.

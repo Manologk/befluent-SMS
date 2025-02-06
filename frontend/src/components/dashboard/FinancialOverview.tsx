@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { DollarSign, TrendingUp, Clock, Calendar } from 'lucide-react';
 
 const FinancialOverview = () => {

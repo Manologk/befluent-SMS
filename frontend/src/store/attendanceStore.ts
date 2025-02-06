@@ -33,13 +33,10 @@ export const useAttendanceStore = create<AttendanceState & AttendanceActions>((s
 
     const newRecord: AttendanceRecord = {
       id: `${Date.now()}`, // Generate a temporary ID
-      studentId,
-      studentName: '', // This will be updated when synced with backend
-      date: new Date().toISOString().split('T')[0],
-      status: 'present',
-      timeIn: new Date().toISOString(),
-      grade: '', // This will be updated when synced with backend
-      language: '', // This will be updated when synced with backend
+      student_id: studentId,
+      session_id: classId,
+      status: 'PRESENT',
+      timestamp: new Date().toISOString(),
     };
 
     const newScannedStudents = new Set(scannedStudents);
@@ -55,7 +52,7 @@ export const useAttendanceStore = create<AttendanceState & AttendanceActions>((s
 
   getAttendanceStatus: (classId) => {
     const { records } = get();
-    const classRecords = records.filter(r => r.studentId === classId);
+    const classRecords = records.filter(r => r.session_id === classId);
     return {
       total: 3, // This would come from the class roster
       present: classRecords.length

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { X, Search, UserPlus, UserMinus, Users } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { X, Search, UserPlus, UserMinus } from 'lucide-react';
 import { Student, Teacher, Group } from '@/types/groupManager';
 import { studentApi, teacherApi } from '@/services/api';
 
@@ -18,7 +18,6 @@ export function MembersModal({
 }: MembersModalProps) {
   const [activeTab, setActiveTab] = useState<'students' | 'teachers'>('students');
   const [searchTerm, setSearchTerm] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
   const [localStudentIds, setLocalStudentIds] = useState<string[]>([]);
   const [localTeacherIds, setLocalTeacherIds] = useState<string[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -164,31 +163,6 @@ export function MembersModal({
     );
   };
 
-  const renderMemberList = (items: (Student | Teacher)[], type: 'students' | 'teachers') => {
-    return items.map((item) => {
-      const isSelected = type === 'students' 
-        ? localStudentIds.includes(item.id.toString())
-        : localTeacherIds.includes(item.id.toString());
-
-      return (
-        <div
-          key={item.id}
-          className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg"
-        >
-          <div>
-            <h3 className="font-medium">{item.name}</h3>
-            <p className="text-sm text-gray-500">
-              {type === 'students' 
-                ? `Grade: ${(item as Student).grade} • ${item.email}`
-                : `Subject: ${(item as Teacher).subject} • ${item.email}`}
-            </p>
-          </div>
-          {renderToggleButton(item.id.toString(), isSelected)}
-        </div>
-      );
-    });
-  };
-
   if (!open) return null;
 
   return (
@@ -209,7 +183,6 @@ export function MembersModal({
               onClick={() => {
                 setActiveTab('students');
                 setSearchTerm('');
-                setIsSearching(false);
               }}
               className={`px-4 py-2 rounded-lg ${
                 activeTab === 'students'
@@ -223,7 +196,6 @@ export function MembersModal({
               onClick={() => {
                 setActiveTab('teachers');
                 setSearchTerm('');
-                setIsSearching(false);
               }}
               className={`px-4 py-2 rounded-lg ${
                 activeTab === 'teachers'
@@ -312,7 +284,6 @@ export function MembersModal({
                     value={searchTerm}
                     onChange={(e) => {
                       setSearchTerm(e.target.value);
-                      setIsSearching(true);
                     }}
                     className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -330,8 +301,8 @@ export function MembersModal({
                             <h3 className="font-medium">{item.name}</h3>
                             <p className="text-sm text-gray-500">
                               {activeTab === 'students'
-                                ? `Level: ${(item as Student).level} • ${item.email}`
-                                : `${(item as Teacher).specializations?.join(', ')} • ${item.email}`}
+                                ? `Level: ${(item as Student).level || 'N/A'} • ${item.email}`
+                                : `${(item as Teacher).specializations?.join(', ') || 'No specializations'} • ${item.email}`}
                             </p>
                           </div>
                           {renderToggleButton(item.id.toString(), false)}

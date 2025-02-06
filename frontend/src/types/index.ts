@@ -32,4 +32,22 @@ export interface Student {
     payment: number;
   }
   
+  export interface User {
+    user_id: string;
+    email: string;
+    role: string;
+    name?: string;
+    qr_code?: string;
+  }
+  
+  export interface LoginResponse {
+    access: string;
+    refresh: string;
+    user_id: string;
+    email: string;
+    role: string;
+    name?: string;
+    qr_code?: string;
+  }
+  
   

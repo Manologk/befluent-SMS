@@ -12,7 +12,7 @@ import { groupService } from '../../services/api';
 import GroupForm from './GroupForm';
 import GroupList from './GroupList';
 import MembersModal from './MembersModal';
-import { Student, Teacher, Group, mockStudents, mockTeachers } from '@/types/groupManager';
+import { Group } from '@/types/groupManager';
 
 export const GroupManagement: React.FC = () => {
   const [groups, setGroups] = useState<Group[]>([]);
@@ -20,8 +20,8 @@ export const GroupManagement: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [students, setStudents] = useState<Student[]>([]);
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  // const [students, setStudents] = useState<Student[]>([]);
+  // const [teachers, setTeachers] = useState<Teacher[]>([]);
 
   const fetchGroups = async () => {
     try {
@@ -29,7 +29,7 @@ export const GroupManagement: React.FC = () => {
       setGroups(response.data);
       // Update selectedGroup if it exists
       if (selectedGroup) {
-        const updatedGroup = response.data.find(g => g.id === selectedGroup.id);
+        const updatedGroup = response.data.find((g: Group) => g.id === selectedGroup.id);
         if (updatedGroup) {
           setSelectedGroup(updatedGroup);
         }
@@ -55,10 +55,10 @@ export const GroupManagement: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  const handleDeleteGroup = async (groupId: number) => {
+  const handleDeleteGroup = async (groupId: string) => {
     if (window.confirm('Are you sure you want to delete this group?')) {
       try {
-        await groupService.deleteGroup(groupId);
+        await groupService.deleteGroup(parseInt(groupId));
         await fetchGroups();
       } catch (error) {
         console.error('Error deleting group:', error);
@@ -170,7 +170,14 @@ export const GroupManagement: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           <GroupForm
-            initialData={selectedGroup || undefined}
+            initialData={selectedGroup ? {
+              id: parseInt(selectedGroup.id),
+              name: selectedGroup.name,
+              description: selectedGroup.description || '',
+              language: selectedGroup.language,
+              level: selectedGroup.level,
+              max_capacity: selectedGroup.max_capacity
+            } : undefined}
             onSubmit={handleFormSubmit}
             onCancel={handleFormClose}
           />

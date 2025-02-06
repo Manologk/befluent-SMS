@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import { AttendanceRecord } from '../../../types/attendance';
+import { AttendanceRecord, AttendanceStatus } from '../../../types/attendance';
 // import { attendanceApi } from '../../../services/api';
 import toast from 'react-hot-toast';
 
@@ -8,7 +8,7 @@ interface EditRecordModalProps {
   record: AttendanceRecord;
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { status: 'present' | 'absent' | 'late' }) => Promise<void>;
+  onSubmit: (data: { status: AttendanceStatus }) => Promise<void>;
 }
 
 export const EditRecordModal: React.FC<EditRecordModalProps> = ({
@@ -17,7 +17,7 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
   onClose,
   onSubmit,
 }) => {
-  const [status, setStatus] = useState<'present' | 'absent' | 'late'>(record.status);
+  const [status, setStatus] = useState<AttendanceStatus>(record.status);
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
@@ -54,19 +54,19 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
           <div className="space-y-4">
             <div>
               <p className="text-sm font-medium text-gray-500">Student</p>
-              <p className="mt-1 text-sm text-gray-900">{record.studentName}</p>
+              <p className="mt-1 text-sm text-gray-900">{record.student?.name || 'Unknown Student'}</p>
             </div>
 
             <div>
               <p className="text-sm font-medium text-gray-500">Date</p>
               <p className="mt-1 text-sm text-gray-900">
-                {new Date(record.date).toLocaleDateString()}
+                {new Date(record.timestamp).toLocaleDateString()}
               </p>
             </div>
 
             <div>
               <p className="text-sm font-medium text-gray-500">Current Status</p>
-              <p className="mt-1 text-sm text-gray-900 capitalize">{record.status}</p>
+              <p className="mt-1 text-sm text-gray-900 capitalize">{record.status.toLowerCase()}</p>
             </div>
 
             <div>
@@ -75,24 +75,24 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
               </label>
               <select
                 value={status}
-                onChange={(e) => setStatus(e.target.value as 'present' | 'absent' | 'late')}
+                onChange={(e) => setStatus(e.target.value as AttendanceStatus)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 disabled={loading}
               >
-                <option value="present">Present</option>
-                <option value="absent">Absent</option>
-                <option value="late">Late</option>
+                <option value="PRESENT">Present</option>
+                <option value="ABSENT">Absent</option>
+                <option value="LATE">Late</option>
               </select>
             </div>
 
             {status !== record.status && (
               <div className="mt-4 p-4 bg-yellow-50 rounded-md">
                 <p className="text-sm text-yellow-700">
-                  {status === 'present' && record.status === 'absent' ? (
+                  {status === 'PRESENT' && record.status === 'ABSENT' ? (
                     <span>
                       Changing status to Present will deduct 1 lesson and update the subscription balance.
                     </span>
-                  ) : status === 'absent' && record.status === 'present' ? (
+                  ) : status === 'ABSENT' && record.status === 'PRESENT' ? (
                     <span>
                       Changing status to Absent will add back 1 lesson and update the subscription balance.
                     </span>

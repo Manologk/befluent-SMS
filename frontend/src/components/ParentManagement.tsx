@@ -22,12 +22,17 @@ interface Child {
   total_lessons: number
 }
 
-interface Parent {
+// Update Parent interface to match API response
+interface ApiParent {
   id: number
   name: string
   email: string
   phone_number: string
   children: Child[]
+}
+
+// Component's Parent interface with additional calculated fields
+interface Parent extends ApiParent {
   total_lessons_remaining: number
   total_subscription_balance: number
 }
@@ -36,6 +41,20 @@ type SortConfig = {
   key: string
   direction: 'ascending' | 'descending'
 }
+
+// Helper function for number formatting
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('ru-RU', {
+    style: 'currency',
+    currency: 'RUB',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount);
+};
+
+const formatNumber = (num: number) => {
+  return new Intl.NumberFormat('ru-RU').format(num);
+};
 
 export function ParentManagement() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -52,10 +71,16 @@ export function ParentManagement() {
         setIsLoading(true)
         setError(null)
         
-        const data = await parentApi.getAll() // Data is already parsed
-        console.log('API Response:', data) // For debugging
+        const apiData = await parentApi.getAll()
         
-        setParents(data)
+        // Transform API data to include calculated fields
+        const transformedData: Parent[] = apiData.map((parent: ApiParent) => ({
+          ...parent,
+          total_lessons_remaining: parent.children.reduce((sum, child) => sum + Number(child.lessons_remaining), 0),
+          total_subscription_balance: parent.children.reduce((sum, child) => sum + Number(child.subscription_balance), 0)
+        }))
+        
+        setParents(transformedData)
       } catch (error) {
         console.error('Error fetching parents:', error)
         setError('Failed to load parents data')
@@ -122,11 +147,15 @@ export function ParentManagement() {
   }
 
   const handleParentAdded = async () => {
-    // Refresh the parents list
     try {
-      const data = await parentApi.getAll()
-      setParents(data)
-      setShowAddForm(false) // Hide the form after successful addition
+      const apiData = await parentApi.getAll()
+      const transformedData: Parent[] = apiData.map((parent: ApiParent) => ({
+        ...parent,
+        total_lessons_remaining: parent.children.reduce((sum, child) => sum + Number(child.lessons_remaining), 0),
+        total_subscription_balance: parent.children.reduce((sum, child) => sum + Number(child.subscription_balance), 0)
+      }))
+      setParents(transformedData)
+      setShowAddForm(false)
     } catch (error) {
       console.error('Error refreshing parents:', error)
     }
@@ -142,6 +171,17 @@ export function ParentManagement() {
 
   return (
     <div className="space-y-4">
+      {error && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4 text-red-600">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">Error:</span>
+              <span>{error}</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {showAddForm ? (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -212,9 +252,9 @@ export function ParentManagement() {
                 <TableRow key={parent.id}>
                   <TableCell>{parent.name}</TableCell>
                   <TableCell>{parent.email}</TableCell>
-                  <TableCell>{parent.children.length}</TableCell>
-                  <TableCell>{parent.total_lessons_remaining}</TableCell>
-                  <TableCell>₽ {parent.total_subscription_balance}</TableCell>
+                  <TableCell>{formatNumber(parent.children.length)}</TableCell>
+                  <TableCell>{formatNumber(parent.total_lessons_remaining)}</TableCell>
+                  <TableCell>{formatCurrency(parent.total_subscription_balance)}</TableCell>
                   <TableCell>
                     <Dialog>
                       <DialogTrigger asChild>
@@ -236,16 +276,18 @@ export function ParentManagement() {
                                   <div>
                                     <h4 className="text-sm font-medium mb-2">Lessons Progress</h4>
                                     <Progress 
-                                      value={(child.lessons_remaining / (child.total_lessons || child.lessons_remaining)) * 100} 
+                                      value={(Number(child.lessons_remaining) / (Number(child.total_lessons) || Number(child.lessons_remaining))) * 100} 
                                       className="h-2" 
                                     />
                                     <p className="text-sm text-muted-foreground mt-2">
-                                      {child.lessons_remaining} lessons remaining
+                                      {formatNumber(Number(child.lessons_remaining))} lessons remaining
                                     </p>
                                   </div>
                                   <div>
                                     <h4 className="text-sm font-medium">Subscription Balance</h4>
-                                    <p className="text-sm text-muted-foreground">₽ {child.subscription_balance}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {formatCurrency(Number(child.subscription_balance))}
+                                    </p>
                                   </div>
                                 </CardContent>
                               </Card>

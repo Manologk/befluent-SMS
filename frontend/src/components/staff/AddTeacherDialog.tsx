@@ -23,6 +23,7 @@ export function AddTeacherDialog({ open, onOpenChange, onSuccess }: AddTeacherDi
     name: "",
     email: "",
     password: "",
+    phone_number: "",
     specializations: [] as string[],
   })
   const { toast } = useToast()
@@ -30,10 +31,11 @@ export function AddTeacherDialog({ open, onOpenChange, onSuccess }: AddTeacherDi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await teacherApi.create({
+      await teacherApi.createWithUser({
         name: formData.name,
         email: formData.email,
         password: formData.password,
+        phone_number: formData.phone_number,
         specializations: formData.specializations,
       })
       toast({
@@ -46,12 +48,14 @@ export function AddTeacherDialog({ open, onOpenChange, onSuccess }: AddTeacherDi
         name: "",
         email: "",
         password: "",
+        phone_number: "",
         specializations: [],
       })
     } catch (error) {
+      console.error('Error adding teacher:', error)
       toast({
         title: "Error",
-        description: "Failed to add teacher",
+        description: "Failed to add teacher. Please try again.",
         variant: "destructive",
       })
     }
@@ -69,6 +73,7 @@ export function AddTeacherDialog({ open, onOpenChange, onSuccess }: AddTeacherDi
             <Input
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Enter full name"
               required
             />
           </div>
@@ -78,6 +83,17 @@ export function AddTeacherDialog({ open, onOpenChange, onSuccess }: AddTeacherDi
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="Enter email address"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Phone Number</label>
+            <Input
+              type="tel"
+              value={formData.phone_number}
+              onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+              placeholder="Enter phone number"
               required
             />
           </div>
@@ -87,6 +103,7 @@ export function AddTeacherDialog({ open, onOpenChange, onSuccess }: AddTeacherDi
               type="password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder="Enter password"
               required
             />
           </div>

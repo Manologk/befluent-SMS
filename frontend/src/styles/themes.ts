@@ -1,6 +1,7 @@
 import { createTheme } from "@/lib/create-theme"
+import { ThemeColors } from "@/types/theme"
 
-export const lightTheme = createTheme("light", {
+export const lightTheme = createTheme({
   background: "0 0% 100%",
   foreground: "222.2 84% 4.9%",
   card: "0 0% 100%",
@@ -20,9 +21,9 @@ export const lightTheme = createTheme("light", {
   border: "214.3 31.8% 91.4%",
   input: "214.3 31.8% 91.4%",
   ring: "222.2 84% 4.9%",
-})
+} satisfies ThemeColors)
 
-export const darkTheme = createTheme("dark", {
+export const darkTheme = createTheme({
   background: "222.2 84% 4.9%",
   foreground: "210 40% 98%",
   card: "222.2 84% 4.9%",
@@ -42,9 +43,9 @@ export const darkTheme = createTheme("dark", {
   border: "217.2 32.6% 17.5%",
   input: "217.2 32.6% 17.5%",
   ring: "212.7 26.8% 83.9%",
-})
+} satisfies ThemeColors)
 
-export const blueTheme = createTheme("blue", {
+export const blueTheme = createTheme({
   background: "220 100% 98%",
   foreground: "220 10% 10%",
   card: "220 100% 98%",
@@ -64,9 +65,9 @@ export const blueTheme = createTheme("blue", {
   border: "220 30% 80%",
   input: "220 30% 80%",
   ring: "220 90% 50%",
-})
+} satisfies ThemeColors)
 
-export const greenTheme = createTheme("green", {
+export const greenTheme = createTheme({
   background: "150 100% 98%",
   foreground: "150 10% 10%",
   card: "150 100% 98%",
@@ -86,9 +87,9 @@ export const greenTheme = createTheme("green", {
   border: "150 30% 80%",
   input: "150 30% 80%",
   ring: "150 90% 40%",
-})
+} satisfies ThemeColors)
 
-export const purpleTheme = createTheme("purple", {
+export const purpleTheme = createTheme({
   background: "270 100% 98%",
   foreground: "270 10% 10%",
   card: "270 100% 98%",
@@ -108,5 +109,5 @@ export const purpleTheme = createTheme("purple", {
   border: "270 30% 80%",
   input: "270 30% 80%",
   ring: "270 90% 50%",
-})
+} satisfies ThemeColors)
 

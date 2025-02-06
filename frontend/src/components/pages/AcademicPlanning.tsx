@@ -3,19 +3,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import GroupManagement from '@/components/GroupManager/GroupManagement'
 // import ReportGeneration from '@/components/ReportGeneration'
 import CreateSchedule from '@/components/CreateSchedule'
-import { Student, Teacher, Assignment } from '@/types'
-import { Group } from '@/types/groupManager'
+import { Assignment } from '@/types'
 
 export default function ClassManagement() {
-  const [students, setStudents] = useState<Student[]>([])
-  const [teachers, setTeachers] = useState<Teacher[]>([])
-  const [groups, setGroups] = useState<Group[]>([])
   const [assignments, setAssignments] = useState<Assignment[]>([])
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Class Management System</h1>
-      <Tabs defaultValue="students">
+      <Tabs defaultValue="groups">
         <TabsList>
           {/* <TabsTrigger value="students">Students</TabsTrigger> */}
           {/* <TabsTrigger value="teachers">Teachers</TabsTrigger> */}
@@ -45,9 +41,6 @@ export default function ClassManagement() {
         </TabsContent>
         <TabsContent value="schedule">
           <CreateSchedule 
-            students={students}
-            teachers={teachers}
-            groups={groups}
             assignments={assignments}
             setAssignments={setAssignments}
           />

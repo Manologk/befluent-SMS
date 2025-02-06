@@ -11,7 +11,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Student, Teacher, Group, Assignment } from '@/types'
 import  MultipleSelector, { Option } from "@/components/ui/multiple-selector"
 
-import { toast, useToast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { scheduleApi } from '@/services/api';
 import { CreateSchedulePayload } from '@/services/api';
 import { teacherApi } from '@/services/api'
@@ -55,8 +55,6 @@ const formSchema = z.object({
 )
 
 interface CreateScheduleProps {
-  // students: Student[]
-  groups: Group[]
   assignments: Assignment[]
   setAssignments: React.Dispatch<React.SetStateAction<Assignment[]>>
 }
@@ -72,8 +70,6 @@ const DAYS_OPTIONS: Option[] = [
 ]
 
 export default function CreateSchedule({ 
-  // students, 
-  groups, 
   assignments, 
   setAssignments 
 }: CreateScheduleProps) {
@@ -94,7 +90,8 @@ export default function CreateSchedule({
           id: teacher.id.toString(),
           name: teacher.name || `${teacher.first_name} ${teacher.last_name}`,
           email: teacher.email,
-          specializations: teacher.specializations || []
+          specializations: teacher.specializations || [],
+          contactDetails: teacher.contact_details || teacher.phone || ''
         }))
         setTeachers(transformedTeachers)
       } catch (error) {
@@ -302,7 +299,7 @@ export default function CreateSchedule({
                       <SelectContent>
                         {groupsState.map((group) => (
                           <SelectItem key={group.id} value={group.id.toString()}>
-                            {group.name} ({group.current_capacity}/{group.max_capacity} students)
+                            {group.name} ({group.studentIds.length}/{group.maxCapacity} students)
                           </SelectItem>
                         ))}
                       </SelectContent>

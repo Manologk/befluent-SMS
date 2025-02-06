@@ -1,24 +1,24 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Users, UserCheck, UserX, Clock } from 'lucide-react';
+import { Users, UserCheck, UserX } from 'lucide-react';
 import { Header } from './Header';
 import { StatsCard } from '@/components/AttendanceViewer/StatsCard';
 import { FilterBar } from '@/components/AttendanceViewer/FilterBar';
 import { DataTable } from '@/components/AttendanceViewer/DataTable';
 import { EditRecordModal } from '@/components/AttendanceViewer/Modals/EditRecordModal';
-import { AttendanceRecord, AttendanceFilters } from '../../types/attendance';
+import { AttendanceRecord, AttendanceFilters, AttendanceStatus } from '../../types/attendance';
 import { attendanceApi } from '@/services/api';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
-const STUDENT_LEVELS = [
-  'all',
-  'Beginner',
-  'Elementary',
-  'Pre-Intermediate',
-  'Intermediate',
-  'Upper-Intermediate',
-  'Advanced'
-];
+// const STUDENT_LEVELS = [
+//   'all',
+//   'Beginner',
+//   'Elementary',
+//   'Pre-Intermediate',
+//   'Intermediate',
+//   'Upper-Intermediate',
+//   'Advanced'
+// ];
 
 export const AttendanceViewer: React.FC = () => {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
@@ -28,14 +28,13 @@ export const AttendanceViewer: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<AttendanceFilters>({
-    dateRange: { 
-      start: format(new Date(), 'yyyy-MM-dd'),
-      end: format(new Date(), 'yyyy-MM-dd')
-    },
-    level: '',
-    studentSearch: '',
-    status: '',
-    language: '',
+    startDate: format(new Date(), 'yyyy-MM-dd'),
+    endDate: format(new Date(), 'yyyy-MM-dd'),
+    studentId: undefined,
+    status: undefined,
+    language: undefined,
+    grade: undefined,
+    groupId: undefined
   });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
@@ -56,8 +55,8 @@ export const AttendanceViewer: React.FC = () => {
     setError(null);
     try {
       const data = await attendanceApi.getAttendanceLogs(
-        filters.dateRange.start,
-        filters.dateRange.end
+        filters.startDate,
+        filters.endDate
       );
       setRecords(data);
       setFilteredRecords(data);
@@ -71,14 +70,7 @@ export const AttendanceViewer: React.FC = () => {
 
   useEffect(() => {
     fetchAttendanceData();
-  }, [filters.dateRange]);
-
-  const stats = {
-    total: filteredRecords.length,
-    present: filteredRecords.filter(r => r.status === 'present').length,
-    absent: filteredRecords.filter(r => r.status === 'absent').length,
-    late: filteredRecords.filter(r => r.status === 'late').length,
-  };
+  }, [filters.startDate, filters.endDate]);
 
   const handleFilterChange = (newFilters: AttendanceFilters) => {
     setFilters(newFilters);
@@ -99,14 +91,13 @@ export const AttendanceViewer: React.FC = () => {
 
   const handleExport = () => {
     const csv = [
-      ['Student Name', 'Date', 'Status', 'Time In', 'Time Out', 'Notes'].join(','),
+      ['Student Name', 'Date', 'Status', 'Time', 'Notes'].join(','),
       ...filteredRecords.map((record) =>
         [
-          record.studentName,
-          record.date,
+          record.student?.name || 'Unknown',
+          new Date(record.timestamp).toLocaleDateString(),
           record.status,
-          record.timeIn || '',
-          record.timeOut || '',
+          new Date(record.timestamp).toLocaleTimeString(),
           record.notes || '',
         ].join(',')
       ),
@@ -132,75 +123,52 @@ export const AttendanceViewer: React.FC = () => {
 
   const handleSaveRecord = async (updatedRecord: AttendanceRecord) => {
     try {
-      await attendanceApi.updateAttendanceStatus(updatedRecord.id, updatedRecord.status);
+      const newStatus = updatedRecord.status.toLowerCase() as 'present' | 'absent' | 'late';
+      const result = await attendanceApi.updateAttendanceStatus(updatedRecord.id, newStatus);
       const updatedRecords = records.map(record =>
         record.id === updatedRecord.id ? updatedRecord : record
       );
       setRecords(updatedRecords);
       setIsEditModalOpen(false);
       setSelectedRecord(null);
-    } catch (err) {
-      console.error('Error updating record:', err);
-      setError('Failed to update attendance record');
-    }
-  };
-
-  const handleStatusChange = async (id: string, newStatus: 'present' | 'absent' | 'late') => {
-    try {
-      setLoading(true);
-      console.log('Updating status:', { id, newStatus }); // Debug log
       
-      const result = await attendanceApi.updateAttendanceStatus(id, newStatus);
-      console.log('API response:', result); // Debug log
-      
-      // Update the records with the new attendance status
-      setRecords(prevRecords => 
-        prevRecords.map(record => 
-          record.id === id 
-            ? { 
-                ...record, 
-                status: newStatus,
-              } 
-            : record
-        )
-      );
-
-      // Show success message with updated lesson count and balance
       toast.success(
         `Status updated successfully! \nLessons remaining: ${result.lessons_remaining}\nSubscription balance: $${result.subscription_balance.toFixed(2)}`
       );
-    } catch (error: any) {
-      console.error('Error updating status:', error); // Debug log
-      toast.error(error.response?.data?.error || 'Failed to update status');
-    } finally {
-      setLoading(false);
+    } catch (err: any) {
+      console.error('Error updating record:', err);
+      toast.error(err.response?.data?.error || 'Failed to update attendance record');
     }
   };
 
-  const handleEditSubmit = async (data: { status: 'present' | 'absent' | 'late' }) => {
+  const handleEditSubmit = async (data: { status: AttendanceStatus }) => {
     if (selectedRecord) {
-      await handleStatusChange(selectedRecord.id, data.status);
-      setIsEditModalOpen(false);
+      await handleSaveRecord({
+        ...selectedRecord,
+        status: data.status
+      });
     }
   };
 
   useEffect(() => {
     let filtered = [...records];
 
-    if (filters.dateRange.start && filters.dateRange.end) {
+    if (filters.startDate && filters.endDate) {
       filtered = filtered.filter(
-        (record) =>
-          record.date >= filters.dateRange.start && record.date <= filters.dateRange.end
+        (record) => {
+          const recordDate = new Date(record.timestamp).toISOString().split('T')[0];
+          return recordDate >= filters.startDate && recordDate <= filters.endDate;
+        }
       );
     }
 
-    if (filters.level) {
-      filtered = filtered.filter((record) => record.grade === filters.level);
+    if (filters.grade) {
+      filtered = filtered.filter((record) => record.student?.grade === filters.grade);
     }
 
-    if (filters.studentSearch) {
+    if (filters.studentId) {
       filtered = filtered.filter((record) =>
-        record.studentName.toLowerCase().includes(filters.studentSearch.toLowerCase())
+        record.student_id.includes(filters.studentId || '')
       );
     }
 
@@ -209,7 +177,7 @@ export const AttendanceViewer: React.FC = () => {
     }
 
     if (filters.language) {
-      filtered = filtered.filter((record) => record.language === filters.language);
+      filtered = filtered.filter((record) => record.student?.language === filters.language);
     }
 
     setFilteredRecords(filtered);
@@ -230,7 +198,7 @@ export const AttendanceViewer: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Header title="Attendance Viewer" />
+      <Header />
       
       <main className="container mx-auto px-4 py-8">
         {error && (
@@ -248,13 +216,13 @@ export const AttendanceViewer: React.FC = () => {
           />
           <StatsCard
             title="Present"
-            value={records.filter(r => r.status === 'present').length.toString()}
+            value={records.filter(r => r.status === 'PRESENT').length.toString()}
             icon={<UserCheck className="h-6 w-6" />}
             color="text-green-600"
           />
           <StatsCard
             title="Absent"
-            value={records.filter(r => r.status === 'absent').length.toString()}
+            value={records.filter(r => r.status === 'ABSENT').length.toString()}
             icon={<UserX className="h-6 w-6" />}
             color="text-red-600"
           />
@@ -264,8 +232,6 @@ export const AttendanceViewer: React.FC = () => {
           <FilterBar
             filters={filters}
             onFilterChange={handleFilterChange}
-            levels={STUDENT_LEVELS}
-            statuses={['all', 'present', 'absent', 'late']}
           />
 
           <div className="overflow-x-auto bg-white rounded-lg shadow">

@@ -4,13 +4,13 @@ import { ClassSchedule } from "@/types/attendance";
 import { useClassActivity } from "@/hooks/useClassActivity";
 import AttendanceScanner from "@/components/pages/AttendanceScanner";
 import { AttendanceProgress } from "./AttendanceProgress";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+// import {
+//   Card,
+//   CardContent,
+//   CardDescription,
+//   CardHeader,
+//   CardTitle,
+// } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,6 +31,10 @@ export const ClassCard: React.FC<ClassCardProps> = ({
   onStartScanning,
 }) => {
   const isActive = useClassActivity(class_.time);
+
+  const handleStartScanning = () => {
+    onStartScanning(class_.id);
+  };
 
   return (
     <div className="border rounded-lg p-4 hover:border-blue-500 transition-colors">
@@ -107,7 +111,11 @@ export const ClassCard: React.FC<ClassCardProps> = ({
 
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="outline" className="flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-md text-sm hover:bg-green-100">
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-md text-sm hover:bg-green-100"
+              onClick={handleStartScanning}
+            >
               <QrCode className="w-4 h-4" />Mark Attendance
             </Button>
           </DialogTrigger>

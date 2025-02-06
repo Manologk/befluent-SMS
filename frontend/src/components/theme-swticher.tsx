@@ -1,9 +1,6 @@
 "use client"
 
-import * as React from "react"
 import { Moon, Sun, Laptop, Palette } from 'lucide-react'
-
-// import { useTheme } from "next-themes"
 import { useTheme } from './theme-provider';
 import { Button } from "@/components/ui/button"
 import {
@@ -12,8 +9,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Theme } from "@/types/theme"
 
-const themes = [
+const themes: Theme[] = [
   { name: "light", icon: Sun },
   { name: "dark", icon: Moon },
   { name: "system", icon: Laptop },
@@ -22,8 +20,8 @@ const themes = [
   { name: "purple", icon: Palette },
 ]
 
-export function ThemeSwitcher() {
-  const { theme, setTheme } = useTheme()
+export function ThemeSwitcher(): JSX.Element {
+  const { setTheme } = useTheme()
 
   return (
     <DropdownMenu>

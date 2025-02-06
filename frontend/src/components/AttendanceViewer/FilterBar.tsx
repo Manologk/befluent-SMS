@@ -1,6 +1,6 @@
 import React from 'react';
 import { Search, Filter } from 'lucide-react';
-import { AttendanceFilters, AttendanceStatus, Language } from '../../types/attendance';
+import { AttendanceFilters } from '../../types/attendance';
 import { StatusFilter } from '@/components/AttendanceViewer/Filters/StatusFilter';
 import { LanguageFilter } from '@/components/AttendanceViewer/Filters/LanguangeFilter';
 
@@ -23,9 +23,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange })
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                value={filters.studentSearch}
-                onChange={(e) => handleChange('studentSearch', e.target.value)}
-                placeholder="Search students..."
+                value={filters.studentId || ''}
+                onChange={(e) => handleChange('studentId', e.target.value || undefined)}
+                placeholder="Search by student ID..."
                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
@@ -34,8 +34,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange })
           <div className="flex flex-wrap gap-4">
             <div className="flex-1 min-w-[200px]">
               <select
-                value={filters.grade}
-                onChange={(e) => handleChange('grade', e.target.value)}
+                value={filters.grade || ''}
+                onChange={(e) => handleChange('grade', e.target.value || undefined)}
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="">All Grades</option>
@@ -45,13 +45,13 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange })
             </div>
 
             <StatusFilter 
-              value={filters.status}
-              onChange={(value) => handleChange('status', value)}
+              value={filters.status || ''}
+              onChange={(value) => handleChange('status', value || undefined)}
             />
 
             <LanguageFilter
-              value={filters.language}
-              onChange={(value) => handleChange('language', value)}
+              value={filters.language || ''}
+              onChange={(value) => handleChange('language', value || undefined)}
             />
 
             <button className="inline-flex items-center px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50">
@@ -67,15 +67,15 @@ export const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange })
           <span className="text-sm text-gray-500">Date Range:</span>
           <input
             type="date"
-            value={filters.dateRange.start}
-            onChange={(e) => handleChange('dateRange', { ...filters.dateRange, start: e.target.value })}
+            value={filters.startDate}
+            onChange={(e) => handleChange('startDate', e.target.value)}
             className="px-3 py-1 border border-gray-200 rounded-md text-sm"
           />
           <span>-</span>
           <input
             type="date"
-            value={filters.dateRange.end}
-            onChange={(e) => handleChange('dateRange', { ...filters.dateRange, end: e.target.value })}
+            value={filters.endDate}
+            onChange={(e) => handleChange('endDate', e.target.value)}
             className="px-3 py-1 border border-gray-200 rounded-md text-sm"
           />
         </div>

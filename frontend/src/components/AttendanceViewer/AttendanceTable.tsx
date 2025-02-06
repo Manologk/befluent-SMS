@@ -12,12 +12,14 @@ interface AttendanceTableProps {
 
 const getStatusColor = (status: AttendanceStatus): string => {
   switch (status) {
-    case 'present':
+    case 'PRESENT':
       return 'bg-green-100 text-green-800';
-    case 'absent':
+    case 'ABSENT':
       return 'bg-red-100 text-red-800';
-    case 'late':
+    case 'LATE':
       return 'bg-yellow-100 text-yellow-800';
+    case 'EXCUSED':
+      return 'bg-blue-100 text-blue-800';
     default:
       return 'bg-gray-100 text-gray-800';
   }
@@ -55,7 +57,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => onSort('studentName')}
+                onClick={() => onSort('student_id')}
               >
                 <div className="flex items-center">
                   Student Name
@@ -65,7 +67,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => onSort('date')}
+                onClick={() => onSort('timestamp')}
               >
                 <div className="flex items-center">
                   Date
@@ -76,7 +78,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                 Status
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Time In/Out
+                Time
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Notes
@@ -90,18 +92,18 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
             {records.map((record) => (
               <tr key={record.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {record.studentName}
+                  {record.student?.name || 'Unknown Student'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(record.date).toLocaleDateString()}
+                  {new Date(record.timestamp).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(record.status)}`}>
-                    {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+                    {record.status.charAt(0) + record.status.slice(1).toLowerCase()}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {record.timeIn && record.timeOut ? `${record.timeIn} - ${record.timeOut}` : '-'}
+                  {new Date(record.timestamp).toLocaleTimeString()}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {record.notes || '-'}

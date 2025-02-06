@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Clock } from 'lucide-react';
 import { format, startOfWeek, addDays, addWeeks, subWeeks, parseISO } from 'date-fns';
 import { sessionApi } from '@/services/api';
 

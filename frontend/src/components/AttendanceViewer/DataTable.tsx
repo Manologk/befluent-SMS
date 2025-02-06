@@ -10,11 +10,12 @@ interface DataTableProps {
   onEdit: (record: AttendanceRecord) => void;
 }
 
-const getStatusStyle = (status: AttendanceStatus) => {
-  const styles = {
-    present: 'bg-green-50 text-green-700 border-green-200',
-    absent: 'bg-red-50 text-red-700 border-red-200',
-    late: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+const getStatusStyle = (status: AttendanceStatus): string => {
+  const styles: Record<AttendanceStatus, string> = {
+    PRESENT: 'bg-green-50 text-green-700 border-green-200',
+    ABSENT: 'bg-red-50 text-red-700 border-red-200',
+    LATE: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+    EXCUSED: 'bg-blue-50 text-blue-700 border-blue-200'
   };
   return `${styles[status]} px-2 py-1 text-xs font-medium rounded-full border`;
 };
@@ -56,7 +57,7 @@ export const DataTable: React.FC<DataTableProps> = ({
             <tr className="bg-gray-50">
               <th scope="col" className="px-6 py-3 text-left">
                 <button
-                  onClick={() => onSort('studentName')}
+                  onClick={() => onSort('student_id')}
                   className="flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Student
@@ -65,7 +66,7 @@ export const DataTable: React.FC<DataTableProps> = ({
               </th>
               <th scope="col" className="px-6 py-3 text-left">
                 <button
-                  onClick={() => onSort('date')}
+                  onClick={() => onSort('timestamp')}
                   className="flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Date
@@ -93,41 +94,29 @@ export const DataTable: React.FC<DataTableProps> = ({
                   <div className="flex items-center">
                     <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
                       <span className="text-sm font-medium text-gray-600">
-                        {record.studentName.charAt(0)}
+                        {record.student?.name?.charAt(0) || '?'}
                       </span>
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">
-                        {record.studentName}
-                        {record.students && record.students.length > 0 && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            Group: {record.students.join(', ')}
-                          </div>
-                        )}
+                        {record.student?.name || 'Unknown Student'}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {record.grade} • {record.language}
+                        Session ID: {record.session_id}
                       </div>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
-                  {new Date(record.date).toLocaleDateString()}
+                  {new Date(record.timestamp).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4">
                   <span className={getStatusStyle(record.status)}>
-                    {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+                    {record.status.charAt(0) + record.status.slice(1).toLowerCase()}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
-                  {record.timeIn && record.timeOut ? (
-                    <div>
-                      <div>In: {record.timeIn}</div>
-                      <div>Out: {record.timeOut}</div>
-                    </div>
-                  ) : (
-                    '-'
-                  )}
+                  {new Date(record.timestamp).toLocaleTimeString()}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {record.notes || '-'}

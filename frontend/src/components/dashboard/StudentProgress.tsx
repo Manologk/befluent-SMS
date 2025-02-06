@@ -1,5 +1,5 @@
-import React from 'react';
-import { TrendingUp, CheckCircle, AlertCircle, Star } from 'lucide-react';
+
+import { CheckCircle, AlertCircle, Star } from 'lucide-react';
 
 const StudentProgress = () => {
   const students = [

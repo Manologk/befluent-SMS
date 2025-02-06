@@ -1,16 +1,16 @@
-import React from 'react';
+
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './components/theme-provider';
 import { Sidebar } from '@/components/Sidebar';
 import { ThemeSwitcher } from '@/components/theme-swticher';
 import { SidebarProvider } from '@/components/SidebarProvider';
 import { useAuth } from '@/contexts/AuthContext';
+import { UserRole } from '@/types/auth';
 import Login from '@/components/pages/Login';
 import Dashboard from '@/components/pages/Dashboard';
 import { Index as StudentDashboard } from '@/components/pages/StudentPortal';
 import StudentManagement from '@/components/pages/StudentManament';
 import ParentPortal from '@/components/pages/ParentPortal';
-import AttendanceScanner from '@/components/pages/AttendanceScanner';
 import StaffManagementPage from './components/pages/Staff';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { LogoutButton } from './components/LogoutButton';
@@ -39,7 +39,7 @@ function App() {
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-      {isAuthenticated && user?.role === 'student' ? (
+      {isAuthenticated && (user?.role as UserRole) === 'student' ? (
         <main className="flex-1">
           <div className="flex justify-end p-4 items-center gap-2">
             <LogoutButton />
@@ -47,7 +47,7 @@ function App() {
           </div>
           <StudentDashboard />
         </main>
-      ) : isAuthenticated && user?.role === 'instructor' ? (
+      ) : isAuthenticated && (user?.role as UserRole) === 'instructor' ? (
         <DashboardLayout>
           <div className="flex justify-end p-4 items-center gap-2">
             <LogoutButton />

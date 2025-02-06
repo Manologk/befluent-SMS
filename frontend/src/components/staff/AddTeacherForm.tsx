@@ -42,7 +42,11 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>
 
-export function AddTeacherForm({ className }: React.HTMLAttributes<HTMLDivElement>) {
+interface AddTeacherFormProps extends React.HTMLAttributes<HTMLDivElement> {
+  onSuccess?: () => void;
+}
+
+export function AddTeacherForm({ className, onSuccess }: AddTeacherFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
 
@@ -76,7 +80,12 @@ export function AddTeacherForm({ className }: React.HTMLAttributes<HTMLDivElemen
       // Clear the form
       form.reset()
       
-      navigate('/staff')
+      // Call onSuccess if provided, otherwise navigate
+      if (onSuccess) {
+        onSuccess()
+      } else {
+        navigate('/staff')
+      }
     } catch (error: any) {
       console.error('Registration error:', error)
       const errorMessage = error.response?.data?.detail || 

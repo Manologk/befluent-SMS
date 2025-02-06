@@ -1,7 +1,7 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
-import { Users, UserPlus, Book, Edit, Eye } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Users, UserPlus, Book, Edit } from 'lucide-react'
 import { teacherApi } from '@/services/api'
 import { AddTeacherDialog } from './AddTeacherDialog'
 import { EditTeacherDialog } from './EditTeacherDialog'
@@ -50,13 +50,13 @@ export function TeacherList() {
     setSelectedTeacher(teacher)
   }
 
-  const handleViewAssignments = (teacher: Teacher) => {
-    // TODO: Implement view assignments functionality
-    toast({
-      title: "Coming Soon",
-      description: "View assignments functionality will be implemented soon",
-    })
-  }
+  // const handleViewAssignments = (teacher: Teacher) => {
+  //   // TODO: Implement view assignments functionality
+  //   toast({
+  //     title: "Coming Soon",
+  //     description: "View assignments functionality will be implemented soon",
+  //   })
+  // }
 
   if (isLoading) {
     return (
@@ -124,13 +124,13 @@ export function TeacherList() {
                 <Edit className="w-4 h-4" />
                 Edit
               </button>
-              <button
+              {/* <button
                 onClick={() => handleViewAssignments(teacher)}
                 className="flex items-center gap-1 px-3 py-1 bg-gray-50 text-gray-700 rounded-md text-sm hover:bg-gray-100"
               >
                 <Eye className="w-4 h-4" />
                 View Assignments
-              </button>
+              </button> */}
             </div>
           </div>
         ))}

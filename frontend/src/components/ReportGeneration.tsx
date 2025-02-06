@@ -1,13 +1,13 @@
-import React from 'react'
-import { Button } from "@/components/ui/button"
-import { Student, Teacher, Group, Assignment } from '@/types'
+// import React from 'react'
+// import { Button } from "@/components/ui/button"
+// import { Student, Teacher, Group, Assignment } from '@/types'
 
-interface ReportGenerationProps {
-  students: Student[]
-  teachers: Teacher[]
-  groups: Group[]
-  assignments: Assignment[]
-}
+// interface ReportGenerationProps {
+//   students: Student[]
+//   teachers: Teacher[]
+//   groups: Group[]
+//   assignments: Assignment[]
+// }
 
 // export default function ReportGeneration({ students, teachers, groups, assignments }: ReportGenerationProps) {
 //   const generateClassAssignmentReport = () => {

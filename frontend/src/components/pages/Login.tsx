@@ -1,59 +1,56 @@
 "use client"
 
-import React, { useState } from 'react'
+// import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2 } from 'lucide-react'
+// import { Loader2 } from 'lucide-react'
 import { authApi } from '@/services/api'
 import circleImage from '@/assets/circle-cropped.png'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { LoginFormValues, loginFormSchema } from '@/lib/validations/login'
+import { User } from '@/types/auth'
+import { AuthResponse } from '@/services/api'
+import { UserRole } from '@/types/auth'
 
 export default function Login() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
   const { toast } = useToast()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginFormSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  })
 
+  const onSubmit = async (values: LoginFormValues) => {
     try {
-      const response = await authApi.login({ email, password })
+      const response = await authApi.login(values) as AuthResponse;
       
-      if (!response.access) {
-        throw new Error('Invalid response from server')
+      // Ensure all required User properties are present
+      const user: User = {
+        user_id: Number(response.user_id),
+        email: response.email,
+        role: response.role as UserRole,
+        qr_code: response.qr_code || `qr-${response.user_id}` // Generate QR if not provided
       }
 
-      // Store token in localStorage
-      localStorage.setItem('token', response.access)
-      
-      login(response.access, {
-        user_id: response.user_id,
-        email: response.email,
-        role: response.role,
-      })
-
-      toast({
-        title: 'Login successful',
-        description: 'Welcome back!',
-      })
-
-      navigate('/')
+      login(response.access, user)
+      navigate("/")
     } catch (error) {
-      console.error('Login error:', error)
+      console.error("Login error:", error)
       toast({
-        title: 'Login failed',
-        description: error instanceof Error ? error.message : 'Please check your credentials and try again.',
-        variant: 'destructive',
+        title: "Login Failed",
+        description: "Invalid credentials. Please try again.",
+        variant: "destructive",
       })
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -66,7 +63,7 @@ export default function Login() {
           <CardDescription>Sign in to your account</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">
                 Email
@@ -74,11 +71,9 @@ export default function Login() {
               <Input
                 id="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                {...form.register('email')}
                 placeholder="Enter your email"
                 required
-                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -88,22 +83,13 @@ export default function Login() {
               <Input
                 id="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                {...form.register('password')}
                 placeholder="Enter your password"
                 required
-                disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                'Sign In'
-              )}
+            <Button type="submit" className="w-full">
+              Sign In
             </Button>
           </form>
         </CardContent>

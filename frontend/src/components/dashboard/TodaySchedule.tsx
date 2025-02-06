@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ClassSchedule } from '@/types/attendance';
 import { ClassCard } from '@/components/ClassCard';
 import { useAttendanceStore } from '../../store/attendanceStore';
 import { sessionApi } from '@/services/api';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useToast } from '@/hooks/use-toast';
+import QRScanner from '@/components/QRScanner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const TodaySchedule = () => {
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
@@ -18,18 +20,34 @@ const TodaySchedule = () => {
     const fetchSessions = async () => {
       try {
         const today = format(new Date(), 'yyyy-MM-dd');
-        console.log('Fetching sessions for date:', today); // Debug log
-        const data = await sessionApi.getTeacherSessions(today);
-        // Sort sessions by start time
-        const sortedData = data.sort((a, b) => {
-          return a.start_time.localeCompare(b.start_time);
+        console.log('Fetching sessions for date:', today);
+        const data: ClassSchedule[] = await sessionApi.getTeacherSessions(today);
+        console.log('Raw sessions data:', data);
+        
+        // Sort sessions by time
+        const sortedData = [...data].sort((a, b) => {
+          try {
+            // Parse time strings (e.g., "09:00 AM") to Date objects for comparison
+            const timeA = parse(a.time, 'hh:mm a', new Date());
+            const timeB = parse(b.time, 'hh:mm a', new Date());
+            console.log('Comparing times:', {
+              a: timeA.toLocaleTimeString(),
+              b: timeB.toLocaleTimeString()
+            });
+            return timeA.getTime() - timeB.getTime();
+          } catch (error) {
+            console.error('Error sorting sessions:', error);
+            return 0;
+          }
         });
+        
+        console.log('Final sorted sessions:', sortedData);
         setSessions(sortedData);
       } catch (error) {
         console.error('Error fetching sessions:', error);
         toast({
           title: 'Error',
-          description: 'Failed to load sessions. Please try again.',
+          description: 'Failed to load today\'s sessions. Please try again.',
           variant: 'destructive',
         });
       } finally {
@@ -38,9 +56,34 @@ const TodaySchedule = () => {
     };
 
     fetchSessions();
+
+    // Refresh sessions every 5 minutes
+    const intervalId = setInterval(fetchSessions, 5 * 60 * 1000);
+
+    return () => clearInterval(intervalId);
   }, [toast]);
 
   const handleStartScanning = (classId: string) => {
+    if (!classId) {
+      toast({
+        title: 'Error',
+        description: 'Invalid class selected.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Check if the class exists in today's sessions
+    const classExists = sessions.some(session => session.id === classId);
+    if (!classExists) {
+      toast({
+        title: 'Error',
+        description: 'Selected class not found in today\'s schedule.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setSelectedClass(classId);
     startScanning();
   };
@@ -48,6 +91,44 @@ const TodaySchedule = () => {
   const handleStopScanning = () => {
     setSelectedClass(null);
     stopScanning();
+    toast({
+      title: 'Scanning Stopped',
+      description: 'QR code scanning has been stopped.',
+    });
+  };
+
+  const handleScanSuccess = async (qrData: string) => {
+    try {
+      if (!selectedClass) {
+        throw new Error('No class selected');
+      }
+
+      await sessionApi.markAttendance({
+        sessionId: selectedClass,
+        studentId: qrData,
+      });
+
+      toast({
+        title: 'Success',
+        description: 'Attendance marked successfully',
+      });
+      handleStopScanning();
+    } catch (error) {
+      console.error('Error marking attendance:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to mark attendance. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleScanError = (error: string) => {
+    toast({
+      title: 'Scanner Error',
+      description: error,
+      variant: 'destructive',
+    });
   };
 
   if (loading) {
@@ -79,12 +160,19 @@ const TodaySchedule = () => {
         </div>
       )}
 
-      {/* {isScanning && selectedClass && (
-        <QRScanner
-          classId={selectedClass}
-          onClose={handleStopScanning}
-        />
-      )} */}
+      {isScanning && selectedClass && (
+        <Dialog open={true} onOpenChange={() => handleStopScanning()}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Scan Student QR Code</DialogTitle>
+            </DialogHeader>
+            <QRScanner
+              onScanSuccess={handleScanSuccess}
+              onScanError={handleScanError}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

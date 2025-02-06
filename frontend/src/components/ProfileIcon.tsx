@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from './ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { User, LogOut, LogIn } from 'lucide-react';
+import { User, LogIn } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { LogoutButton } from './LogoutButton'
 
@@ -12,12 +12,6 @@ export function ProfileIcon() {
     // Implement login logic here
     console.log('Login clicked');
     setIsAuthenticated(true);
-  };
-
-  const handleLogout = () => {
-    // Implement logout logic here
-    console.log('Logout clicked');
-    setIsAuthenticated(false);
   };
 
   return (

@@ -25,18 +25,14 @@ export const AttendanceFiltersComponent: React.FC<AttendanceFiltersProps> = ({
           <div className="mt-1 flex space-x-2">
             <input
               type="date"
-              value={filters.dateRange.start}
-              onChange={(e) =>
-                handleChange('dateRange', { ...filters.dateRange, start: e.target.value })
-              }
+              value={filters.startDate}
+              onChange={(e) => handleChange('startDate', e.target.value)}
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
             <input
               type="date"
-              value={filters.dateRange.end}
-              onChange={(e) =>
-                handleChange('dateRange', { ...filters.dateRange, end: e.target.value })
-              }
+              value={filters.endDate}
+              onChange={(e) => handleChange('endDate', e.target.value)}
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
           </div>
@@ -45,8 +41,8 @@ export const AttendanceFiltersComponent: React.FC<AttendanceFiltersProps> = ({
         <div>
           <label className="block text-sm font-medium text-gray-700">Grade/Class</label>
           <select
-            value={filters.grade}
-            onChange={(e) => handleChange('grade', e.target.value)}
+            value={filters.grade || ''}
+            onChange={(e) => handleChange('grade', e.target.value || undefined)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           >
             <option value="">All Grades</option>
@@ -56,12 +52,12 @@ export const AttendanceFiltersComponent: React.FC<AttendanceFiltersProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Student Search</label>
+          <label className="block text-sm font-medium text-gray-700">Student ID</label>
           <input
             type="text"
-            value={filters.studentSearch}
-            onChange={(e) => handleChange('studentSearch', e.target.value)}
-            placeholder="Search by name..."
+            value={filters.studentId || ''}
+            onChange={(e) => handleChange('studentId', e.target.value || undefined)}
+            placeholder="Search by ID..."
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           />
         </div>
@@ -69,14 +65,15 @@ export const AttendanceFiltersComponent: React.FC<AttendanceFiltersProps> = ({
         <div>
           <label className="block text-sm font-medium text-gray-700">Status</label>
           <select
-            value={filters.status}
-            onChange={(e) => handleChange('status', e.target.value as AttendanceStatus)}
+            value={filters.status || ''}
+            onChange={(e) => handleChange('status', e.target.value as AttendanceStatus || undefined)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           >
             <option value="">All</option>
-            <option value="present">Present</option>
-            <option value="absent">Absent</option>
-            <option value="late">Late</option>
+            <option value="PRESENT">Present</option>
+            <option value="ABSENT">Absent</option>
+            <option value="LATE">Late</option>
+            <option value="EXCUSED">Excused</option>
           </select>
         </div>
       </div>

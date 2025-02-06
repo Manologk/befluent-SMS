@@ -23,7 +23,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    if (allowedRoles && user && !allowedRoles.includes(user.role as UserRole)) {
+    if (allowedRoles && user?.role && !allowedRoles.includes(user.role)) {
         // Redirect to appropriate dashboard based on user role
         const redirectPath = `/${user.role.toLowerCase()}panel`;
         return <Navigate to={redirectPath} replace />;
