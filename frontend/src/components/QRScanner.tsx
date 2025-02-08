@@ -6,7 +6,7 @@ import { Card } from './ui/card';
 // import { studentApi } from '../services/api';
 
 interface QRScannerProps {
-    onScanSuccess: (qrData: string) => void;
+    onScanSuccess: (qrData: string) => Promise<void>;
     onScanError?: (error: string) => void;
 }
 
@@ -21,7 +21,6 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onScanError }) => 
     const cleanupScanner = async () => {
         try {
             if (scannerRef.current && isScanningRef.current) {
-                // Stop the camera and QR scanning
                 await scannerRef.current.stop();
                 console.log('Camera stopped successfully');
             }
@@ -31,7 +30,6 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onScanError }) => 
 
         try {
             if (scannerRef.current) {
-                // Clear the HTML elements
                 await scannerRef.current.clear();
                 scannerRef.current = null;
                 console.log('Scanner cleared successfully');
@@ -40,12 +38,10 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onScanError }) => 
             console.error('Error clearing scanner:', err);
         }
 
-        // Reset states
         isScanningRef.current = false;
         setIsScanning(false);
         setMessage(null);
 
-        // Clear the QR reader element content
         const qrReader = document.getElementById('qr-reader');
         if (qrReader) {
             qrReader.innerHTML = '';
@@ -62,43 +58,54 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onScanError }) => 
         if (!isScanningRef.current) return;
 
         try {
-            // Check if this QR code was already scanned today
             if (scannedCodesRef.current.has(data)) {
                 setMessage("Attendance already marked for today");
                 return;
             }
 
-            // Add to scanned codes before stopping the scanner
+            // Add to scanned codes
             scannedCodesRef.current.add(data);
             
-            // Stop scanning immediately after getting data
+            // Pause scanning but don't cleanup yet
             isScanningRef.current = false;
-            await cleanupScanner();
+            if (scannerRef.current) {
+                await scannerRef.current.pause();
+            }
             
             console.log('Raw QR code data:', data);
-            // Only pass the data to parent when actually scanned
-            onScanSuccess(data);
+            
+            // Call the parent handler and wait for it to complete
+            await onScanSuccess(data);
+            
+            // Only cleanup after the API call is complete
+            await cleanupScanner();
         } catch (error) {
+            // If there's an error, resume scanning
+            isScanningRef.current = true;
+            if (scannerRef.current) {
+                await scannerRef.current.resume();
+            }
+            
             const errorMessage = error instanceof Error ? error.message : 'Error processing QR code';
             console.error('QR scan error:', error);
             if (onScanError) {
                 onScanError(errorMessage);
             }
+            
+            // Remove from scanned codes if there was an error
+            scannedCodesRef.current.delete(data);
         }
     };
 
     const startScanning = async () => {
-        // Reset message when starting new scan
         setMessage(null);
         setError(null);
 
-        // If already scanning, cleanup first
         if (isScanningRef.current) {
             await cleanupScanner();
         }
 
         try {
-            // Create new scanner instance
             const scanner = new Html5Qrcode('qr-reader');
             scannerRef.current = scanner;
 
@@ -113,7 +120,6 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onScanError }) => 
                 },
                 handleScan,
                 (errorMessage) => {
-                    // Ignore errors during scanning as they're usually just failed reads
                     console.log(errorMessage);
                 }
             );
@@ -132,7 +138,6 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onScanError }) => 
         await cleanupScanner();
     };
 
-    // Reset scanned codes and start fresh
     const resetScanner = () => {
         scannedCodesRef.current.clear();
         setMessage(null);

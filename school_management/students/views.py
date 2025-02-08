@@ -505,6 +505,40 @@ class SessionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+    @action(detail=True, methods=['post'])
+    def mark_attendance(self, request, pk=None):
+        """Mark attendance for a student in this session"""
+        session = self.get_object()
+        student_id = request.data.get('student_id')
+
+        try:
+            # Use the session's mark_attendance method which handles:
+            # - Creating attendance log
+            # - Deducting lessons
+            # - Updating subscription balance
+            attendance = session.mark_attendance(student_id)
+            
+            return Response({
+                'message': 'Attendance marked successfully',
+                'attendance': AttendanceLogSerializer(attendance).data
+            }, status=status.HTTP_200_OK)
+            
+        except Student.DoesNotExist:
+            return Response(
+                {'error': 'Student not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except ValidationError as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 class AttendanceLogViewSet(viewsets.ModelViewSet):
     serializer_class = AttendanceLogSerializer

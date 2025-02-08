@@ -2,24 +2,8 @@ import React from "react";
 import { Clock, Users, Video, BookOpen, QrCode } from "lucide-react";
 import { ClassSchedule } from "@/types/attendance";
 import { useClassActivity } from "@/hooks/useClassActivity";
-import AttendanceScanner from "@/components/pages/AttendanceScanner";
 import { AttendanceProgress } from "./AttendanceProgress";
-// import {
-//   Card,
-//   CardContent,
-//   CardDescription,
-//   CardHeader,
-//   CardTitle,
-// } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogDescription,
-} from "@/components/ui/dialog";
 
 interface ClassCardProps {
   class_: ClassSchedule;
@@ -109,28 +93,13 @@ export const ClassCard: React.FC<ClassCardProps> = ({
           View Materials
         </button>
 
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button 
-              variant="outline" 
-              className="flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-md text-sm hover:bg-green-100"
-              onClick={handleStartScanning}
-            >
-              <QrCode className="w-4 h-4" />Mark Attendance
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Mark Attendance</DialogTitle>
-              <DialogDescription>
-                Scan the QR code to mark attendance for this class.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="mt-4">
-              <AttendanceScanner />
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Button 
+          variant="outline" 
+          className="flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-md text-sm hover:bg-green-100"
+          onClick={handleStartScanning}
+        >
+          <QrCode className="w-4 h-4" />Mark Attendance
+        </Button>
       </div>
     </div>
   );

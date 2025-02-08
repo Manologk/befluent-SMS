@@ -7,10 +7,11 @@ import { format, parse } from 'date-fns';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useToast } from '@/hooks/use-toast';
 import QRScanner from '@/components/QRScanner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 const TodaySchedule = () => {
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
+  const [selectedClassName, setSelectedClassName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [sessions, setSessions] = useState<ClassSchedule[]>([]);
   const { startScanning, stopScanning, isScanning } = useAttendanceStore();
@@ -74,8 +75,8 @@ const TodaySchedule = () => {
     }
     
     // Check if the class exists in today's sessions
-    const classExists = sessions.some(session => session.id === classId);
-    if (!classExists) {
+    const selectedSession = sessions.find(session => session.id === classId);
+    if (!selectedSession) {
       toast({
         title: 'Error',
         description: 'Selected class not found in today\'s schedule.',
@@ -85,11 +86,13 @@ const TodaySchedule = () => {
     }
 
     setSelectedClass(classId);
+    setSelectedClassName(selectedSession.className);
     startScanning();
   };
 
   const handleStopScanning = () => {
     setSelectedClass(null);
+    setSelectedClassName("");
     stopScanning();
     toast({
       title: 'Scanning Stopped',
@@ -164,7 +167,10 @@ const TodaySchedule = () => {
         <Dialog open={true} onOpenChange={() => handleStopScanning()}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Scan Student QR Code</DialogTitle>
+              <DialogTitle>Mark Attendance - {selectedClassName}</DialogTitle>
+              <DialogDescription>
+                Scan student QR codes to mark attendance for this class. The scanner will close automatically after each successful scan.
+              </DialogDescription>
             </DialogHeader>
             <QRScanner
               onScanSuccess={handleScanSuccess}

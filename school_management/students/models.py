@@ -95,11 +95,21 @@ class Session(models.Model):
         try:
             student = Student.objects.get(id=student_id)
             
+            # Check for existing attendance
+            existing_attendance = AttendanceLog.objects.filter(
+                student=student,
+                session=self
+            ).first()
+            
+            if existing_attendance:
+                raise ValidationError("Attendance already marked for this student in this session")
+            
             # Create attendance log
             attendance = AttendanceLog.objects.create(
                 student=student,
                 session=self,
-                valid=True
+                valid=True,
+                status='present'
             )
             
             # Deduct lesson and balance
@@ -127,6 +137,9 @@ class AttendanceLog(models.Model):
         ],
         default='absent'
     )
+
+    class Meta:
+        unique_together = ('student', 'session')
 
     def __str__(self):
         return f"{self.student.name} - {self.session} - {self.status}"

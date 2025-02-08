@@ -475,8 +475,15 @@ export const sessionApi = {
   },
 
   async markAttendance(data: { sessionId: string; studentId: string }) {
-    const response = await api.post('/students/attendance/', data);
-    return response.data;
+    try {
+      const response = await api.post(`/students/sessions/${data.sessionId}/mark_attendance/`, {
+        student_id: data.studentId
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error marking attendance:', error);
+      throw error;
+    }
   },
 
   async getAttendance(sessionId: string) {
