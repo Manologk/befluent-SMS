@@ -1,7 +1,7 @@
 import axios from 'axios';
 //import { AttendanceRecord, ClassSchedule } from '@/types/session';
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = 'https://befluent-sms.onrender.com/api';
 
 // Create axios instance with default config
 const api = axios.create({

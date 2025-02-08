@@ -1,7 +1,7 @@
 import requests
 import json
 
-BASE_URL = 'http://localhost:8000/api'
+BASE_URL = 'https://befluent-sms.onrender.com/api'
 
 def get_token(email, password):
     """Get JWT token for authentication"""
