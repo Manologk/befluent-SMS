@@ -78,37 +78,47 @@ export const AttendanceViewer: React.FC = () => {
 
   const handleSort = (column: keyof AttendanceRecord) => {
     const sorted = [...filteredRecords].sort((a, b) => {
+      if (column === 'date') {
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      }
+      if (column === 'studentName' || column === 'grade' || column === 'language') {
+        const valueA = a[column]?.toString() || '';
+        const valueB = b[column]?.toString() || '';
+        return valueA.localeCompare(valueB);
+      }
       const valueA = a[column];
       const valueB = b[column];
       
       if (valueA === valueB) return 0;
-      if (valueA === null || valueA === undefined) return 1;
-      if (valueB === null || valueB === undefined) return -1;
-      return valueA < valueB ? -1 : 1;
+      if (valueA === undefined || valueA === null) return 1;
+      if (valueB === undefined || valueB === null) return -1;
+      
+      return valueA > valueB ? 1 : -1;
     });
     setFilteredRecords(sorted);
   };
 
   const handleExport = () => {
     const csv = [
-      ['Student Name', 'Date', 'Status', 'Time', 'Notes'].join(','),
-      ...filteredRecords.map((record) =>
-        [
-          record.student?.name || 'Unknown',
-          new Date(record.timestamp).toLocaleDateString(),
-          record.status,
-          new Date(record.timestamp).toLocaleTimeString(),
-          record.notes || '',
-        ].join(',')
-      ),
+      ['Student Name', 'Student ID', 'Date', 'Status', 'Grade', 'Language'].join(','),
+      ...filteredRecords.map((record) => [
+        record.studentName,
+        record.studentId,
+        new Date(record.date).toLocaleDateString(),
+        record.status,
+        record.grade,
+        record.language || '',
+      ].join(','))
     ].join('\n');
 
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'attendance.csv';
+    a.download = `attendance_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
   };
 
@@ -151,24 +161,24 @@ export const AttendanceViewer: React.FC = () => {
   };
 
   useEffect(() => {
+    if (!filters) return;
+    
     let filtered = [...records];
 
     if (filters.startDate && filters.endDate) {
-      filtered = filtered.filter(
-        (record) => {
-          const recordDate = new Date(record.timestamp).toISOString().split('T')[0];
-          return recordDate >= filters.startDate && recordDate <= filters.endDate;
-        }
-      );
+      filtered = filtered.filter((record) => {
+        const recordDate = record.date;
+        return recordDate >= filters.startDate && recordDate <= filters.endDate;
+      });
     }
 
     if (filters.grade) {
-      filtered = filtered.filter((record) => record.student?.grade === filters.grade);
+      filtered = filtered.filter((record) => record.grade === filters.grade);
     }
 
     if (filters.studentId) {
-      filtered = filtered.filter((record) =>
-        record.student_id.includes(filters.studentId || '')
+      filtered = filtered.filter((record) => 
+        record.studentId.toString().includes(filters.studentId || '')
       );
     }
 
@@ -177,7 +187,7 @@ export const AttendanceViewer: React.FC = () => {
     }
 
     if (filters.language) {
-      filtered = filtered.filter((record) => record.student?.language === filters.language);
+      filtered = filtered.filter((record) => record.language === filters.language);
     }
 
     setFilteredRecords(filtered);

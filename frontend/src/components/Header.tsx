@@ -27,36 +27,46 @@ interface StudentData {
 const Header = () => {
     const [profileOpen, setProfileOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const [studentData, setStudentData] = useState<StudentData>();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     // In a real app, this would come from your auth system
     const course = "English";
 
     const { user } = useAuth();
-    const [studentData, setStudentData] = useState<StudentData>();
-    const [loading, setLoading] = useState(true);
-
     const navigate = useNavigate();
     const { logout } = useAuth();
 
     useEffect(() => {
         const fetchStudentData = async () => {
             try {
-                if(user?.user_id){
-                    const headerData = await studentApi.getById(user.user_id);
-                    setStudentData(headerData)
+                if (user?.user_id) {
+                    const response = await studentApi.getById(user.user_id);
+                    if (response && response.data) {
+                        setStudentData(response.data);
+                        setError(null);
+                    } else {
+                        setError('Invalid response format');
+                    }
                 }
             } catch (error) {
                 console.error('Failed to fetch student data:', error);
+                setError('Failed to fetch student data');
             } finally {
-                setLoading (false);
+                setLoading(false);
             }
         };
 
         fetchStudentData();
-    }, [user?.user_id])
+    }, [user?.user_id]);
 
     if (loading) {
         return <p>Loading student data...</p>;
+    }
+
+    if (error) {
+        return <p className="text-red-500">{error}</p>;
     }
 
     if (!studentData) {

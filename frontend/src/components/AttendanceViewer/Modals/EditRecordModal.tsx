@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { AttendanceRecord, AttendanceStatus } from '../../../types/attendance';
-// import { attendanceApi } from '../../../services/api';
+import { attendanceApi } from '@/services/api';
 import toast from 'react-hot-toast';
 
 interface EditRecordModalProps {
@@ -25,9 +25,21 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
   const handleSave = async () => {
     try {
       setLoading(true);
+      
+      // Call the API to update the status
+      const result = await attendanceApi.updateAttendanceStatus(record.id, status.toLowerCase() as 'present' | 'absent' | 'late');
+      
+      // Call the onSubmit handler with the new status
       await onSubmit({ status });
+      
+      // Show success message with updated balance info
+      toast.success(
+        `Status updated successfully!\nLessons remaining: ${result.lessons_remaining}\nSubscription balance: $${result.subscription_balance.toFixed(2)}`
+      );
+      
       onClose();
     } catch (error: any) {
+      console.error('Error updating status:', error);
       toast.error(error.response?.data?.error || 'Failed to update status');
     } finally {
       setLoading(false);
@@ -54,13 +66,13 @@ export const EditRecordModal: React.FC<EditRecordModalProps> = ({
           <div className="space-y-4">
             <div>
               <p className="text-sm font-medium text-gray-500">Student</p>
-              <p className="mt-1 text-sm text-gray-900">{record.student?.name || 'Unknown Student'}</p>
+              <p className="mt-1 text-sm text-gray-900">{record.studentName}</p>
             </div>
 
             <div>
               <p className="text-sm font-medium text-gray-500">Date</p>
               <p className="mt-1 text-sm text-gray-900">
-                {new Date(record.timestamp).toLocaleDateString()}
+                {new Date(record.date).toLocaleDateString()}
               </p>
             </div>
 

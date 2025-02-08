@@ -113,8 +113,9 @@ class Session(models.Model):
             )
             
             # Deduct lesson and balance
+            cost_per_lesson = student.subscription_plan.price / student.subscription_plan.number_of_lessons
             student.lessons_remaining = models.F('lessons_remaining') - 1
-            student.subscription_balance = models.F('subscription_balance') - self.payment
+            student.subscription_balance = models.F('subscription_balance') - cost_per_lesson
             student.save()
             
             return attendance

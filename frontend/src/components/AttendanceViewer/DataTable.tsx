@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowUpDown, MoreHorizontal, FileDown, Printer } from 'lucide-react';
+import { ArrowUpDown, FileDown, Printer } from 'lucide-react';
 import { AttendanceRecord, AttendanceStatus } from '../../types/attendance';
 
 interface DataTableProps {
@@ -57,7 +57,7 @@ export const DataTable: React.FC<DataTableProps> = ({
             <tr className="bg-gray-50">
               <th scope="col" className="px-6 py-3 text-left">
                 <button
-                  onClick={() => onSort('student_id')}
+                  onClick={() => onSort('studentName')}
                   className="flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Student
@@ -66,7 +66,7 @@ export const DataTable: React.FC<DataTableProps> = ({
               </th>
               <th scope="col" className="px-6 py-3 text-left">
                 <button
-                  onClick={() => onSort('timestamp')}
+                  onClick={() => onSort('date')}
                   className="flex items-center text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Date
@@ -77,10 +77,10 @@ export const DataTable: React.FC<DataTableProps> = ({
                 Status
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Time
+                Grade
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Notes
+                Language
               </th>
               <th scope="col" className="relative px-6 py-3">
                 <span className="sr-only">Actions</span>
@@ -94,61 +94,41 @@ export const DataTable: React.FC<DataTableProps> = ({
                   <div className="flex items-center">
                     <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
                       <span className="text-sm font-medium text-gray-600">
-                        {record.student?.name?.charAt(0) || '?'}
+                        {record.studentName.charAt(0)}
                       </span>
                     </div>
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {record.student?.name || 'Unknown Student'}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        Session ID: {record.session_id}
-                      </div>
+                      <div className="text-sm font-medium text-gray-900">{record.studentName}</div>
+                      <div className="text-sm text-gray-500">ID: {record.studentId}</div>
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  {new Date(record.timestamp).toLocaleDateString()}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {new Date(record.date).toLocaleDateString()}
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-4 whitespace-nowrap">
                   <span className={getStatusStyle(record.status)}>
                     {record.status.charAt(0) + record.status.slice(1).toLowerCase()}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  {new Date(record.timestamp).toLocaleTimeString()}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {record.grade}
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  {record.notes || '-'}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {record.language || '-'}
                 </td>
-                <td className="px-6 py-4 text-right text-sm font-medium">
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button
                     onClick={() => onEdit(record)}
                     className="text-indigo-600 hover:text-indigo-900"
                   >
-                    <MoreHorizontal className="h-5 w-5" />
+                    Edit
                   </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-
-      <div className="px-4 py-3 border-t border-gray-200">
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-500">
-            Showing {records.length} records
-          </div>
-          <div className="flex items-center space-x-2">
-            <button className="px-3 py-1 border border-gray-200 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
-              Previous
-            </button>
-            <button className="px-3 py-1 border border-gray-200 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
-              Next
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

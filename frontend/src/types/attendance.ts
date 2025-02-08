@@ -33,12 +33,13 @@ export interface AttendanceFilters {
 
 export interface AttendanceRecord {
     id: string;
-    student_id: string;
-    session_id: string;
+    studentName: string;
+    studentId: string;
+    grade: string;
+    language: string | null;
+    date: string;
     status: AttendanceStatus;
-    timestamp: string;
     notes?: string;
-    student?: Student;
 }
 
 export interface AttendanceStats {

@@ -182,8 +182,10 @@ export function StudentList({ className }: StudentListProps) {
         })
       )
       setStudents(studentsWithSubscriptions)
+      setError(null) // Clear any previous errors
     } catch (error) {
       console.error('Error fetching students:', error)
+      setError('Failed to load students. Please try again.')
       toast({
         title: "Error",
         description: "Failed to load students",

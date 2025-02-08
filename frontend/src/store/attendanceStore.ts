@@ -33,14 +33,17 @@ export const useAttendanceStore = create<AttendanceState & AttendanceActions>((s
 
     const newRecord: AttendanceRecord = {
       id: `${Date.now()}`, // Generate a temporary ID
-      student_id: studentId,
-      session_id: classId,
+      studentId: studentId,
+      studentName: '', // This will be populated from the backend
+      grade: '', // This will be populated from the backend
+      language: null, // This will be populated from the backend
+      date: new Date().toISOString().split('T')[0],
       status: 'PRESENT',
-      timestamp: new Date().toISOString(),
+      notes: `Marked via QR scan for class ${classId}`
     };
 
     const newScannedStudents = new Set(scannedStudents);
-    newScannedStudents.add(`${studentId}`);
+    newScannedStudents.add(key);
 
     set({ 
       records: [...records, newRecord],
@@ -52,7 +55,7 @@ export const useAttendanceStore = create<AttendanceState & AttendanceActions>((s
 
   getAttendanceStatus: (classId) => {
     const { records } = get();
-    const classRecords = records.filter(r => r.session_id === classId);
+    const classRecords = records.filter(r => r.notes?.includes(`class ${classId}`));
     return {
       total: 3, // This would come from the class roster
       present: classRecords.length

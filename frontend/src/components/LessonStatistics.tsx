@@ -18,6 +18,7 @@ export function LessonStatistics() {
   const { user } = useAuth();
   const [studentData, setStudentData] = useState<StudentData>();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStudentData = async () => {
@@ -25,12 +26,18 @@ export function LessonStatistics() {
       try {
         if (user?.user_id) {
           console.log('Fetching data for user:', user);
-          const dashboardData = await studentApi.getById(user.user_id);
-          console.log('Dashboard data received:', dashboardData);
-          setStudentData(dashboardData);
+          const response = await studentApi.getById(user.user_id);
+          console.log('Dashboard data received:', response);
+          if (response && response.data) {
+            setStudentData(response.data);
+            setError(null);
+          } else {
+            setError('Invalid response format');
+          }
         }
       } catch (error) {
         console.error('Failed to fetch student data:', error);
+        setError('Failed to fetch student data. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -41,6 +48,10 @@ export function LessonStatistics() {
 
   if (loading) {
     return <p>Loading student data...</p>;
+  }
+
+  if (error) {
+    return <p className="text-red-500">{error}</p>;
   }
 
   if (!studentData) {

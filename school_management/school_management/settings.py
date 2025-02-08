@@ -86,14 +86,14 @@ WSGI_APPLICATION = 'school_management.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        # 'NAME': os.environ.get('DB_NAME', 'defaultdb'),
-        # 'USER': os.environ.get('DB_USER', 'avnadmin'),
-        # 'PASSWORD': os.environ.get('DB_PASSWORD', 'AVNS_M4PheSxQkvzP1NGLsJh'),
-        # 'HOST': os.environ.get('DB_HOST', 'befluent-db-payslipapp.g.aivencloud.com'),
-        # 'PORT': os.environ.get('DB_PORT', '16595')
-        'NAME': 'school_management',
-        'USER': 'postgres',
-        'PASSWORD': 'Manolo29',
+        'NAME': os.environ.get('DB_NAME', 'defaultdb'),
+        'USER': os.environ.get('DB_USER', 'avnadmin'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'AVNS_wQJS6J65PEvltp9QEsy'),
+        'HOST': os.environ.get('DB_HOST', 'befluentdb-payslipapp.c.aivencloud.com'),
+        'PORT': os.environ.get('DB_PORT', '16595')
+        # 'NAME': 'school_management',
+        # 'USER': 'postgres',
+        # 'PASSWORD': 'Manolo29',
     }
 }
 
@@ -158,6 +158,7 @@ REST_FRAMEWORK = {
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "https://befluent-sms.vercel.app"
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
@@ -194,8 +195,8 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=999),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': False,

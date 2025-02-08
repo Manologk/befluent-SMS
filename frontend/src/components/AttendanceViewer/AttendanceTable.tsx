@@ -57,7 +57,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => onSort('student_id')}
+                onClick={() => onSort('studentName')}
               >
                 <div className="flex items-center">
                   Student Name
@@ -67,7 +67,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
               <th
                 scope="col"
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                onClick={() => onSort('timestamp')}
+                onClick={() => onSort('date')}
               >
                 <div className="flex items-center">
                   Date
@@ -92,10 +92,10 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
             {records.map((record) => (
               <tr key={record.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {record.student?.name || 'Unknown Student'}
+                  {record.studentName}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(record.timestamp).toLocaleDateString()}
+                  {new Date(record.date).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(record.status)}`}>
@@ -103,7 +103,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(record.timestamp).toLocaleTimeString()}
+                  {new Date(record.date).toLocaleTimeString()}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {record.notes || '-'}
