@@ -26,6 +26,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             try {
                 const user = JSON.parse(userStr) as User;
                 console.log('Parsed user from localStorage:', user);
+
+                
                 setAuthState({
                     user,
                     token,
@@ -51,6 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const login = (token: string, user: User) => {
         console.log('Login called with user:', user);
+
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
         // setAuthToken(token);

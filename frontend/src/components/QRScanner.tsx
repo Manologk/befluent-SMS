@@ -19,8 +19,11 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onScanError }) => 
     const scannedCodesRef = useRef<Set<string>>(new Set());
 
     const cleanupScanner = async () => {
+        if (!scannerRef.current) return;
+
         try {
-            if (scannerRef.current && isScanningRef.current) {
+            if (isScanningRef.current) {
+                isScanningRef.current = false;
                 await scannerRef.current.stop();
                 console.log('Camera stopped successfully');
             }
@@ -29,16 +32,13 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onScanError }) => 
         }
 
         try {
-            if (scannerRef.current) {
-                await scannerRef.current.clear();
-                scannerRef.current = null;
-                console.log('Scanner cleared successfully');
-            }
+            await scannerRef.current.clear();
+            scannerRef.current = null;
+            console.log('Scanner cleared successfully');
         } catch (err) {
             console.error('Error clearing scanner:', err);
         }
 
-        isScanningRef.current = false;
         setIsScanning(false);
         setMessage(null);
 
@@ -54,35 +54,51 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onScanError }) => 
         };
     }, []);
 
-    const handleScan = async (data: string) => {
+    const handleScan = async (decodedText: string) => {
         if (!isScanningRef.current) return;
 
         try {
-            if (scannedCodesRef.current.has(data)) {
+            if (scannedCodesRef.current.has(decodedText)) {
                 setMessage("Attendance already marked for today");
                 return;
             }
 
-            // Add to scanned codes
-            scannedCodesRef.current.add(data);
+            console.log('Raw QR code data:', decodedText);
+            console.log('QR code data type:', typeof decodedText);
             
-            // Pause scanning but don't cleanup yet
-            isScanningRef.current = false;
+            // Trim any whitespace
+            const cleanedText = decodedText.trim();
+            console.log('Cleaned QR code data:', cleanedText);
+
+            // Parse the QR code data as a number
+            const studentId = parseInt(cleanedText, 10);
+            console.log('Parsed student ID:', studentId);
+            
+            if (isNaN(studentId)) {
+                throw new Error(`Invalid QR code format: "${cleanedText}" is not a valid student ID number`);
+            }
+
+            // Add to scanned codes
+            scannedCodesRef.current.add(decodedText);
+            
+            // Pause scanning
             if (scannerRef.current) {
-                await scannerRef.current.pause();
+                isScanningRef.current = false;
+                await scannerRef.current.pause(true);
             }
             
-            console.log('Raw QR code data:', data);
+            console.log('Raw QR code data:', decodedText);
+            console.log('Parsed student ID:', studentId);
             
-            // Call the parent handler and wait for it to complete
-            await onScanSuccess(data);
+            // Call the parent handler with the parsed student ID
+            await onScanSuccess(studentId.toString());
             
-            // Only cleanup after the API call is complete
+            // Only cleanup after successful processing
             await cleanupScanner();
         } catch (error) {
             // If there's an error, resume scanning
-            isScanningRef.current = true;
-            if (scannerRef.current) {
+            if (scannerRef.current && !isScanningRef.current) {
+                isScanningRef.current = true;
                 await scannerRef.current.resume();
             }
             
@@ -93,7 +109,8 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onScanError }) => 
             }
             
             // Remove from scanned codes if there was an error
-            scannedCodesRef.current.delete(data);
+            scannedCodesRef.current.delete(decodedText);
+            setError(errorMessage);
         }
     };
 
@@ -120,7 +137,10 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanSuccess, onScanError }) => 
                 },
                 handleScan,
                 (errorMessage) => {
-                    console.log(errorMessage);
+                    // Only log scanning errors if we're actually scanning
+                    if (isScanningRef.current) {
+                        console.log(errorMessage);
+                    }
                 }
             );
             console.log('Camera started successfully');

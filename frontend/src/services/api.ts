@@ -183,27 +183,18 @@ export const authApi = {
 // Student endpoints
 export const studentApi = {
   getAll: async () => {
-    try {
-      const { data } = await api.get('/students/students/');
-      return data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error('Student API Error:', error.response?.data);
-        throw new Error(error.response?.data?.detail || 'Failed to fetch students');
-      }
-      throw error;
-    }
+    const response = await api.get('/students/students/');
+    return response;
+  },
+  
+  getById: async (id: number) => {
+    const response = await api.get(`/students/students/${id}/`);
+    return response;
   },
 
-  getById: async (id: number) => {
-    try {
-      const { data } = await api.get(`/students/students/${id}/`);
-      console.log('Student data response:', data); // Debug log
-      return data;
-    } catch (error) {
-      console.error('Failed to fetch student:', error);
-      throw error;
-    }
+  getSubscription: async (studentId: string | number) => {
+    const response = await api.get(`/students/student-subscriptions/?student_id=${studentId}`);
+    return response;
   },
 
   getDashboard: async () => {

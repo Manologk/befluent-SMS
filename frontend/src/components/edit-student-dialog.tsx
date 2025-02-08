@@ -56,6 +56,7 @@ interface EditStudentDialogProps {
     lessons_remaining: number
     subscription_balance: number
     parent_id?: number
+    subscription_plan?: string
   }
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -312,6 +313,18 @@ export function EditStudentDialog({ student, open, onOpenChange, onSuccess }: Ed
                   </FormItem>
                 )}
               />
+              <div className="col-span-2">
+                <FormItem>
+                  <FormLabel>Current Subscription Plan</FormLabel>
+                  <FormControl>
+                    <Input 
+                      value={student.subscription_plan || 'No active plan'} 
+                      disabled 
+                      className="bg-gray-50"
+                    />
+                  </FormControl>
+                </FormItem>
+              </div>
             </div>
             <DialogFooter>
               <Button type="submit" disabled={isSubmitting}>

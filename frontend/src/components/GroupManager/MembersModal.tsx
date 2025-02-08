@@ -41,12 +41,12 @@ export function MembersModal({
       setIsLoading(true);
       setError(null);
       try {
-        const studentsData = await studentApi.getAll();
-        console.log('Student API Response:', studentsData);
-        if (Array.isArray(studentsData)) {
-          setStudents(studentsData);
+        const response = await studentApi.getAll();
+        console.log('Student API Response:', response);
+        if (response && response.data) {
+          setStudents(response.data);
         } else {
-          console.error('Unexpected response format:', studentsData);
+          console.error('Unexpected response format:', response);
           throw new Error('Invalid response format');
         }
       } catch (err) {

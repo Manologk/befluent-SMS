@@ -220,13 +220,32 @@ class CreateStudentWithUserSerializer(serializers.Serializer):
             role='student'
         )
 
-        # Create student
+        # Get the subscription plan
+        try:
+            plan = SubscriptionPlan.objects.get(name__iexact=validated_data['subscription_plan'])
+        except SubscriptionPlan.DoesNotExist:
+            raise serializers.ValidationError({"subscription_plan": "Invalid subscription plan selected"})
+
+        # Create student with subscription details
         student = Student.objects.create(
             user=user,
             name=validated_data['name'],
             email=validated_data['email'],
             phone_number=validated_data.get('phone_number', ''),
-            level=validated_data.get('level', '')
+            level=validated_data.get('level', ''),
+            lessons_remaining=plan.number_of_lessons,  # Set initial lessons from plan
+            subscription_balance=plan.price  # Set initial balance from plan
+        )
+
+        # Set the qr_code to the student ID
+        student.qr_code = str(student.id)
+        student.save()
+
+        # Create subscription record
+        StudentSubscription.objects.create(
+            student=student,
+            subscription_plan=plan,
+            start_date=timezone.now().date()
         )
 
         return student

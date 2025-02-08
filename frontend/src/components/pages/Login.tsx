@@ -38,8 +38,7 @@ export default function Login() {
       const user: User = {
         user_id: Number(response.user_id),
         email: response.email,
-        role: response.role as UserRole,
-        qr_code: response.qr_code || `qr-${response.user_id}` // Generate QR if not provided
+        role: response.role as UserRole
       }
 
       login(response.access, user)

@@ -84,16 +84,22 @@ export default function CreateSchedule({
     async function fetchTeachers() {
       try {
         setLoading(true)
-        const data = await teacherApi.getAll()
-        // Transform the API response to match the UI's expected format
-        const transformedTeachers = data.map((teacher: any) => ({
-          id: teacher.id.toString(),
-          name: teacher.name || `${teacher.first_name} ${teacher.last_name}`,
-          email: teacher.email,
-          specializations: teacher.specializations || [],
-          contactDetails: teacher.contact_details || teacher.phone || ''
-        }))
-        setTeachers(transformedTeachers)
+        const response = await teacherApi.getAll()
+        console.log('Teacher API Response:', response)
+        if (Array.isArray(response)) {
+          // Transform the API response to match the UI's expected format
+          const transformedTeachers = response.map((teacher: any) => ({
+            id: teacher.id.toString(),
+            name: teacher.name || `${teacher.first_name} ${teacher.last_name}`,
+            email: teacher.email,
+            specializations: teacher.specializations || [],
+            contactDetails: teacher.contact_details || teacher.phone || ''
+          }))
+          setTeachers(transformedTeachers)
+        } else {
+          console.error('Unexpected teacher response format:', response)
+          throw new Error('Invalid teacher response format')
+        }
       } catch (error) {
         toast({
           title: "Error",
@@ -112,14 +118,20 @@ export default function CreateSchedule({
     async function fetchStudents() {
       try {
         setLoading(true)
-        const data = await studentApi.getAll()
-        // Transform the API response to match the UI's expected format
-        const transformedStudents = data.map((student: any) => ({
-          id: student.id.toString(),
-          name: student.name || `${student.first_name} ${student.last_name}`,
-          email: student.email
-        }))
-        setStudents(transformedStudents)
+        const response = await studentApi.getAll()
+        console.log('Student API Response:', response)
+        if (response && response.data) {
+          // Transform the API response to match the UI's expected format
+          const transformedStudents = response.data.map((student: any) => ({
+            id: student.id.toString(),
+            name: student.name || `${student.first_name} ${student.last_name}`,
+            email: student.email
+          }))
+          setStudents(transformedStudents)
+        } else {
+          console.error('Unexpected student response format:', response)
+          throw new Error('Invalid student response format')
+        }
       } catch (error) {
         toast({
           title: "Error",
@@ -138,8 +150,14 @@ export default function CreateSchedule({
     async function fetchGroups() {
       try {
         setLoading(true)
-        const groups = await groupApi.getAll()
-        setGroups(groups)
+        const response = await groupApi.getAll()
+        console.log('Groups API Response:', response)
+        if (Array.isArray(response)) {
+          setGroups(response)
+        } else {
+          console.error('Unexpected groups response format:', response)
+          throw new Error('Invalid groups response format')
+        }
       } catch (error) {
         console.error('Error fetching groups:', error)
         toast({
@@ -299,7 +317,7 @@ export default function CreateSchedule({
                       <SelectContent>
                         {groupsState.map((group) => (
                           <SelectItem key={group.id} value={group.id.toString()}>
-                            {group.name} ({group.studentIds.length}/{group.maxCapacity} students)
+                            {group.name} (students)
                           </SelectItem>
                         ))}
                       </SelectContent>

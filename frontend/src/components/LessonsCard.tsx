@@ -13,27 +13,27 @@ interface StudentData {
     level: string;
 }
 
-
-
-
 const LessonsCard = () => {
     const { user } = useAuth();
     const [studentData, setStudentData] = useState<StudentData>();
     const [loading, setLoading] = useState(true);
 
-    const totalLessons = 50;
+    
     // const remainingLessons = 12;
     // const percentage = (remainingLessons / totalLessons) * 100;
 
     useEffect(() => {
         const fetchStudentData = async () => {
-            console.log("user", user)
+            console.log("Fetching student data for user ID:", user?.user_id)
             try {
                 if (user?.user_id) {
-                    console.log('Fetching data for user:', user);
-                    const dashboardData = await studentApi.getById(user.user_id);
-                    console.log('Dashboard data received:', dashboardData);
-                    setStudentData(dashboardData);
+                    const response = await studentApi.getById(user.user_id);
+                    console.log('Student data received:', response);
+                    if (response && response.data) {
+                        setStudentData(response.data);
+                    } else {
+                        console.error('Invalid response format:', response);
+                    }
                 }
             } catch (error) {
                 console.error('Failed to fetch student data:', error);
@@ -45,7 +45,6 @@ const LessonsCard = () => {
         fetchStudentData();
     }, [user?.user_id]);
 
-
     if (loading) {
         return <p>Loading student data...</p>;
     }
@@ -54,8 +53,8 @@ const LessonsCard = () => {
         return <p>No data available for this student.</p>;
     }
 
-
     const { lessons_remaining } = studentData;
+    const totalLessons = 50;
     const remainingLessons = lessons_remaining;
     const percentage = (remainingLessons / totalLessons) * 100;
     console.log("Remaining Lessons", lessons_remaining)   

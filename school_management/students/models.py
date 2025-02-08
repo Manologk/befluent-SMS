@@ -35,8 +35,8 @@ class Student(models.Model):
 
     def generate_qr_code(self):
         try:
-            # Create minimal QR code data
-            qr_data = f"{self.id}"
+            # Create minimal QR code data - just the student ID
+            qr_data = str(self.id)
             
             # Generate QR code with optimized parameters
             qr = qrcode.QRCode(
@@ -56,7 +56,7 @@ class Student(models.Model):
             img.save(buffer, format='PNG', optimize=True)
             qr_base64 = base64.b64encode(buffer.getvalue()).decode()
             
-            # Save with data URI format
+            # Save just the student ID as the QR code
             self.qr_code = qr_data
             self.save()
             

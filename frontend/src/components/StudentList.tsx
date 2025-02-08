@@ -14,6 +14,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import { ArrowUpDown, ChevronDown, MoreHorizontal } from 'lucide-react'
+import { toast } from "@/hooks/use-toast"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -47,6 +48,7 @@ interface Student {
   gpa: string;
   lessons_remaining: number;
   subscription_balance: number;
+  subscription_plan?: string;
 }
 
 export type StudentListProps = {
@@ -163,27 +165,34 @@ export function StudentList({ className }: StudentListProps) {
 
   const fetchStudents = async () => {
     try {
-      const data = await studentApi.getAll();
-      
-      // Transform the data to match our table structure
-      const transformedData = data.map((student: any) => ({
-        id: student.id.toString(),
-        name: student.name,
-        email: student.email,
-        level: student.level || 'N/A',
-        attendance: '95%',
-        gpa: '3.8',
-        lessons_remaining: student.lessons_remaining,
-        subscription_balance: student.subscription_balance
-      }));
-      
-      setStudents(transformedData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load students');
+      const response = await studentApi.getAll()
+      const studentsWithSubscriptions = await Promise.all(
+        response.data.map(async (student: any) => {
+          try {
+            // Get student's subscription
+            const subscriptionResponse = await studentApi.getSubscription(student.id)
+            return {
+              ...student,
+              subscription_plan: subscriptionResponse.data?.subscription_plan?.name || null
+            }
+          } catch (error) {
+            console.error(`Error fetching subscription for student ${student.id}:`, error)
+            return student
+          }
+        })
+      )
+      setStudents(studentsWithSubscriptions)
+    } catch (error) {
+      console.error('Error fetching students:', error)
+      toast({
+        title: "Error",
+        description: "Failed to load students",
+        variant: "destructive",
+      })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   React.useEffect(() => {
     fetchStudents()

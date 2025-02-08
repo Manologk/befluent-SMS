@@ -30,17 +30,24 @@ const formSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  phoneNumber: z.string().regex(phoneRegex, {
-    message: "Please enter a valid phone number.",
+  phoneNumber: z.string().min(10, {
+    message: "Phone number must be at least 10 characters.",
   }),
-  subscriptionPlan: z.string({
-    required_error: "Please select a subscription plan.",
+  level: z.string().min(1, {
+    message: "Please select a level.",
   }),
-  level: z.string({
-    required_error: "Please select an academic level.",
+  subscriptionPlan: z.string().min(1, {
+    message: "Please select a subscription plan.",
   }),
   parentId: z.string().optional(),
-})
+  password: z.string().min(8, {
+    message: "Password must be at least 8 characters.",
+  }),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
 
 type FormValues = z.infer<typeof formSchema>
 
@@ -102,6 +109,8 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
       subscriptionPlan: undefined,
       level: undefined,
       parentId: undefined,
+      password: "",
+      confirmPassword: "",
     },
   })
 
@@ -121,7 +130,7 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
         phone_number: values.phoneNumber,
         subscription_plan: values.subscriptionPlan.toLowerCase(),
         level: values.level.toLowerCase(),
-        password: 'student123',
+        password: values.password,
       })
 
       // If parent is selected, create the link
@@ -292,6 +301,34 @@ export function AddStudentForm({ className }: React.HTMLAttributes<HTMLDivElemen
                   <FormDescription>
                     Optional: Link this student to a parent
                   </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="Enter password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="Confirm password" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

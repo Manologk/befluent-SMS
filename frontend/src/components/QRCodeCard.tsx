@@ -17,6 +17,7 @@ import { studentApi } from '@/services/api';
 
 
 interface StudentData {
+    id: number;
     user_id: number;
     qr_code: string;
 }
@@ -26,20 +27,18 @@ interface StudentData {
 const QRCodeCard = () => {
     const [isZoomed, setIsZoomed] = useState(false);
     const isMobile = useIsMobile();
-    const [studentData, setStudentData] = useState<StudentData>()
+    const [studentData, setStudentData] = useState<StudentData>();
     const { user } = useAuth();
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-    // QR code data is simply the user ID
     useEffect(() => {
         const fetchStudentData = async () => {
-            console.log("user", user)
             try {
                 if (user?.user_id) {
-                    console.log('Fetching data for user:', user);
-                    const dashboardData = await studentApi.getById(user.user_id);
-                    console.log('Dashboard data received:', dashboardData);
-                    setStudentData(dashboardData);
+                    console.log('Fetching student data for user ID:', user.user_id);
+                    const response = await studentApi.getById(user.user_id);
+                    console.log('Student data received:', response.data);
+                    setStudentData(response.data);
                 }
             } catch (error) {
                 console.error('Failed to fetch student data:', error);
@@ -51,7 +50,6 @@ const QRCodeCard = () => {
         fetchStudentData();
     }, [user?.user_id]);
 
-
     if (loading) {
         return <p>Loading student data...</p>;
     }
@@ -60,12 +58,9 @@ const QRCodeCard = () => {
         return <p>No data available for this student.</p>;
     }
 
+    const qrCodeData = studentData.id.toString();
+    console.log("QR Code Data (Student ID):", qrCodeData);
 
-    const { qr_code } = studentData;
-
-    const  qrCodeData = qr_code;
-
-    console.log("User Data = ", qrCodeData)
     const qrCodeSize = isMobile ? Math.min(window.innerWidth - 64, 384) : 384;
 
     return (
