@@ -86,14 +86,14 @@ WSGI_APPLICATION = 'school_management.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        # 'NAME': os.environ.get('DB_NAME', 'defaultdb'),
-        # 'USER': os.environ.get('DB_USER', 'avnadmin'),
-        # 'PASSWORD': os.environ.get('DB_PASSWORD', 'AVNS_wQJS6J65PEvltp9QEsy'),
-        # 'HOST': os.environ.get('DB_HOST', 'befluentdb-payslipapp.c.aivencloud.com'),
-        # 'PORT': os.environ.get('DB_PORT', '16595')
-        'NAME': 'school_management',
-        'USER': 'postgres',
-        'PASSWORD': 'Manolo29',
+        'NAME': os.environ.get('DB_NAME', 'defaultdb'),
+        'USER': os.environ.get('DB_USER', 'avnadmin'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'AVNS_wQJS6J65PEvltp9QEsy'),
+        'HOST': os.environ.get('DB_HOST', 'befluentdb-payslipapp.c.aivencloud.com'),
+        'PORT': os.environ.get('DB_PORT', '16595')
+        # 'NAME': 'school_management',
+        # 'USER': 'postgres',
+        # 'PASSWORD': 'Manolo29',
     }
 }
 
