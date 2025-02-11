@@ -1,7 +1,8 @@
 import axios from 'axios';
 //import { AttendanceRecord, ClassSchedule } from '@/types/session';
 
-const API_URL = 'https://befluent-sms.onrender.com/api';
+// const API_URL = 'https://befluent-sms.onrender.com/api';
+const API_URL = 'http://127.0.0.1:8000/api';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -280,6 +281,21 @@ export const teacherApi = {
       return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
       console.error('Error fetching teachers:', error);
+      throw error;
+    }
+  },
+
+  async getCurrentTeacher(user_id: string) {
+    try {
+      console.log('Fetching teacher with user_id:', user_id);
+      const response = await api.get(`/students/teachers/by-user/${user_id}/`);
+      console.log('Teacher API Response:', response);
+      if (!response.data) {
+        throw new Error('No teacher data received');
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching current teacher:', error);
       throw error;
     }
   },

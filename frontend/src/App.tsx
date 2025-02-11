@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './components/theme-provider';
 import { Sidebar } from '@/components/Sidebar';
@@ -28,9 +27,6 @@ import FinancialOverview from './components/dashboard/FinancialOverview';
 import ClassManagement from './components/dashboard/ClassManagement';
 import StudentProgress from './components/dashboard/StudentProgress';
 // import AdminFunctions from './components/dashboard/AdminFunctions';
-
-
-
 
 import './App.css';
 
@@ -93,7 +89,7 @@ function App() {
       ) : (
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="*" element={<Navigate to="/login" />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       )}
     </ThemeProvider>

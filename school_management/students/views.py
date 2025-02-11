@@ -35,6 +35,18 @@ class TeacherViewSet(viewsets.ModelViewSet):
             return CreateTeacherWithUserSerializer
         return TeacherSerializer
 
+    @action(detail=False, methods=['get'], url_path='by-user/(?P<user_id>[^/.]+)')
+    def get_by_user(self, request, user_id=None):
+        try:
+            teacher = Teacher.objects.get(user_id=user_id)
+            serializer = self.get_serializer(teacher)
+            return Response(serializer.data)
+        except Teacher.DoesNotExist:
+            return Response(
+                {'error': 'Teacher not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+
     @action(detail=False, methods=['post'], url_path='create-with-user')
     def create_with_user(self, request):
         serializer = self.get_serializer(data=request.data)
