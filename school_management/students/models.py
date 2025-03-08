@@ -8,6 +8,7 @@ import qrcode
 from io import BytesIO
 from django.core.exceptions import ValidationError
 from datetime import datetime, timedelta
+from decimal import Decimal
 
 
 # Create your models here.
@@ -112,16 +113,27 @@ class Session(models.Model):
                 status='present'
             )
             
+            # Calculate cost per lesson using current balance and remaining lessons
+            if student.lessons_remaining > 0:
+                cost_per_lesson = Decimal(str(student.subscription_balance / student.lessons_remaining))
+            else:
+                # If no lessons remaining, use the last known cost per lesson or a default value
+                cost_per_lesson = Decimal('0.00')
+            
             # Deduct lesson and balance
-            cost_per_lesson = student.subscription_plan.price / student.subscription_plan.number_of_lessons
             student.lessons_remaining = models.F('lessons_remaining') - 1
             student.subscription_balance = models.F('subscription_balance') - cost_per_lesson
             student.save()
+            
+            # Refresh from db to get updated values
+            student.refresh_from_db()
             
             return attendance
             
         except Student.DoesNotExist:
             raise ValueError("Student not found")
+        except Exception as e:
+            raise ValidationError(str(e))
 
 
 class AttendanceLog(models.Model):

@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 from django.db.models import Avg, F, Q
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.db import transaction
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.core.exceptions import ValidationError
 
@@ -842,30 +842,58 @@ def scan_qr_code(request, student_id):
                 'message': 'Attendance already marked for today'
             }, status=400)
 
+        # Get the teacher from the request user if they are a teacher
+        teacher = None
+        if hasattr(request.user, 'teacher'):
+            teacher = request.user.teacher
+        else:
+            # Get any available teacher for testing/development
+            teacher = Teacher.objects.first()
+            if not teacher:
+                return Response({
+                    'success': False,
+                    'message': 'No teacher available to assign to session'
+                }, status=400)
+
         # Get or create today's session
-        session, created = Session.objects.get_or_create(
-            date=today,
-            defaults={
-                'language': student.level.split('_')[0] if '_' in student.level else 'English',
-                'level': student.level.split('_')[1] if '_' in student.level else student.level,
-                'status': 'IN_PROGRESS'  # Set status to IN_PROGRESS by default
-            }
-        )
+        try:
+            session = Session.objects.get(
+                date=today,
+                student=student,
+                status='IN_PROGRESS'
+            )
+        except Session.DoesNotExist:
+            # Create new session
+            session = Session.objects.create(
+                date=today,
+                student=student,
+                teacher=teacher,
+                type='PRIVATE',  # Default to private session
+                status='IN_PROGRESS',
+                start_time=timezone.now().time(),
+                end_time=(timezone.now() + timedelta(hours=1)).time(),
+                payment=0  # Set default payment or calculate based on your business logic
+            )
 
-        # If session exists but not in progress, set it to in progress
-        if not created and session.status != 'IN_PROGRESS':
-            session.status = 'IN_PROGRESS'
-            session.save()
+        try:
+            # Mark attendance using the session's method
+            attendance = session.mark_attendance(student.id)
+            
+            # Refresh student object to get updated values
+            student.refresh_from_db()
 
-        # Mark attendance using the session's method
-        attendance = session.mark_attendance(student.id)
+            return Response({
+                'success': True,
+                'lessonsRemaining': student.lessons_remaining,
+                'subscriptionBalance': float(student.subscription_balance),
+                'message': f'Attendance marked successfully for {student.name}'
+            })
 
-        return Response({
-            'success': True,
-            'lessonsRemaining': student.lessons_remaining,
-            'subscriptionBalance': student.subscription_balance,
-            'message': f'Attendance marked successfully for {student.name}'
-        })
+        except ValidationError as e:
+            return Response({
+                'success': False,
+                'message': str(e)
+            }, status=400)
 
     except Student.DoesNotExist:
         return Response({
@@ -877,7 +905,7 @@ def scan_qr_code(request, student_id):
         return Response({
             'success': False,
             'message': str(e)
-        }, status=400)
+        }, status=500)
 
 
 @api_view(['GET'])
