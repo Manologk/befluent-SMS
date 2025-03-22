@@ -26,9 +26,9 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure--d-s-zcg0vzyt=1*m6bo9
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['*']
-RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+#RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+#if RENDER_EXTERNAL_HOSTNAME:
+#    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 # Application definition
 
@@ -86,11 +86,11 @@ WSGI_APPLICATION = 'school_management.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'defaultdb'),
-        'USER': os.environ.get('DB_USER', 'avnadmin'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'AVNS_wQJS6J65PEvltp9QEsy'),
-        'HOST': os.environ.get('DB_HOST', 'befluentdb-payslipapp.c.aivencloud.com'),
-        'PORT': os.environ.get('DB_PORT', '16595')
+        'NAME': 'befluentsms',
+        'USER': 'befluentuser',
+        'PASSWORD': 'Manolo29',
+        'HOST': '172.232.140.85',
+        'PORT': '5432',
         # 'NAME': 'school_management',
         # 'USER': 'postgres',
         # 'PASSWORD': 'Manolo29',
@@ -158,7 +158,8 @@ REST_FRAMEWORK = {
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://befluent-sms.vercel.app"
+    "https://befluent-sms.vercel.app",
+    "https://befluent.zedtech.shop",
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
