@@ -1,4 +1,4 @@
-OBname: Deploy To VPS
+name: Deploy To VPS
 
 on:
   push:

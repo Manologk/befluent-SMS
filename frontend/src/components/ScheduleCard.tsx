@@ -55,6 +55,7 @@ const ScheduleCard = () => {
         console.log('Fetching student data for user ID:', user.user_id);
         const studentResponse = await studentApi.getById(user.user_id);
         console.log('Student data received:', studentResponse.data);
+        console.log(studentData);
         
         if (!studentResponse.data) {
           throw new Error('No student data received');
