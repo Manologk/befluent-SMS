@@ -10,9 +10,37 @@ import base64
 
 
 class StudentSerializer(serializers.ModelSerializer):
+    total_lessons = serializers.SerializerMethodField()
+    subscription_info = serializers.SerializerMethodField()
+
     class Meta:
         model = Student
         fields = '__all__'
+
+    def get_total_lessons(self, obj):
+        try:
+            subscription = StudentSubscription.objects.filter(student=obj).latest('start_date')
+            return subscription.subscription_plan.number_of_lessons
+        except StudentSubscription.DoesNotExist:
+            return 0
+        except Exception as e:
+            print(f"Error getting total lessons for student {obj.id}: {str(e)}")
+            return 0
+
+    def get_subscription_info(self, obj):
+        try:
+            subscription = StudentSubscription.objects.filter(student=obj).latest('start_date')
+            return {
+                'plan_name': subscription.subscription_plan.name,
+                'total_lessons': subscription.subscription_plan.number_of_lessons,
+                'start_date': subscription.start_date,
+                'end_date': subscription.end_date,
+            }
+        except StudentSubscription.DoesNotExist:
+            return None
+        except Exception as e:
+            print(f"Error getting subscription info for student {obj.id}: {str(e)}")
+            return None
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -61,12 +89,14 @@ class SessionSerializer(serializers.ModelSerializer):
     isOnline = serializers.SerializerMethodField()
     proficiencyLevel = serializers.SerializerMethodField()
     student_details = serializers.SerializerMethodField()
+    teacher_details = serializers.SerializerMethodField()
+    subject = serializers.SerializerMethodField()
 
     class Meta:
         model = Session
         fields = ['id', 'time', 'className', 'students', 'type', 'isOnline', 'proficiencyLevel', 
                  'date', 'start_time', 'end_time', 'status', 'teacher', 'student', 'group',
-                 'student_details']
+                 'student_details', 'teacher_details', 'subject']
 
     def get_time(self, obj):
         return obj.start_time.strftime('%I:%M %p')
@@ -117,6 +147,22 @@ class SessionSerializer(serializers.ModelSerializer):
                 'email': student.student.email,
                 'phone_number': student.student.phone_number
             } for student in obj.group.students.all()]
+        return None
+
+    def get_teacher_details(self, obj):
+        if obj.teacher:
+            return {
+                'id': obj.teacher.id,
+                'name': obj.teacher.name,
+                'email': obj.teacher.email,
+                'phone_number': obj.teacher.phone_number,
+                'specializations': obj.teacher.specializations
+            }
+        return None
+
+    def get_subject(self, obj):
+        if obj.teacher and obj.teacher.specializations:
+            return obj.teacher.specializations[0] if obj.teacher.specializations else None
         return None
 
 

@@ -1,12 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { Menu, Bell, User, LogOut } from 'lucide-react';
+import { Menu, Bell, User, LogOut, Settings, Edit } from 'lucide-react';
 import { authApi, teacherApi } from '@/services/api';
+import { Button } from "@/components/ui/button"
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card"
-import { useAuth } from '@/contexts/AuthContext';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import { useAuth } from '@/contexts/AuthContext'; 
 
 interface TeacherInfo {
   name: string;
@@ -16,19 +27,15 @@ interface TeacherInfo {
 
 const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [teacherInfo, setTeacherInfo] = useState<TeacherInfo | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
     const fetchTeacherInfo = async () => {
       try {
-        // Only fetch if we have a user_id
         if (user?.user_id) {
-          console.log('Fetching teacher info for user_id:', user.user_id);
           const data = await teacherApi.getCurrentTeacher(user.user_id.toString());
-          console.log('Received teacher data:', data);
           setTeacherInfo(data);
-        } else {
-          console.log('No user_id available:', user);
         }
       } catch (error) {
         console.error('Failed to fetch teacher info:', error);
@@ -36,80 +43,108 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
     };
 
     fetchTeacherInfo();
-  }, [user]); // Add user as a dependency so it refetches when user changes
+  }, [user]);
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button className="p-2 rounded-lg hover:bg-gray-100">
-              <Menu className="w-6 h-6 text-gray-600" />
-            </button>
-            <h1 className="text-xl font-semibold text-gray-800">Teacher Dashboard</h1>
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-14 items-center">
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+              <SheetHeader>
+                <SheetTitle>Navigation</SheetTitle>
+              </SheetHeader>
+              {/* Add your mobile navigation items here */}
+            </SheetContent>
+          </Sheet>
+          
+          <div className="flex items-center gap-2">
+            <h1 className="hidden md:block text-xl font-semibold">Teacher Dashboard</h1>
           </div>
-          <div className="flex items-center gap-4">
-            <button className="p-2 rounded-lg hover:bg-gray-100 relative">
-              <Bell className="w-6 h-6 text-gray-600" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
 
-            <HoverCard>
-              <HoverCardTrigger asChild>
-                <button className="p-2 rounded-lg hover:bg-gray-100">
-                  <User className="w-6 h-6 text-gray-600" />
-                </button>
-              </HoverCardTrigger>
-              <HoverCardContent className="w-80">
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    <div className="rounded-full bg-gray-100 p-2">
-                      <User className="w-8 h-8" />
+          <div className="flex flex-1 items-center justify-end space-x-4">
+            <nav className="flex items-center space-x-2">
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-600" />
+              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="relative">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{teacherInfo?.name || 'Loading...'}</p>
+                      <p className="text-xs leading-none text-muted-foreground">{teacherInfo?.email || 'Loading...'}</p>
                     </div>
-                    <div>
-                      <h4 className="text-sm font-semibold">{teacherInfo?.name || 'Loading...'}</h4>
-                      <p className="text-sm text-gray-500">{teacherInfo?.email || 'Loading...'}</p>
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {teacherInfo?.specializations && (
-                      <p>Specializations: {teacherInfo.specializations.join(', ')}</p>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-2 mt-2">
-                    <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
-                      Edit Info
-                    </button>
-                    <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md">
-                      Settings
-                    </button>
-                  </div>
-                </div>
-              </HoverCardContent>
-            </HoverCard>
-            
-            <button 
-              className="p-2 rounded-lg hover:bg-gray-100"
-              onClick={async () => {
-                try {
-                  await authApi.logout();
-                  window.location.href = '/login';
-                } catch (error) {
-                  console.error('Logout failed:', error);
-                }
-              }}
-            >
-              <LogOut className="w-6 h-6 text-gray-600" />
-            </button>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {teacherInfo?.specializations && (
+                    <>
+                      <DropdownMenuLabel className="font-normal">
+                        <span className="text-xs text-muted-foreground">
+                          Specializations: {teacherInfo.specializations.join(', ')}
+                        </span>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  <DropdownMenuItem>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </nav>
           </div>
         </div>
       </header>
-      
+
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
-      </main>
+      <div className="container flex-1 items-start md:grid md:grid-cols-[220px_1fr] md:gap-6 lg:grid-cols-[240px_1fr] lg:gap-10">
+        {/* Sidebar - Desktop only */}
+        <aside className="fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-3.5rem)] w-full shrink-0 overflow-y-auto border-r md:sticky md:block">
+          <div className="h-full py-6 pl-8 pr-6 lg:py-8">
+            {/* Add your sidebar navigation items here */}
+          </div>
+        </aside>
+        
+        {/* Main content area */}
+        <main className="flex w-full flex-col overflow-hidden">
+          <div className="flex-1 space-y-4 p-8 pt-6">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

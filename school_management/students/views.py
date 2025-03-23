@@ -427,18 +427,23 @@ class SessionViewSet(viewsets.ModelViewSet):
         queryset = Session.objects.all()
         
         try:
-            # Get date parameter
-            date = self.request.query_params.get('date', None)
+            # Get query parameters
+            start_date = self.request.query_params.get('start_date')
+            end_date = self.request.query_params.get('end_date')
+            student_id = self.request.query_params.get('student')
             
-            # Filter by date if provided
-            if date:
-                target_date = datetime.strptime(date, '%Y-%m-%d').date()
-                queryset = queryset.filter(date=target_date)
-                
-                # Automatically set today's sessions to IN_PROGRESS
-                today = timezone.now().date()
-                if target_date == today:
-                    queryset.filter(status='SCHEDULED').update(status='IN_PROGRESS')
+            # Filter by date range if provided
+            if start_date and end_date:
+                start = datetime.strptime(start_date, '%Y-%m-%d').date()
+                end = datetime.strptime(end_date, '%Y-%m-%d').date()
+                queryset = queryset.filter(date__range=[start, end])
+            
+            # Filter by student if provided
+            if student_id:
+                queryset = queryset.filter(
+                    Q(student_id=student_id) | 
+                    Q(group__students__student_id=student_id)
+                )
             
             # Filter based on user role
             if hasattr(self.request.user, 'role'):
@@ -448,29 +453,27 @@ class SessionViewSet(viewsets.ModelViewSet):
                     queryset = queryset.filter(teacher=teacher)
                     
                     # Generate sessions from schedule if none exist
-                    if date and not queryset.exists():
-                        weekday = target_date.weekday()
+                    if start_date and not queryset.exists():
+                        weekday = datetime.strptime(start_date, '%Y-%m-%d').date().weekday()
                         schedules = Schedule.objects.filter(
                             teacher=teacher,
                             days__contains=[weekday]
                         )
                         
                         for schedule in schedules:
-                            session = schedule.generate_next_session(target_date=target_date)
+                            session = schedule.generate_next_session(target_date=start_date)
                             if session:
                                 queryset = queryset | Session.objects.filter(id=session.id)
-                
-                elif self.request.user.role == 'student':
-                    # For students, show sessions they're part of
-                    student = Student.objects.get(user=self.request.user)
-                    queryset = queryset.filter(
-                        Q(student=student) | Q(group__students=student)
-                    )
             
-            return queryset.select_related('student', 'group', 'teacher').distinct()
+            # Select related fields and return distinct results
+            return queryset.select_related(
+                'student',
+                'group',
+                'teacher'
+            ).prefetch_related(
+                'group__students'
+            ).distinct()
         
-        except (Teacher.DoesNotExist, Student.DoesNotExist):
-            return Session.objects.none()
         except Exception as e:
             print(f"Error in get_queryset: {str(e)}")
             return Session.objects.none()

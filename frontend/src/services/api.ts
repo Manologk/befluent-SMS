@@ -2,7 +2,9 @@ import axios from 'axios';
 //import { AttendanceRecord, ClassSchedule } from '@/types/session';
 
 
-const API_URL = 'https://backend.zedtech.shop/api';
+// const API_URL = 'https://backend.zedtech.shop/api';
+const API_URL = 'http://127.0.0.1:8000/api';
+
 
 // Create axios instance with default config
 const api = axios.create({
@@ -515,12 +517,27 @@ export const sessionApi = {
 
 // Schedule endpoints
 export const scheduleApi = {
-  getWeeklySchedule: async (date: string) => {
+  getWeeklySchedule: async (dateRange: string, studentId: string) => {
     try {
-      const { data } = await api.get(`/students/sessions/?date=${date}`);
+      const [startDate, endDate] = dateRange.split(',');
+      console.log('API call params:', { startDate, endDate, studentId });
+      
+      const { data } = await api.get('/students/sessions/', {
+        params: {
+          start_date: startDate,
+          end_date: endDate,
+          student: studentId
+        }
+      });
+      console.log('API Response:', data);
       return data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
+        console.error('Schedule API Error:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          config: error.config
+        });
         throw new Error(error.response?.data?.message || 'Failed to fetch schedule');
       }
       throw error;
@@ -764,6 +781,31 @@ export const groupService = {
   },
   removeTeacherFromGroup: (groupId: number) => 
     api.post(`/students/groups/${groupId}/remove_teacher/`)
+};
+
+export const financialApi = {
+  getTeacherStats: async (teacherId: string) => {
+    const response = await api.get(`/students/teachers/${teacherId}/stats/`);
+    return response.data;
+  },
+  
+  getTeacherSessions: async (teacherId: string, startDate: string, endDate: string) => {
+    const response = await api.get(`/students/sessions/`, {
+      params: {
+        teacher: teacherId,
+        start_date: startDate,
+        end_date: endDate
+      }
+    });
+    return response.data;
+  },
+
+  getTeacherEarnings: async (teacherId: string, period: 'daily' | 'weekly' | 'monthly' = 'monthly') => {
+    const response = await api.get(`/students/teachers/${teacherId}/earnings/`, {
+      params: { period }
+    });
+    return response.data;
+  }
 };
 
 export default api;

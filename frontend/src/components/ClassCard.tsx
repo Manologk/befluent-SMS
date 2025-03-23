@@ -1,9 +1,19 @@
 import React from "react";
-import { Clock, Users, Video, BookOpen, QrCode } from "lucide-react";
+import { Clock, Users, Video, BookOpen, QrCode, ExternalLink } from "lucide-react";
 import { ClassSchedule } from "@/types/attendance";
 import { useClassActivity } from "@/hooks/useClassActivity";
 import { AttendanceProgress } from "./AttendanceProgress";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarGroup } from "@/components/ui/avatar-group";
 
 interface ClassCardProps {
   class_: ClassSchedule;
@@ -21,86 +31,98 @@ export const ClassCard: React.FC<ClassCardProps> = ({
   };
 
   return (
-    <div className="border rounded-lg p-4 hover:border-blue-500 transition-colors">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Clock className="w-5 h-5 text-blue-500" />
-          <span className="font-medium">{class_.time}</span>
+    <Card className="hover:shadow-md transition-all">
+      <CardContent className="pt-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-muted-foreground" />
+            <span className="font-medium text-sm">{class_.time}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant={class_.isOnline ? "default" : "secondary"} className={class_.isOnline ? "bg-green-500 hover:bg-green-600" : ""}>
+              {class_.isOnline ? "Online" : "In-Person"}
+            </Badge>
+            {isActive && (
+              <Badge variant="default" className="bg-blue-500 hover:bg-blue-600">
+                Active
+              </Badge>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span
-            className={`px-3 py-1 rounded-full text-sm ${
-              class_.isOnline
-                ? "bg-green-100 text-green-800"
-                : "bg-purple-100 text-purple-800"
-            }`}
-          >
-            {class_.isOnline ? "Online" : "In-Person"}
-          </span>
-          {isActive && (
-            <span className="px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
-              Active
-            </span>
-          )}
-        </div>
-      </div>
 
-      <h3 className="text-lg font-medium text-gray-800 mb-2">
-        {class_.className}
-      </h3>
+        <h3 className="text-lg font-semibold mb-4">{class_.className}</h3>
 
-      <div className="grid grid-cols-1 gap-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Users className="w-5 h-5 text-gray-500" />
-          <div className="flex flex-col">
-            <div className="text-sm text-gray-600">
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <Users className="w-4 h-4 text-muted-foreground mt-1" />
+            <div className="flex-1">
               {class_.students.length > 0 ? (
-                <>
-                  {class_.students.length > 3 ? (
-                    <>
-                      {class_.students.slice(0, 3).join(', ')}
-                      <span className="text-gray-500"> +{class_.students.length - 3} more</span>
-                    </>
-                  ) : (
-                    class_.students.join(', ')
+                <div className="space-y-2">
+                  <AvatarGroup>
+                    {class_.students.slice(0, 5).map((student, index) => (
+                      <TooltipProvider key={index}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Avatar>
+                              <AvatarFallback>
+                                {student.split(' ').map(n => n[0]).join('')}
+                              </AvatarFallback>
+                            </Avatar>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{student}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ))}
+                  </AvatarGroup>
+                  {class_.students.length > 5 && (
+                    <p className="text-sm text-muted-foreground">
+                      +{class_.students.length - 5} more students
+                    </p>
                   )}
-                </>
+                </div>
               ) : (
-                <span className="text-gray-400">No students assigned</span>
+                <p className="text-sm text-muted-foreground">
+                  No students assigned
+                </p>
               )}
             </div>
           </div>
+
+          <div className="flex items-center gap-3">
+            <BookOpen className="w-4 h-4 text-muted-foreground" />
+            <Badge variant="outline">{class_.proficiencyLevel}</Badge>
+          </div>
+
+          <div className="pt-2">
+            <AttendanceProgress classId={class_.id} />
+          </div>
+
+          <div className="flex flex-wrap gap-2 pt-2">
+            {class_.isOnline && (
+              <Button variant="outline" size="sm" className="text-blue-600">
+                <Video className="w-4 h-4 mr-2" />
+                Join Meeting
+                <ExternalLink className="w-3 h-3 ml-2" />
+              </Button>
+            )}
+            <Button variant="outline" size="sm">
+              <BookOpen className="w-4 h-4 mr-2" />
+              View Materials
+            </Button>
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={handleStartScanning}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <QrCode className="w-4 h-4 mr-2" />
+              Mark Attendance
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2 mb-3">
-          <BookOpen className="w-5 h-5 text-gray-500" />
-          <span className="text-sm">{class_.proficiencyLevel}</span>
-        </div>
-      </div>
-
-      <div className="mt-4">
-        <AttendanceProgress classId={class_.id} />
-      </div>
-
-      <div className="mt-4 flex gap-2">
-        {class_.isOnline && (
-          <button className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-md text-sm hover:bg-blue-100">
-            <Video className="w-4 h-4" />
-            Join Meeting
-          </button>
-        )}
-        <button className="flex items-center gap-1 px-3 py-1 bg-gray-50 text-gray-700 rounded-md text-sm hover:bg-gray-100">
-          <BookOpen className="w-4 h-4" />
-          View Materials
-        </button>
-
-        <Button 
-          variant="outline" 
-          className="flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-md text-sm hover:bg-green-100"
-          onClick={handleStartScanning}
-        >
-          <QrCode className="w-4 h-4" />Mark Attendance
-        </Button>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };

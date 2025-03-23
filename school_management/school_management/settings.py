@@ -86,14 +86,14 @@ WSGI_APPLICATION = 'school_management.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'befluentsms',
-        'USER': 'befluentuser',
-        'PASSWORD': 'Manolo29',
-        'HOST': '172.232.140.85',
-        'PORT': '5432',
-        # 'NAME': 'school_management',
-        # 'USER': 'postgres',
+        # 'NAME': 'befluentsms',
+        # 'USER': 'befluentuser',
         # 'PASSWORD': 'Manolo29',
+        # 'HOST': '172.232.140.85',
+        # 'PORT': '5432',
+        'NAME': 'school_management',
+        'USER': 'postgres',
+        'PASSWORD': 'Manolo29',
     }
 }
 
